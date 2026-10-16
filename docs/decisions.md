@@ -106,3 +106,12 @@ Date: 2026-10-16 · Status: accepted
 **Decision.** Extend `Topic` with a `synthesis jsonb` column holding `benchmarks` (baseline probabilities), `levers` (interventions with effect sizes, landmark trials, and verdicts), `clinicalQuestions` (specialist checklist), and `sweepQueue` (frontier trial tracking). The `skeptic` agent extracts this schema during review. The Next.js front renders the decision ledger prominently while deep academic evidence tiers (T1–T6) and sources are collapsed into clean accordions. Tree navigation defaults to focused mode (`containsSlug(node, activeSlug)`), keeping all inactive branches collapsed.
 **Consequences.** Results are immediately actionable and quantitative for any reader in a clinical subgroup without sacrificing objective study-design grading or literature provenance.
 
+## D-014: Research pipeline visibility card and server component defensive recovery
+
+Date: 2026-10-16 · Status: accepted
+
+**Context.** When autonomous research runs asynchronously, users lack visibility into what the worker is doing (which stage is active, which jobs have completed, and what tasks remain queued). Furthermore, server-side exceptions during RSC rendering under incomplete or stringified JSON database states must never crash the entire page with opaque 500 error screens.
+**Decision.** Add a dedicated `ResearchProgressCard` with a 5-stage pipeline stepper (`Plan` → `Harvest` → `Read & Grade` → `Scan Web` → `Synthesize`), live pulse beacon, open task counter, and recent pipeline activity log. Implement Next.js `error.tsx` error boundary for graceful degradation. Defensively guard all date serialization, entity attributes, claim sources, and synthesis fields against null or string-encoded database values.
+**Consequences.** Users have full real-time visibility into the autonomous research workflow. Topic pages remain resilient and self-healing across serverless environments.
+
+

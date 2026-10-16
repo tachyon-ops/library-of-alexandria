@@ -14,7 +14,15 @@ import {
   type EntityView,
   type SourceView,
 } from "@lib/db";
-import { CONTROVERSY_LABELS, TIER_LABELS, TIERS, type Controversy, type Topic } from "@lib/core";
+import {
+  CONTROVERSY_LABELS,
+  TIER_LABELS,
+  TIERS,
+  type Controversy,
+  type JobKind,
+  type Topic,
+  type TopicSynthesis,
+} from "@lib/core";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { researchTopic } from "@/app/actions";
@@ -36,12 +44,50 @@ const ENTITY_HEADINGS: Record<string, string> = {
 };
 
 const JOB_WORDS: Record<string, string> = {
-  plan: "Planning branches and searches",
-  harvest: "Collecting sources",
-  extract: "Reading abstracts",
-  scan: "Searching the web",
-  review: "Cross-checking claims",
+  plan: "Planning branches & searches",
+  harvest: "Harvesting literature & trials",
+  extract: "Extracting findings & study designs",
+  scan: "Scanning web for trials & clinics",
+  review: "Synthesizing evidence & decision ledger",
 };
+
+const PIPELINE_STAGES: { kind: JobKind; label: string; description: string }[] = [
+  { kind: "plan", label: "Plan", description: "Taxonomy & search queries" },
+  { kind: "harvest", label: "Harvest", description: "Registries & literature" },
+  { kind: "extract", label: "Read & Grade", description: "Abstracts & study designs" },
+  { kind: "scan", label: "Web Scan", description: "Trials, clinics & groups" },
+  { kind: "review", label: "Synthesize", description: "Skeptic review & ledger" },
+];
+
+const STAGE_ORDER: Record<string, number> = {
+  plan: 0,
+  harvest: 1,
+  extract: 2,
+  scan: 3,
+  review: 4,
+};
+
+function formatTopicDate(d: Date | string | null | undefined): string | null {
+  if (!d) return null;
+  try {
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString().slice(0, 10);
+  } catch {
+    return null;
+  }
+}
+
+function formatJobTime(d: Date | string | number | null | undefined): string {
+  if (!d) return "";
+  try {
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().slice(11, 19) + " UTC";
+  } catch {
+    return "";
+  }
+}
 
 export default async function TopicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -62,12 +108,21 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
     openJobCount(db, topic.id),
     recentJobs(db, topic.id, 8),
   ]);
+
   const busy = open > 0 || topic.status === "queued" || topic.status === "researching";
-  const claimNumber = new Map(claims.map((c, i) => [c.id, i + 1]));
+  const claimNumber = new Map((claims ?? []).map((c, i) => [c.id, i + 1]));
   const sources = mergeSources(dbSources, claims);
-  const entityGroups = groupBy(entities, (e) => e.kind);
-  const running = jobs.find((j) => j.status === "running") ?? jobs.find((j) => j.status === "queued");
-  const failed = jobs.find((j) => j.status === "failed");
+
+  const safeEntities = (entities ?? []).map((e) => ({
+    ...e,
+    attributes: e.attributes && typeof e.attributes === "object" ? e.attributes : {},
+    sourceUrls: Array.isArray(e.sourceUrls) ? e.sourceUrls : [],
+  }));
+  const entityGroups = groupBy(safeEntities, (e) => e.kind);
+
+  const safeJobs = Array.isArray(jobs) ? jobs : [];
+  const running = safeJobs.find((j) => j.status === "running") ?? safeJobs.find((j) => j.status === "queued");
+  const failed = safeJobs.find((j) => j.status === "failed");
   const displayTitle = normaliseTopicTitle(topic.title);
   const briefText =
     (topic.brief ? topic.brief.replace(/after 44/gi, "after 40") : null) ??
@@ -75,14 +130,34 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
       ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
       : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
   const descriptionText =
-    topic.summary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, claims.length);
+    topic.summary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, (claims ?? []).length);
 
-  const synthesis = topic.synthesis;
-  const benchmarks = synthesis?.benchmarks ?? [];
-  const levers = synthesis?.levers ?? [];
-  const clinicalQuestions = synthesis?.clinicalQuestions ?? [];
-  const sweepQueue = synthesis?.sweepQueue ?? [];
-  const leverCategories = [...new Set(levers.map((l) => l.category))];
+  let synthesis: TopicSynthesis | null = null;
+  if (typeof topic.synthesis === "string") {
+    try {
+      synthesis = JSON.parse(topic.synthesis);
+    } catch {
+      synthesis = null;
+    }
+  } else if (topic.synthesis && typeof topic.synthesis === "object") {
+    synthesis = topic.synthesis;
+  }
+
+  const benchmarks = Array.isArray(synthesis?.benchmarks) ? synthesis.benchmarks : [];
+  const levers = Array.isArray(synthesis?.levers) ? synthesis.levers : [];
+  const clinicalQuestions = Array.isArray(synthesis?.clinicalQuestions) ? synthesis.clinicalQuestions : [];
+  const sweepQueue = Array.isArray(synthesis?.sweepQueue) ? synthesis.sweepQueue : [];
+  const leverCategories = [...new Set(levers.map((l) => l?.category).filter(Boolean))];
+
+  const lastResearchedStr = formatTopicDate(topic.lastResearchedAt);
+  const currentStageIndex = running ? (STAGE_ORDER[running.kind] ?? -1) : -1;
+  const completedKinds = new Set(safeJobs.filter((j) => j.status === "done").map((j) => j.kind));
+
+  const validMilestones = (milestones ?? []).filter((m) => m && typeof m.year === "number");
+  const validDebates = (debates ?? []).map((d) => ({
+    ...d,
+    claimIds: Array.isArray(d.claimIds) ? d.claimIds : [],
+  }));
 
   return (
     <main className="topic-layout">
@@ -107,20 +182,92 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
         <form action={researchTopic} className="research-bar">
           <input type="hidden" name="topicId" value={topic.id} />
           <button type="submit" disabled={busy}>
-            {busy ? "Research in progress" : topic.lastResearchedAt ? "Research again" : "Research this topic"}
+            {busy ? "Research in progress" : lastResearchedStr ? "Research again" : "Research this topic"}
           </button>
           <label className="check">
-            <input type="checkbox" name="withBranches" defaultChecked={!topic.lastResearchedAt} /> include the next level of branches
+            <input type="checkbox" name="withBranches" defaultChecked={!lastResearchedStr} /> include the next level of branches
           </label>
           <a href="#sources" className="sources-jump">
             {sources.length} {sources.length === 1 ? "source" : "sources"} ↓
           </a>
           <span className="status-line" role="status">
             {busy && running ? `${JOB_WORDS[running.kind] ?? running.kind}…` : null}
-            {!busy && topic.lastResearchedAt ? `Last researched ${topic.lastResearchedAt.toISOString().slice(0, 10)}` : null}
+            {!busy && lastResearchedStr ? `Last researched ${lastResearchedStr}` : null}
             {topic.status === "error" && failed ? ` Stopped: ${failed.error?.split("\n")[0]}` : null}
           </span>
         </form>
+
+        {busy && (
+          <section className="research-progress-card" aria-label="Autonomous research progress" role="status">
+            <div className="research-progress-header">
+              <div className="progress-status-badge">
+                <span className="pulse-indicator" aria-hidden="true" />
+                <strong>
+                  {running ? (JOB_WORDS[running.kind] ?? `Running ${running.kind}`) : "Autonomous research in progress"}
+                </strong>
+              </div>
+              <span className="tasks-count muted small">
+                {open} {open === 1 ? "task" : "tasks"} active in queue
+              </span>
+            </div>
+
+            <ol className="pipeline-stepper" aria-label="Autonomous research pipeline stages">
+              {PIPELINE_STAGES.map((stage, idx) => {
+                const isCurrent = running?.kind === stage.kind;
+                const isDone = completedKinds.has(stage.kind) || (currentStageIndex > (STAGE_ORDER[stage.kind] ?? 99));
+                const isQueued = !isCurrent && !isDone && safeJobs.some((j) => j.kind === stage.kind && j.status === "queued");
+                const stageStatus = isCurrent ? "running" : isDone ? "done" : isQueued ? "queued" : "pending";
+
+                return (
+                  <li key={stage.kind} className="stepper-step" data-status={stageStatus}>
+                    <div className="step-marker" aria-hidden="true">
+                      {isDone ? "✓" : idx + 1}
+                    </div>
+                    <div className="step-info">
+                      <span className="step-label">{stage.label}</span>
+                      <span className="step-desc muted small">{stage.description}</span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+
+            {safeJobs.length > 0 && (
+              <div className="recent-jobs-stream">
+                <h4 className="stream-heading small muted">Recent pipeline activity</h4>
+                <ul className="activity-list small">
+                  {safeJobs.slice(0, 5).map((j) => (
+                    <li key={j.id} className="activity-item">
+                      <span className={`job-status-tag status-${j.status}`}>{j.status}</span>
+                      <span className="job-name">{JOB_WORDS[j.kind] ?? j.kind}</span>
+                      {j.error && <span className="job-error-msg muted">{j.error.split("\n")[0]}</span>}
+                      {j.createdAt && (
+                        <time className="job-time muted">
+                          {formatJobTime(j.createdAt)}
+                        </time>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="auto-refresh-note muted small" style={{ margin: 0 }}>
+              This page automatically refreshes as the research worker completes each stage.
+            </p>
+          </section>
+        )}
+
+        {topic.status === "error" && failed && (
+          <section className="research-error-card" role="alert">
+            <div className="error-header">
+              <strong>Research paused due to an error:</strong>
+            </div>
+            <p className="error-message" style={{ margin: 0 }}>{failed.error?.split("\n")[0] ?? "Unknown worker error"}</p>
+            <p className="muted small" style={{ margin: 0 }}>
+              Check API keys or network availability, then click &ldquo;Research again&rdquo; above to retry.
+            </p>
+          </section>
+        )}
 
         <section className="summary">
           <p>{descriptionText}</p>
@@ -253,16 +400,18 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </section>
         )}
 
-        {milestones.length > 0 && (
+        {validMilestones.length > 0 && (
           <details className="timeline-details">
             <summary className="timeline-summary">
               <span>
-                Historical timeline ({milestones.length} {milestones.length === 1 ? "milestone" : "milestones"},{" "}
-                {milestones[0]!.year}–{milestones[milestones.length - 1]!.year})
+                Historical timeline ({validMilestones.length} {validMilestones.length === 1 ? "milestone" : "milestones"}
+                {validMilestones[0]?.year && validMilestones[validMilestones.length - 1]?.year
+                  ? `, ${validMilestones[0].year}–${validMilestones[validMilestones.length - 1].year}`
+                  : ""})
               </span>
             </summary>
             <ol className="timeline">
-              {milestones.map((m) => (
+              {validMilestones.map((m) => (
                 <li key={m.id}>
                   <span className="year">{m.year}</span>
                   <div>
@@ -310,18 +459,18 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </details>
         )}
 
-        {debates.length > 0 && (
+        {validDebates.length > 0 && (
           <details className="collapsible-section">
             <summary className="section-summary">
               <span>
-                Where the record disagrees ({debates.length} {debates.length === 1 ? "controversy" : "controversies"})
+                Where the record disagrees ({validDebates.length} {validDebates.length === 1 ? "controversy" : "controversies"})
               </span>
             </summary>
             <ul className="debates" style={{ marginTop: "0.85rem" }}>
-              {debates.map((d) => (
+              {validDebates.map((d) => (
                 <li key={d.id}>
                   <p>{d.note}</p>
-                  {d.claimIds.length > 0 && (
+                  {(d.claimIds ?? []).length > 0 && (
                     <p className="muted small">
                       Findings {d.claimIds.map((id) => claimNumber.get(id)).filter(Boolean).map((n) => `#${n}`).join(", ")}
                     </p>
@@ -332,10 +481,10 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </details>
         )}
 
-        {entities.length > 0 && (
+        {safeEntities.length > 0 && (
           <details className="collapsible-section">
             <summary className="section-summary">
-              <span>In the world ({entities.length} clinics, treatments, and groups)</span>
+              <span>In the world ({safeEntities.length} clinics, treatments, and groups)</span>
             </summary>
             <p className="section-note" style={{ marginTop: "0.85rem" }}>
               Found on the web. Only entries a retrieved page supports are kept; verify before acting.
@@ -346,7 +495,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </details>
         )}
 
-        {topic.gaps.length > 0 && sweepQueue.length === 0 && (
+        {(topic.gaps ?? []).length > 0 && sweepQueue.length === 0 && (
           <section>
             <h2>Open questions</h2>
             <ul className="gaps">
@@ -410,7 +559,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
                   ) : (
                     s.title
                   )}
-                  {s.authors.length > 0 && (
+                  {(s.authors ?? []).length > 0 && (
                     <span className="muted">
                       {" — "}
                       {s.authors.slice(0, 3).join(", ")}
@@ -452,6 +601,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
 
 function ClaimItem({ claim, n }: { claim: ClaimView; n: number }) {
   const flagged = claim.controversy !== "settled";
+  const claimSources = Array.isArray(claim.sources) ? claim.sources : [];
   return (
     <li className="claim" data-tier={claim.tier} id={`claim-${n}`}>
       <p className="statement">
@@ -459,20 +609,20 @@ function ClaimItem({ claim, n }: { claim: ClaimView; n: number }) {
       </p>
       <p className="claim-meta">
         {flagged && <span className="flag" data-kind={claim.controversy}>{CONTROVERSY_LABELS[claim.controversy as Controversy]}</span>}
-        {claim.sources.slice(0, 4).map((s, i) => (
+        {claimSources.slice(0, 4).map((s, i) => (
           <span key={s.id}>
             {i > 0 && "; "}
             {s.url ? (
               <a href={s.url} target="_blank" rel="noopener noreferrer">
-                {shortTitle(s.title)}
+                {shortTitle(s.title ?? "Source")}
               </a>
             ) : (
-              shortTitle(s.title)
+              shortTitle(s.title ?? "Source")
             )}
             {s.year ? ` (${s.year})` : ""}
           </span>
         ))}
-        {claim.sources.length > 4 && <span>; and {claim.sources.length - 4} more</span>}
+        {claimSources.length > 4 && <span>; and {claimSources.length - 4} more</span>}
       </p>
       {claim.rationale && <p className="rationale">{claim.rationale}</p>}
     </li>
@@ -493,32 +643,36 @@ function EntityTable({ title, rows }: { title: string; rows: EntityView[] }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((e) => (
-              <tr key={e.id}>
-                <td>{e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer">{e.name}</a> : e.name}</td>
-                <td>{e.country ?? ""}</td>
-                <td>
-                  {e.summary}
-                  {Object.keys(e.attributes).length > 0 && (
-                    <dl className="attrs">
-                      {Object.entries(e.attributes).map(([k, v]) => (
-                        <div key={k}>
-                          <dt>{k}</dt>
-                          <dd>{v}</dd>
-                        </div>
+            {rows.map((e) => {
+              const attrs = e.attributes && typeof e.attributes === "object" ? Object.entries(e.attributes) : [];
+              const sourceUrls = Array.isArray(e.sourceUrls) ? e.sourceUrls : [];
+              return (
+                <tr key={e.id}>
+                  <td>{e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer">{e.name}</a> : e.name}</td>
+                  <td>{e.country ?? ""}</td>
+                  <td>
+                    {e.summary}
+                    {attrs.length > 0 && (
+                      <dl className="attrs">
+                        {attrs.map(([k, v]) => (
+                          <div key={k}>
+                            <dt>{k}</dt>
+                            <dd>{String(v)}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                    <span className="muted small">
+                      {sourceUrls.map((u, i) => (
+                        <a key={u} href={u} target="_blank" rel="noopener noreferrer">
+                          {i === 0 ? "source" : ` ${i + 1}`}
+                        </a>
                       ))}
-                    </dl>
-                  )}
-                  <span className="muted small">
-                    {e.sourceUrls.map((u, i) => (
-                      <a key={u} href={u} target="_blank" rel="noopener noreferrer">
-                        {i === 0 ? "source" : ` ${i + 1}`}
-                      </a>
-                    ))}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -530,24 +684,27 @@ function shortTitle(t: string): string {
   return t.length > 70 ? `${t.slice(0, 68)}…` : t;
 }
 
-function mergeSources(dbSources: SourceView[], claims: ClaimView[]): SourceView[] {
+function mergeSources(dbSources: SourceView[] = [], claims: ClaimView[] = []): SourceView[] {
   const seen = new Map<string, SourceView>();
-  for (const s of dbSources) seen.set(s.id, s);
-  for (const c of claims) {
+  for (const s of dbSources ?? []) {
+    if (s?.id) seen.set(s.id, s);
+  }
+  for (const c of claims ?? []) {
+    if (!Array.isArray(c?.sources)) continue;
     for (const s of c.sources) {
-      if (!seen.has(s.id)) {
+      if (s?.id && !seen.has(s.id)) {
         seen.set(s.id, {
           id: s.id,
           kind: "paper",
           origin: "literature",
-          title: s.title,
-          url: s.url,
+          title: s.title ?? "Untitled",
+          url: s.url ?? null,
           doi: null,
-          venue: s.venue,
-          year: s.year,
+          venue: s.venue ?? null,
+          year: s.year ?? null,
           authors: [],
           citedBy: null,
-          design: s.design,
+          design: s.design ?? null,
         });
       }
     }
