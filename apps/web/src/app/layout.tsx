@@ -30,30 +30,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="wordmark">
               Alexander&rsquo;s Library
             </Link>
-            <Link href="/about" className="masthead-note">
+            <span className="masthead-divider" aria-hidden="true" />
+            <p className="masthead-note">
               The search for the elixir of youth — what the record says, and how strongly.
-            </Link>
+            </p>
           </div>
-          <nav aria-label="Support and author" className="masthead-actions">
+          <nav aria-label="Primary and support" className="masthead-actions">
+            <Link href="/" className="masthead-link">
+              Tree of Knowledge
+            </Link>
             <Link href="/about" className="masthead-link">
               The Chronicle
             </Link>
-            <a
-              href={AUTHOR_SITE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="masthead-link"
-            >
-              nuuno.art
-            </a>
-            <a
-              href={GITHUB_PROFILE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="masthead-link"
-            >
-              @tachyon-ops
-            </a>
             <a
               href={GITHUB_SPONSORS_URL}
               target="_blank"
