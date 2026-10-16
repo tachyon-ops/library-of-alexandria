@@ -92,10 +92,10 @@ Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-hai
 
 | Route           | Shows                                                                                                                                                       | Actions                                                                   |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `/`             | tree with status and finding counts; grading legend; 30-day usage                                                                                           | add a root branch, optionally starting research with `AUTO_EXPAND_DEPTH`  |
+| `/`             | tree with status and finding counts; grading legend; support and author links; 30-day usage                                                                 | add a root branch, optionally starting research with `AUTO_EXPAND_DEPTH`  |
 | `/topic/[slug]` | path, brief, research bar with job status, summary, findings grouped by tier, debates, entities by kind, milestones, open questions, branches, sources read | research (optionally with the next level of branches); add a child branch |
 
-The page refreshes every 5 s while the topic has open jobs or is `queued` or `researching`. Rendering is server-side; writes are server actions.
+Every page shares a masthead and footer with links to the author (`nuuno.art`, `@tachyon-ops`) and donation options (PayPal Donate and GitHub Sponsors). The page refreshes every 5 s while the topic has open jobs or is `queued` or `researching`. Rendering is server-side; writes are server actions.
 
 ## 8. Configuration
 

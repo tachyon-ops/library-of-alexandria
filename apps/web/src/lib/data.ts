@@ -1,6 +1,12 @@
 import "server-only";
 import { getSql, listTree, type TreeNode } from "@lib/db";
 
+export const PAYPAL_DONATE_URL =
+  "https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=D3J2WXTXLAWK8&source=url&ssrt=1792150968588";
+export const GITHUB_SPONSORS_URL = "https://github.com/sponsors/tachyon-ops";
+export const GITHUB_PROFILE_URL = "https://github.com/tachyon-ops";
+export const AUTHOR_SITE_URL = "https://nuuno.art";
+
 export const sql = () => getSql();
 
 export interface TreeBranch extends TreeNode {

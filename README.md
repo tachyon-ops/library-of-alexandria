@@ -1,115 +1,154 @@
-# Alexander's Library
+# Library of Alexandria (*Alexander's Library*)
 
-A tree of knowledge filled by AI research workers. You add a branch ("Human fertility", "Ocean acidification", anything). The workers then search the open literature, trial registries and the web. They extract findings, grade each one by the design of the studies behind it, and flag what is contested, fringe or marketed ahead of evidence. The Next.js front shows the tree, the findings with their grade, the clinics and treatments found on the web, and a timeline of milestones.
+> *What the record actually says, and how strongly.*
 
-Frontier and controversial ideas are kept and labelled, not filtered out. The grade tells you how much weight a claim can bear.
+**Library of Alexandria** (*Alexander's Library*) is an open-source tree of knowledge filled by autonomous AI research workers.
+
+You add a topic—*"Human fertility"*, *"Ocean acidification"*, or any question you want answered from primary evidence. Research workers search the open scientific literature, clinical trial registries, and the live web; extract concrete claims; compute an evidence grade (`T1`–`T6`) in code from the study design behind each claim; and label what is disputed, fringe, or marketed ahead of evidence.
+
+Frontier and minority ideas are kept and labelled, never silently filtered out. The grade tells you how much weight a claim can bear.
+
+---
+
+## Support the project
+
+Building and running an open research library takes ongoing development and paid model and web-search compute for every branch explored. If this project is useful to you, please consider supporting its development and public research runs:
+
+- **[Donate via PayPal](https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=D3J2WXTXLAWK8&source=url&ssrt=1792150968588)** — one-time or recurring contribution
+- **[Sponsor on GitHub](https://github.com/sponsors/tachyon-ops)** — monthly or one-time sponsorship via GitHub Sponsors
+
+Created and maintained by **Nuno Ribeiro** ([nuuno.art](https://nuuno.art) · [@tachyon-ops](https://github.com/tachyon-ops)).
+
+---
+
+## Philosophy
+
+1. **Calibration over persuasion.** A finding is worth only as much as the evidence behind it. Study grades come from study design, computed deterministically in code (`packages/core/src/evidence.ts`), never from a model's tone or a source's confidence.
+2. **Provenance is not optional.** Every claim links to the published sources that support it; every clinic, treatment, or regulation links to the retrieved web pages that describe it. What cannot be traced is dropped.
+3. **The frontier belongs in the library.** Much of what is now settled was once fringe. Frontier, minority, and controversial ideas are collected, kept visible, and labelled so a reader can take an idea seriously without mistaking it for established fact.
+4. **Disagreement is information.** Where sources contradict each other, the library records both sides and what evidence would settle the dispute.
+5. **Marketing is not evidence.** Treatments sold ahead of their trials are flagged as `commercial_hype`.
+
+Read the full stance in [`docs/philosophy.md`](docs/philosophy.md).
+
+---
 
 ## How it works
 
 ```mermaid
 flowchart LR
-  web[Next.js front] -- "Research" --> q[(Postgres job queue)]
-  q --> plan[Scout: branches + queries]
-  plan --> harvest[Harvest: Europe PMC, OpenAlex, ClinicalTrials.gov]
-  plan --> scan[Web crawler: clinics, treatments, law]
-  harvest --> extract[Reader: claims, designs, milestones]
-  extract --> review[Skeptic: merges, debates, summary]
-  scan --> graph[(Knowledge graph)]
+  web["Next.js front (@lib/web)"] -- "Research" --> q[("Postgres job queue")]
+  q --> plan["Scout: sub-branches + queries"]
+  plan --> harvest["Harvest: Europe PMC, OpenAlex, ClinicalTrials.gov"]
+  plan --> scan["Web crawler: clinics, treatments, law"]
+  harvest --> extract["Reader: claims, study designs, milestones"]
+  extract --> review["Skeptic: merges, debates, summary"]
+  scan --> graph[("Knowledge graph")]
   review --> graph
   graph --> web
 ```
 
-| Job | What it does | Model (default) |
+| Job | What it does | Gemini default | Anthropic default |
+| --- | --- | --- | --- |
+| `plan` | Splits the topic into up to 6 sub-branches, writes literature, trial and web queries, and includes frontier angles | `gemini-3.6-flash` | `claude-sonnet-5-5` |
+| `harvest` | Queries Europe PMC (most cited and recent views), OpenAlex, and ClinicalTrials.gov; deduplicates by origin ID and DOI | *none (pure HTTP)* | *none (pure HTTP)* |
+| `extract` | Reads abstracts in batches of 10: extracts claims with cited source indexes, study design, sample size, and milestones | `gemini-3.6-flash` | `claude-haiku-5-5` |
+| `scan` | Runs grounded web search followed by structured extraction; drops any entity whose cited URL was not returned by search | `gemini-3.6-flash` | `claude-sonnet-5-5` |
+| `review` | Merges duplicate claims, recomputes tiers, relabels controversy, records debates, and writes the synthesis and open questions | `gemini-3.6-flash` | `claude-opus-5-5` |
+
+### Evidence grades (`T1`–`T6`)
+
+A claim's grade is computed in pure TypeScript (`packages/core/src/evidence.ts`) from its supporting sources' study designs and sample sizes:
+
+| Grade | Study design | Rules |
 | --- | --- | --- |
-| `plan` | Splits the topic into up to 6 sub-branches, writes literature, trial and web queries, adds frontier angles | `claude-sonnet-5-5` |
-| `harvest` | Runs the queries against each source and stores results once (deduplicated by DOI) | none |
-| `extract` | Reads abstracts in batches of 10: claims with cited sources, study design and size, milestones | `claude-haiku-5-5` |
-| `scan` | Web research with the Claude web search tool, then structured extraction; entities no retrieved page supports are dropped | `claude-sonnet-5-5` |
-| `review` | Merges duplicate claims, relabels controversy, records disagreements, writes the summary and open questions | `claude-opus-5-5` |
+| **T1** | Meta-analysis, systematic review, or clinical guideline | Highest synthesis tier |
+| **T2** | Randomised controlled trials (RCTs) | Requires **≥ 2 RCTs**; a single RCT or an RCT with $n < 100$ is capped at T3 |
+| **T3** | Large observational study (cohort, registry, case-control) or a single RCT | Drops to T4 if stated sample size is under 100 |
+| **T4** | Small studies ($n < 100$), cross-sectional studies, case series, case reports | Early clinical or descriptive evidence |
+| **T5** | Animal, in vitro, cell, or computational work | Preclinical and mechanistic evidence |
+| **T6** | Expert opinion, news, web pages, or unverified claims | Lowest evidentiary weight |
 
-### Evidence grades
+**Controversy labels** are tracked independently of tier: `settled`, `debated`, `contested`, `fringe`, and `commercial_hype` (marketed ahead of evidence).
 
-A claim's grade is computed in code from its sources' study designs (`packages/core/src/evidence.ts`), not chosen by the model:
+---
 
-| Grade | Meaning |
-| --- | --- |
-| T1 | Meta-analysis, systematic review or guideline |
-| T2 | At least two randomised trials |
-| T3 | Large observational study, or a single trial |
-| T4 | Small studies (under 100), case series, case reports |
-| T5 | Animal, cell or computational work |
-| T6 | Opinion, news, unverified |
+## Architecture & monorepo layout
 
-Controversy labels are separate: settled, debated, contested, fringe, marketed ahead of evidence.
-
-## Layout
-
-```
-packages/core       domain types, evidence grading (no I/O)
-packages/db         Postgres schema, migrations, repository functions
-packages/crawlers   source adapters: Europe PMC (two views), OpenAlex, ClinicalTrials.gov
-packages/agents     Claude roles: scout, reader, web crawler, skeptic; one Llm interface
-apps/worker         job loop, handlers, live probe of the sources
-apps/web            Next.js front
-tests               grading, parsers, and a full pipeline run on real Postgres with a scripted model
+```text
+packages/core       Pure domain types, deterministic evidence grading, DOI & slug helpers (zero I/O)
+packages/db         Postgres 16 schema, SQL migrations, postgres.js repository functions, seed
+packages/crawlers   Official API adapters: Europe PMC (cited + recent), OpenAlex, ClinicalTrials.gov v2
+packages/agents     Llm interface (GeminiLlm + ClaudeLlm) and four roles: scout, reader, web, skeptic
+apps/worker         Postgres job queue worker (continuous loop or one-shot --drain mode) and live source probe
+apps/web            Next.js App Router front: knowledge tree, evidence-bar topic view, server actions
+tests               Unit tests for grading and parsers + full end-to-end pipeline test on real Postgres
 ```
 
-Adapters do only I/O and agents only talk to the `Llm` interface, so each part can be replaced or tested alone.
+Dependency direction is strictly one-way (`core <- {db, crawlers, agents} <- worker` and `core <- db <- web`).
 
-## Run it
+### Project documentation
 
-Requirements: Node 20+, Postgres 16 (or Docker), a Claude API key.
+- [`docs/philosophy.md`](docs/philosophy.md) — Mission, epistemic stance, and engineering principles
+- [`docs/specs.md`](docs/specs.md) — As-built v0.1 specification and system invariants
+- [`docs/roadmap.md`](docs/roadmap.md) — Milestones (`M0`–`M5`), exit criteria, and the fertility track
+- [`docs/decisions.md`](docs/decisions.md) — Architecture decision records (`D-001`–`D-012`)
+- [`docs/deployment.md`](docs/deployment.md) — Git workflow, CI gate, local setup, and zero-cost cloud hosting
+
+---
+
+## Quick start (local)
+
+**Requirements:** Node 20+, Postgres 16 (or Docker), and a **Gemini** or **Anthropic** API key.
 
 ```bash
-cp .env.example .env            # add ANTHROPIC_API_KEY and CONTACT_EMAIL
-docker compose up -d db         # or point DATABASE_URL at your own Postgres
+cp env.template .env            # set GEMINI_API_KEY (or ANTHROPIC_API_KEY) and CONTACT_EMAIL
+docker compose up -d db         # starts Postgres 16 on localhost:5432
 npm install
 npm run db:migrate
-npm run db:seed                 # optional: the fertility branch
-npm run probe                   # checks every source live (see below)
-npm run dev:worker              # terminal 1
-npm run dev:web                 # terminal 2, then open http://localhost:3000
+npm run db:seed                 # optional: seeds the initial Human Fertility branch
+npm run probe                   # live check of Europe PMC, OpenAlex, and ClinicalTrials.gov
+npm run dev:worker              # terminal 1: continuous job queue worker (or npm run drain:worker)
+npm run dev:web                 # terminal 2: Next.js front on http://localhost:3000
 ```
 
-Press "Research this topic" on a branch. The page refreshes itself while the workers run.
+Open `http://localhost:3000` and press **"Research this topic"** on any branch. The page refreshes automatically while the workers run.
 
-### First live run: `npm run probe`
+### Zero-cost cloud deployment
 
-The parsers are written against the documented API formats and tested with fixtures, but they have not yet been run against the live services. The probe queries each source and prints how many results came back and which fields were empty:
+Library of Alexandria can also run entirely on free tiers with zero servers to maintain (**Neon Postgres 16** + **Vercel** for `apps/web` + **GitHub Actions** running `npm run drain:worker` on schedule and on demand). See [`docs/deployment.md`](docs/deployment.md) for the step-by-step setup guide.
 
-```
-europepmc: 10 results in 812 ms
-  fields filled: title 10/10, url 10/10, doi 9/10, venue 10/10, year 10/10, authors 10/10, abstract 9/10, ...
-```
-
-A source that fails, or a field at 0/10, shows exactly which parser to adjust. During research, a failing source is logged and skipped; a topic stops only if every source fails.
+---
 
 ## Cost control
 
-- `MAX_LLM_CALLS_PER_DAY` pauses the worker when reached (default 400).
-- `MAX_WEB_SEARCHES_PER_JOB` caps searches per web task (web search is billed per search).
-- `AUTO_EXPAND_DEPTH` sets how many levels of sub-branches research automatically (default 1). Deeper levels wait for you.
-- Every model call is logged in `llm_usage`; the home page shows the 30-day count.
+- `MAX_LLM_CALLS_PER_DAY` pauses the worker when reached (default `400`).
+- `MAX_WEB_SEARCHES_PER_JOB` caps web searches per web task (default `8`).
+- `MAX_SOURCES_PER_TOPIC` caps abstracts read per research run (default `60`, i.e. 6 reader batches of 10). The most cited per year and the newest papers are read first; the rest wait for *"Research again"*.
+- `AUTO_EXPAND_DEPTH` controls how many levels of sub-branches are researched automatically (default `1`). Deeper levels wait for a human click.
+- Every model call is recorded in `llm_usage`; the home page displays the rolling 30-day call and search count.
 
-- `MAX_SOURCES_PER_TOPIC` caps abstracts read per research run (default 60, i.e. 6 reader calls). The most cited per year and the newest are read first; the rest wait for "Research again".
+---
 
-At the defaults a topic costs at most 1 scout call, 6 reader calls, 8 web calls (4 tasks, each a search call and an extraction call) and 1 skeptic call.
-
-## Tests
+## Verification & tests
 
 ```bash
 npm run typecheck
+(cd apps/web && npx tsc --noEmit)
 TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm test
+npm run build:web
 ```
 
-The pipeline test wipes the database it is given; use a separate one.
+> **Note:** The pipeline test wipes the database passed via `TEST_DATABASE_URL`; always point it at a dedicated test database (`library_test`).
 
-## Next steps
+---
 
-- Embeddings (pgvector) to merge near-duplicate claims across sibling branches.
-- Full text from Europe PMC open-access papers, not only abstracts.
-- Scheduled re-research of branches so the library tracks new results.
-- More sources: arXiv and bioRxiv directly, EU Clinical Trials Register, regulators (EMA, Swissmedic).
-- Sign-in before exposing the front publicly; the app has no authentication yet.
+## Author & support
 
-This software organises published research. It is not medical advice.
+Built by **Nuno Ribeiro** — [nuuno.art](https://nuuno.art) · [GitHub (@tachyon-ops)](https://github.com/tachyon-ops)
+
+- [Donate via PayPal](https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=D3J2WXTXLAWK8&source=url&ssrt=1792150968588)
+- [GitHub Sponsors](https://github.com/sponsors/tachyon-ops)
+
+*This software organises published scientific research. It is not medical, legal, or financial advice.*
+
