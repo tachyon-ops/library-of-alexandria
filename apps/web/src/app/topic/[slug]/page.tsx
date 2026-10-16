@@ -77,6 +77,13 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
   const descriptionText =
     topic.summary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, claims.length);
 
+  const synthesis = topic.synthesis;
+  const benchmarks = synthesis?.benchmarks ?? [];
+  const levers = synthesis?.levers ?? [];
+  const clinicalQuestions = synthesis?.clinicalQuestions ?? [];
+  const sweepQueue = synthesis?.sweepQueue ?? [];
+  const leverCategories = [...new Set(levers.map((l) => l.category))];
+
   return (
     <main className="topic-layout">
       <AutoRefresh active={busy} />
@@ -119,6 +126,133 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           <p>{descriptionText}</p>
         </section>
 
+        {benchmarks.length > 0 && (
+          <section className="benchmarks-section" aria-label="Baseline probability benchmarks">
+            <div className="benchmarks-grid">
+              {benchmarks.map((b, i) => (
+                <div key={i} className="benchmark-card">
+                  <span className="benchmark-metric">{b.metric}</span>
+                  <p className="benchmark-label">{b.label}</p>
+                  <p className="benchmark-source muted small">
+                    {b.sourceUrl ? (
+                      <a href={b.sourceUrl} target="_blank" rel="noopener noreferrer">
+                        {b.source}
+                      </a>
+                    ) : (
+                      b.source
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {levers.length > 0 && (
+          <section className="decision-ledger-section">
+            <h2>Where each lever applies</h2>
+            <p className="section-note">
+              A graded decision ledger of interventions across clinical subgroups. Each row names its best landmark evidence, measured effect, clinical reading, and epistemic verdict.
+            </p>
+
+            <div className="verdict-legend" role="note" aria-label="Verdict legend">
+              <span className="verdict-tag" data-verdict="Supported">Supported: RCT live-birth gain</span>
+              <span className="verdict-tag" data-verdict="Targeted">Targeted: specific subgroup</span>
+              <span className="verdict-tag" data-verdict="Guideline">Guideline: clinical consensus</span>
+              <span className="verdict-tag" data-verdict="Weak">Weak: inconsistent/unproven gain</span>
+              <span className="verdict-tag" data-verdict="Not supported">Not supported: RCTs show no gain</span>
+              <span className="verdict-tag" data-verdict="Trial only">Trial: human trial in progress</span>
+              <span className="verdict-tag" data-verdict="Lab only">Lab: preclinical / cell dish</span>
+            </div>
+
+            {leverCategories.map((category) => {
+              const items = levers.filter((l) => l.category === category);
+              return (
+                <div key={category} className="ledger-category">
+                  <h3 className="category-heading">{category}</h3>
+                  <div className="ledger-table-wrap">
+                    <table className="ledger-table">
+                      <thead>
+                        <tr>
+                          <th scope="col" style={{ width: "24%" }}>Lever &amp; Mechanism</th>
+                          <th scope="col" style={{ width: "26%" }}>Best Landmark Evidence</th>
+                          <th scope="col" style={{ width: "36%" }}>Measured Effect &amp; Clinical Reading</th>
+                          <th scope="col" style={{ width: "14%" }}>Verdict</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((lever, idx) => (
+                          <tr key={idx} className="ledger-row">
+                            <td className="lever-cell-main">
+                              <strong className="lever-name">{lever.name}</strong>
+                              {lever.description && <p className="lever-desc muted">{lever.description}</p>}
+                            </td>
+                            <td className="lever-cell-evidence">
+                              <p>{lever.bestEvidence}</p>
+                              {lever.sourceUrl && (
+                                <p className="small">
+                                  <a href={lever.sourceUrl} target="_blank" rel="noopener noreferrer">
+                                    Source document →
+                                  </a>
+                                </p>
+                              )}
+                            </td>
+                            <td className="lever-cell-effect">
+                              <p className="lever-effect">
+                                <strong>Effect:</strong> {lever.effect}
+                              </p>
+                              {lever.reading && (
+                                <p className="lever-reading muted small">
+                                  <strong>Clinical reading:</strong> {lever.reading}
+                                </p>
+                              )}
+                            </td>
+                            <td className="lever-cell-verdict">
+                              <span className="verdict-tag" data-verdict={lever.verdict}>
+                                {lever.verdict}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        )}
+
+        {clinicalQuestions.length > 0 && (
+          <section className="clinic-questions-section">
+            <h2>Questions for specialist consultations</h2>
+            <p className="section-note">
+              High-yield clinical and laboratory inquiries directly derived from the evidence record.
+            </p>
+            <ol className="clinic-questions">
+              {clinicalQuestions.map((q, idx) => (
+                <li key={idx}>
+                  <span className="question-text">{q}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {sweepQueue.length > 0 && (
+          <section className="sweep-queue-section">
+            <h2>Queued for next research sweep</h2>
+            <p className="section-note">
+              Frontier clinical trials, emerging biology, and targeted subgroup outcomes tracked by the autonomous research worker.
+            </p>
+            <ul className="sweep-queue">
+              {sweepQueue.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {milestones.length > 0 && (
           <details className="timeline-details">
             <summary className="timeline-summary">
@@ -150,9 +284,15 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
         )}
 
         {claims.length > 0 && (
-          <section>
-            <h2>Evidence</h2>
-            <p className="section-note">Strongest support first. The bar beside each finding shows its grade.</p>
+          <details className="collapsible-section" open={levers.length === 0}>
+            <summary className="section-summary">
+              <span>
+                Evidence by study design ({claims.length} {claims.length === 1 ? "finding" : "findings"} across T1–T6)
+              </span>
+            </summary>
+            <p className="section-note" style={{ marginTop: "0.85rem" }}>
+              Strongest support first. The bar beside each finding shows its grade.
+            </p>
             {TIERS.map((tier) => {
               const rows = claims.filter((c) => c.tier === tier);
               if (rows.length === 0) return null;
@@ -167,13 +307,17 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
                 </div>
               );
             })}
-          </section>
+          </details>
         )}
 
         {debates.length > 0 && (
-          <section>
-            <h2>Where the record disagrees</h2>
-            <ul className="debates">
+          <details className="collapsible-section">
+            <summary className="section-summary">
+              <span>
+                Where the record disagrees ({debates.length} {debates.length === 1 ? "controversy" : "controversies"})
+              </span>
+            </summary>
+            <ul className="debates" style={{ marginTop: "0.85rem" }}>
               {debates.map((d) => (
                 <li key={d.id}>
                   <p>{d.note}</p>
@@ -185,20 +329,24 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         )}
 
         {entities.length > 0 && (
-          <section>
-            <h2>In the world</h2>
-            <p className="section-note">Found on the web. Only entries a retrieved page supports are kept; verify before acting.</p>
+          <details className="collapsible-section">
+            <summary className="section-summary">
+              <span>In the world ({entities.length} clinics, treatments, and groups)</span>
+            </summary>
+            <p className="section-note" style={{ marginTop: "0.85rem" }}>
+              Found on the web. Only entries a retrieved page supports are kept; verify before acting.
+            </p>
             {[...entityGroups.entries()].map(([kind, rows]) => (
               <EntityTable key={kind} title={ENTITY_HEADINGS[kind] ?? kind} rows={rows} />
             ))}
-          </section>
+          </details>
         )}
 
-        {topic.gaps.length > 0 && (
+        {topic.gaps.length > 0 && sweepQueue.length === 0 && (
           <section>
             <h2>Open questions</h2>
             <ul className="gaps">
@@ -244,9 +392,11 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           <NewTopicForm parentId={topic.id} parentTitle={topic.title} />
         </section>
 
-        <section id="sources">
-          <h2>Sources ({sources.length})</h2>
-          <p className="section-note">
+        <details id="sources" className="collapsible-section">
+          <summary className="section-summary">
+            <span>Primary indexed sources ({sources.length})</span>
+          </summary>
+          <p className="section-note" style={{ marginTop: "0.85rem" }}>
             Primary scientific literature, systematic reviews, and clinical trial registrations indexed for this branch.
           </p>
           {sources.length > 0 ? (
@@ -294,7 +444,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
               No sources indexed on this branch yet. Click &ldquo;Research this topic&rdquo; above to harvest primary literature from Europe PMC, OpenAlex, and ClinicalTrials.gov.
             </p>
           )}
-        </section>
+        </details>
       </article>
     </main>
   );

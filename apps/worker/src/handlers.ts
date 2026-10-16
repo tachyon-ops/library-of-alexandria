@@ -193,7 +193,7 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
         topic.id,
         review.controversies.map((c) => ({ kind: c.kind, note: c.note, claimIds: c.claimIndexes.map((i) => claims[i]!.id) })),
       );
-      await repo.saveTopicReview(d.sql, topic.id, review.summary, review.gaps);
+      await repo.saveTopicReview(d.sql, topic.id, review.summary, review.gaps, review.synthesis);
       d.log(`review ${topic.slug}: ${review.merges.length} merges, ${review.controversies.length} controversies`);
       return;
     }

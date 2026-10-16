@@ -29,6 +29,43 @@ export type EntityKind = (typeof ENTITY_KINDS)[number];
 export const TOPIC_STATUSES = ["idle", "queued", "researching", "ready", "error"] as const;
 export type TopicStatus = (typeof TOPIC_STATUSES)[number];
 
+export const SYNTHESIS_VERDICTS = [
+  "Supported",
+  "Targeted",
+  "Guideline",
+  "Weak",
+  "Not supported",
+  "Trial only",
+  "Lab only",
+  "Case by case",
+] as const;
+export type SynthesisVerdict = (typeof SYNTHESIS_VERDICTS)[number];
+
+export interface SynthesisBenchmark {
+  metric: string;
+  label: string;
+  source: string;
+  sourceUrl?: string;
+}
+
+export interface SynthesisLever {
+  name: string;
+  category: string;
+  description: string;
+  bestEvidence: string;
+  effect: string;
+  reading: string;
+  verdict: SynthesisVerdict;
+  sourceUrl?: string;
+}
+
+export interface TopicSynthesis {
+  benchmarks?: SynthesisBenchmark[];
+  levers?: SynthesisLever[];
+  clinicalQuestions?: string[];
+  sweepQueue?: string[];
+}
+
 export interface Topic {
   id: string;
   parentId: string | null;
@@ -39,6 +76,7 @@ export interface Topic {
   status: TopicStatus;
   summary: string | null;
   gaps: string[];
+  synthesis?: TopicSynthesis | null;
   lastResearchedAt: Date | null;
 }
 
