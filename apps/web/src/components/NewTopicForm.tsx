@@ -5,12 +5,24 @@ export function NewTopicForm({ parentId, parentTitle }: { parentId?: string; par
     <form action={startTopic} className="new-topic">
       {parentId && <input type="hidden" name="parentId" value={parentId} />}
       <label>
-        <span>{parentTitle ? `New branch under ${parentTitle}` : "New branch of the library"}</span>
-        <input name="title" required placeholder={parentTitle ? "e.g. Endometrial receptivity testing" : "e.g. Ocean acidification and coral reefs"} />
+        <span>{parentTitle ? `New sub-discipline under ${parentTitle}` : "New scientific discipline"}</span>
+        <input
+          name="title"
+          required
+          placeholder={
+            parentTitle
+              ? "e.g. Endometrial Receptivity & Implantation"
+              : "e.g. Cellular Senescence & Longevity Biology"
+          }
+        />
       </label>
       <label>
-        <span>What do you want to know? (optional)</span>
-        <textarea name="brief" rows={2} placeholder="The question behind the topic helps the scout aim its searches." />
+        <span>Research scope (optional)</span>
+        <textarea
+          name="brief"
+          rows={2}
+          placeholder="Population-wide scientific questions, mechanisms, and clinical outcomes to investigate."
+        />
       </label>
       <div className="form-row">
         <label className="check">

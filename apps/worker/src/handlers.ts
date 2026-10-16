@@ -49,12 +49,19 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
       await repo.setTopicStatus(d.sql, topic.id, "researching");
       const children = await repo.getChildren(d.sql, topic.id);
       const plan = await planTopic(d.llm, { ...ctx, existingChildren: children.map((c) => c.title) });
+      // Enqueue harvest and scan for the current topic first so its own sources are collected before child branches.
+      const litQueries = plan.queries.literature.length > 0 ? plan.queries.literature : [topic.title];
+      await repo.enqueueJob(d.sql, "harvest", topic.id, { literature: litQueries, trials: plan.queries.trials });
+      for (const task of plan.queries.web) await repo.enqueueJob(d.sql, "scan", topic.id, { task });
+
       const autoDepth = Number(job.payload.autoDepth ?? 0);
+      const branchTitles = [...children.map((c) => c.title)];
       if (topic.depth < d.config.maxTreeDepth) {
         const known = new Set(children.map((c) => c.title.toLowerCase()));
         for (const s of plan.subtopics) {
           if (known.has(s.title.toLowerCase())) continue;
           known.add(s.title.toLowerCase());
+          branchTitles.push(s.title);
           const child = await repo.createTopic(d.sql, { title: s.title, brief: s.brief, parentId: topic.id });
           if (autoDepth > 0) await repo.requestResearch(d.sql, child.id, autoDepth - 1);
         }
@@ -63,14 +70,21 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
       if (autoDepth > 0) {
         for (const c of children) if (c.status === "idle") await repo.requestResearch(d.sql, c.id, autoDepth - 1);
       }
-      await repo.enqueueJob(d.sql, "harvest", topic.id, { literature: plan.queries.literature, trials: plan.queries.trials });
-      for (const task of plan.queries.web) await repo.enqueueJob(d.sql, "scan", topic.id, { task });
-      d.log(`plan ${topic.slug}: ${plan.subtopics.length} branches, ${plan.queries.literature.length} lit / ${plan.queries.trials.length} trial / ${plan.queries.web.length} web`);
+      if (!topic.summary) {
+        const baseOverview = topic.brief
+          ? `${topic.title} examines ${topic.brief.charAt(0).toLowerCase()}${topic.brief.slice(1)}`
+          : `${topic.title} synthesises primary scientific literature, clinical trials, and empirical evidence across this discipline.`;
+        const subLine =
+          branchTitles.length > 0 ? ` Core sub-disciplines include ${branchTitles.slice(0, 6).join("; ")}.` : "";
+        await repo.setTopicSummaryIfEmpty(d.sql, topic.id, `${baseOverview}${subLine}`);
+      }
+      d.log(`plan ${topic.slug}: ${plan.subtopics.length} branches, ${litQueries.length} lit / ${plan.queries.trials.length} trial / ${plan.queries.web.length} web`);
       return;
     }
 
     case "harvest": {
-      const lit = (job.payload.literature as string[] | undefined) ?? [];
+      const rawLit = (job.payload.literature as string[] | undefined) ?? [];
+      const lit = rawLit.length > 0 ? rawLit : [topic.title];
       const trials = (job.payload.trials as string[] | undefined) ?? [];
       const runs: [SourceAdapter, string][] = [
         ...lit.flatMap((q) => d.literature.map((a) => [a, q] as [SourceAdapter, string])),

@@ -8,10 +8,12 @@ import {
   topicControversies,
   topicEntities,
   topicMilestones,
+  topicSources,
   type ClaimView,
   type EntityView,
+  type SourceView,
 } from "@lib/db";
-import { CONTROVERSY_LABELS, TIER_LABELS, TIERS, type Controversy } from "@lib/core";
+import { CONTROVERSY_LABELS, TIER_LABELS, TIERS, type Controversy, type Topic } from "@lib/core";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { researchTopic } from "@/app/actions";
@@ -46,11 +48,12 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
   const topic = await getTopicBySlug(db, slug);
   if (!topic) notFound();
 
-  const [roots, ancestors, children, claims, entities, milestones, debates, open, jobs] = await Promise.all([
+  const [roots, ancestors, children, claims, dbSources, entities, milestones, debates, open, jobs] = await Promise.all([
     loadTree(),
     getAncestors(db, topic.id),
     getChildren(db, topic.id),
     topicClaims(db, topic.id),
+    topicSources(db, topic.id),
     topicEntities(db, topic.id),
     topicMilestones(db, topic.id),
     topicControversies(db, topic.id),
@@ -59,10 +62,17 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
   ]);
   const busy = open > 0 || topic.status === "queued" || topic.status === "researching";
   const claimNumber = new Map(claims.map((c, i) => [c.id, i + 1]));
-  const sources = uniqueSources(claims);
+  const sources = mergeSources(dbSources, claims);
   const entityGroups = groupBy(entities, (e) => e.kind);
   const running = jobs.find((j) => j.status === "running") ?? jobs.find((j) => j.status === "queued");
   const failed = jobs.find((j) => j.status === "failed");
+  const briefText =
+    topic.brief ??
+    (ancestors.length > 0
+      ? `Scientific synthesis, primary literature, and graded evidence within ${ancestors[ancestors.length - 1]!.title}.`
+      : `Scientific synthesis, primary literature, and graded evidence across ${topic.title}.`);
+  const descriptionText =
+    topic.summary ?? describeTopicFallback(topic, ancestors, children, sources.length, claims.length);
 
   return (
     <main className="topic-layout">
@@ -82,7 +92,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           ))}
         </p>
         <h1>{topic.title}</h1>
-        {topic.brief && <p className="brief">{topic.brief}</p>}
+        <p className="brief">{briefText}</p>
 
         <form action={researchTopic} className="research-bar">
           <input type="hidden" name="topicId" value={topic.id} />
@@ -92,6 +102,9 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           <label className="check">
             <input type="checkbox" name="withBranches" defaultChecked={!topic.lastResearchedAt} /> include the next level of branches
           </label>
+          <a href="#sources" className="sources-jump">
+            {sources.length} {sources.length === 1 ? "source" : "sources"} ↓
+          </a>
           <span className="status-line" role="status">
             {busy && running ? `${JOB_WORDS[running.kind] ?? running.kind}…` : null}
             {!busy && topic.lastResearchedAt ? `Last researched ${topic.lastResearchedAt.toISOString().slice(0, 10)}` : null}
@@ -99,12 +112,38 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </span>
         </form>
 
-        {topic.summary ? (
-          <section className="summary">
-            <p>{topic.summary}</p>
-          </section>
-        ) : (
-          !busy && <p className="empty">Nothing has been read on this topic yet. Start research to fill it.</p>
+        <section className="summary" aria-label="Topic overview">
+          <p>{descriptionText}</p>
+        </section>
+
+        {milestones.length > 0 && (
+          <details className="timeline-details">
+            <summary className="timeline-summary">
+              <span>
+                Historical timeline ({milestones.length} {milestones.length === 1 ? "milestone" : "milestones"},{" "}
+                {milestones[0]!.year}–{milestones[milestones.length - 1]!.year})
+              </span>
+            </summary>
+            <ol className="timeline">
+              {milestones.map((m) => (
+                <li key={m.id}>
+                  <span className="year">{m.year}</span>
+                  <div>
+                    <p className="milestone-title">
+                      {m.sourceUrl ? (
+                        <a href={m.sourceUrl} target="_blank" rel="noopener noreferrer">
+                          {m.title}
+                        </a>
+                      ) : (
+                        m.title
+                      )}
+                    </p>
+                    {m.description && <p className="muted">{m.description}</p>}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </details>
         )}
 
         {claims.length > 0 && (
@@ -156,25 +195,6 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </section>
         )}
 
-        {milestones.length > 0 && (
-          <section>
-            <h2>Milestones</h2>
-            <ol className="timeline">
-              {milestones.map((m) => (
-                <li key={m.id}>
-                  <span className="year">{m.year}</span>
-                  <div>
-                    <p className="milestone-title">
-                      {m.sourceUrl ? <a href={m.sourceUrl}>{m.title}</a> : m.title}
-                    </p>
-                    {m.description && <p className="muted">{m.description}</p>}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-
         {topic.gaps.length > 0 && (
           <section>
             <h2>Open questions</h2>
@@ -203,22 +223,57 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           <NewTopicForm parentId={topic.id} parentTitle={topic.title} />
         </section>
 
-        {sources.length > 0 && (
-          <section>
-            <h2>Sources read ({sources.length})</h2>
+        <section id="sources">
+          <h2>Sources ({sources.length})</h2>
+          <p className="section-note">
+            Primary scientific literature, systematic reviews, and clinical trial registrations indexed for this branch.
+          </p>
+          {sources.length > 0 ? (
             <ol className="sources">
               {sources.map((s) => (
                 <li key={s.id}>
-                  {s.url ? <a href={s.url}>{s.title}</a> : s.title}
+                  {s.url ? (
+                    <a href={s.url} target="_blank" rel="noopener noreferrer">
+                      {s.title}
+                    </a>
+                  ) : (
+                    s.title
+                  )}
+                  {s.authors.length > 0 && (
+                    <span className="muted">
+                      {" — "}
+                      {s.authors.slice(0, 3).join(", ")}
+                      {s.authors.length > 3 ? " et al." : ""}
+                    </span>
+                  )}
                   <span className="muted">
                     {" "}
-                    {[s.venue, s.year, s.design?.replace(/_/g, " ")].filter(Boolean).join(", ")}
+                    {[
+                      s.venue,
+                      s.year,
+                      s.design?.replace(/_/g, " "),
+                      s.citedBy && s.citedBy > 0 ? `${s.citedBy} citations` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
                   </span>
+                  {s.doi && (
+                    <span className="muted small">
+                      {" · "}
+                      <a href={`https://doi.org/${s.doi}`} target="_blank" rel="noopener noreferrer">
+                        DOI: {s.doi}
+                      </a>
+                    </span>
+                  )}
                 </li>
               ))}
             </ol>
-          </section>
-        )}
+          ) : (
+            <p className="muted">
+              No sources indexed on this branch yet. Click &ldquo;Research this topic&rdquo; above to harvest primary literature from Europe PMC, OpenAlex, and ClinicalTrials.gov.
+            </p>
+          )}
+        </section>
       </article>
     </main>
   );
@@ -236,7 +291,13 @@ function ClaimItem({ claim, n }: { claim: ClaimView; n: number }) {
         {claim.sources.slice(0, 4).map((s, i) => (
           <span key={s.id}>
             {i > 0 && "; "}
-            {s.url ? <a href={s.url}>{shortTitle(s.title)}</a> : shortTitle(s.title)}
+            {s.url ? (
+              <a href={s.url} target="_blank" rel="noopener noreferrer">
+                {shortTitle(s.title)}
+              </a>
+            ) : (
+              shortTitle(s.title)
+            )}
             {s.year ? ` (${s.year})` : ""}
           </span>
         ))}
@@ -263,7 +324,7 @@ function EntityTable({ title, rows }: { title: string; rows: EntityView[] }) {
           <tbody>
             {rows.map((e) => (
               <tr key={e.id}>
-                <td>{e.url ? <a href={e.url}>{e.name}</a> : e.name}</td>
+                <td>{e.url ? <a href={e.url} target="_blank" rel="noopener noreferrer">{e.name}</a> : e.name}</td>
                 <td>{e.country ?? ""}</td>
                 <td>
                   {e.summary}
@@ -279,7 +340,7 @@ function EntityTable({ title, rows }: { title: string; rows: EntityView[] }) {
                   )}
                   <span className="muted small">
                     {e.sourceUrls.map((u, i) => (
-                      <a key={u} href={u}>
+                      <a key={u} href={u} target="_blank" rel="noopener noreferrer">
                         {i === 0 ? "source" : ` ${i + 1}`}
                       </a>
                     ))}
@@ -298,10 +359,51 @@ function shortTitle(t: string): string {
   return t.length > 70 ? `${t.slice(0, 68)}…` : t;
 }
 
-function uniqueSources(claims: ClaimView[]) {
-  const seen = new Map<string, ClaimView["sources"][number]>();
-  for (const c of claims) for (const s of c.sources) if (!seen.has(s.id)) seen.set(s.id, s);
-  return [...seen.values()].sort((a, b) => (b.year ?? 0) - (a.year ?? 0));
+function mergeSources(dbSources: SourceView[], claims: ClaimView[]): SourceView[] {
+  const seen = new Map<string, SourceView>();
+  for (const s of dbSources) seen.set(s.id, s);
+  for (const c of claims) {
+    for (const s of c.sources) {
+      if (!seen.has(s.id)) {
+        seen.set(s.id, {
+          id: s.id,
+          kind: "paper",
+          origin: "literature",
+          title: s.title,
+          url: s.url,
+          doi: null,
+          venue: s.venue,
+          year: s.year,
+          authors: [],
+          citedBy: null,
+          design: s.design,
+        });
+      }
+    }
+  }
+  return [...seen.values()].sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
+}
+
+function describeTopicFallback(
+  topic: Topic,
+  ancestors: Topic[],
+  children: Topic[],
+  sourceCount: number,
+  claimCount: number,
+): string {
+  const lineage = ancestors.length > 0 ? ` within ${ancestors.map((a) => a.title).join(" › ")}` : "";
+  const scopeSentence = topic.brief
+    ? `${topic.title} is a scientific branch${lineage} investigating ${topic.brief.charAt(0).toLowerCase()}${topic.brief.slice(1)}`
+    : `${topic.title} is a scientific branch${lineage} synthesising primary peer-reviewed literature, clinical trial registries, and empirical evidence across the human population.`;
+  const subBranchesSentence =
+    children.length > 0
+      ? ` This domain encompasses ${children.length} specialised sub-disciplines: ${children.map((c) => c.title).join("; ")}.`
+      : "";
+  const corpusSentence =
+    sourceCount > 0
+      ? ` The library currently indexes ${sourceCount} primary ${sourceCount === 1 ? "source" : "sources"}${claimCount > 0 ? ` and ${claimCount} graded ${claimCount === 1 ? "finding" : "findings"}` : ""} for this branch.`
+      : "";
+  return `${scopeSentence}${subBranchesSentence}${corpusSentence}`;
 }
 
 function groupBy<T, K>(xs: T[], key: (x: T) => K): Map<K, T[]> {

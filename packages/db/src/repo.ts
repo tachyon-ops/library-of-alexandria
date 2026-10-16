@@ -19,6 +19,7 @@ export interface TreeNode {
   parentId: string | null;
   slug: string;
   title: string;
+  brief: string | null;
   status: TopicStatus;
   depth: number;
   claimCount: number;
@@ -66,13 +67,17 @@ export async function getChildren(sql: Sql, id: string): Promise<Topic[]> {
 
 export async function listTree(sql: Sql): Promise<TreeNode[]> {
   return sql<TreeNode[]>`
-    SELECT t.id, t.parent_id, t.slug, t.title, t.status, t.depth,
+    SELECT t.id, t.parent_id, t.slug, t.title, t.brief, t.status, t.depth,
            (SELECT count(*)::int FROM claims c WHERE c.topic_id = t.id AND NOT c.superseded) AS claim_count
     FROM topics t ORDER BY t.depth, t.title`;
 }
 
 export async function setTopicStatus(sql: Sql, id: string, status: TopicStatus): Promise<void> {
   await sql`UPDATE topics SET status = ${status} WHERE id = ${id}`;
+}
+
+export async function setTopicSummaryIfEmpty(sql: Sql, id: string, summary: string): Promise<void> {
+  await sql`UPDATE topics SET summary = COALESCE(summary, ${summary}) WHERE id = ${id}`;
 }
 
 export async function saveTopicReview(sql: Sql, id: string, summary: string, gaps: string[]): Promise<void> {
@@ -97,6 +102,60 @@ export interface StoredSource {
   declaredDesign: string | null;
   design: StudyDesign | null;
   sampleSize: number | null;
+}
+
+export interface SourceView {
+  id: string;
+  kind: string;
+  origin: string;
+  title: string;
+  url: string | null;
+  doi: string | null;
+  venue: string | null;
+  year: number | null;
+  authors: string[];
+  citedBy: number | null;
+  design: string | null;
+}
+
+/**
+ * Returns all sources linked to a topic (via topic_sources or claim_sources).
+ * If a parent branch has no direct sources yet, falls back to sources across its descendant subtree.
+ */
+export async function topicSources(sql: Sql, topicId: string): Promise<SourceView[]> {
+  const direct = await sql<SourceView[]>`
+    SELECT DISTINCT ON (s.id)
+      s.id, s.kind, s.origin, s.title,
+      COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END) AS url,
+      s.doi, s.venue, s.year, s.authors, s.cited_by,
+      COALESCE(s.design, s.declared_design) AS design
+    FROM sources s
+    WHERE s.id IN (
+      SELECT ts.source_id FROM topic_sources ts WHERE ts.topic_id = ${topicId}
+      UNION
+      SELECT cs.source_id FROM claim_sources cs JOIN claims c ON c.id = cs.claim_id WHERE c.topic_id = ${topicId} AND NOT c.superseded
+    )`;
+  if (direct.length > 0) {
+    return direct.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
+  }
+  const inherited = await sql<SourceView[]>`
+    WITH RECURSIVE sub AS (
+      SELECT id FROM topics WHERE parent_id = ${topicId}
+      UNION ALL
+      SELECT t.id FROM topics t JOIN sub ON t.parent_id = sub.id
+    )
+    SELECT DISTINCT ON (s.id)
+      s.id, s.kind, s.origin, s.title,
+      COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END) AS url,
+      s.doi, s.venue, s.year, s.authors, s.cited_by,
+      COALESCE(s.design, s.declared_design) AS design
+    FROM sources s
+    WHERE s.id IN (
+      SELECT ts.source_id FROM topic_sources ts WHERE ts.topic_id IN (SELECT id FROM sub)
+      UNION
+      SELECT cs.source_id FROM claim_sources cs JOIN claims c ON c.id = cs.claim_id WHERE c.topic_id IN (SELECT id FROM sub) AND NOT c.superseded
+    )`;
+  return inherited.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
 }
 
 /** Stores sources once (matched by origin id or DOI) and links them to the topic. Returns stored ids. */
@@ -206,7 +265,9 @@ export async function topicClaims(sql: Sql, topicId: string): Promise<ClaimView[
   return sql<ClaimView[]>`
     SELECT c.id, c.statement, c.tier, c.controversy, c.direction, c.confidence, c.rationale,
            COALESCE(json_agg(json_build_object(
-             'id', s.id, 'title', s.title, 'url', s.url, 'year', s.year, 'design', s.design, 'venue', s.venue
+             'id', s.id, 'title', s.title,
+             'url', COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END),
+             'year', s.year, 'design', s.design, 'venue', s.venue
            ) ORDER BY s.year DESC NULLS LAST) FILTER (WHERE s.id IS NOT NULL), '[]') AS sources
     FROM claims c
     LEFT JOIN claim_sources cs ON cs.claim_id = c.id
@@ -295,10 +356,25 @@ export async function insertMilestone(
 }
 
 export async function topicMilestones(sql: Sql, topicId: string): Promise<MilestoneView[]> {
-  return sql<MilestoneView[]>`
-    SELECT m.id, m.year, m.title, m.description, s.url AS source_url
+  const direct = await sql<MilestoneView[]>`
+    SELECT m.id, m.year, m.title, m.description,
+           COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END) AS source_url
     FROM milestones m LEFT JOIN sources s ON s.id = m.source_id
-    WHERE m.topic_id = ${topicId} ORDER BY m.year`;
+    WHERE m.topic_id = ${topicId} ORDER BY m.year, m.title`;
+  if (direct.length > 0) return direct;
+  const inherited = await sql<MilestoneView[]>`
+    WITH RECURSIVE sub AS (
+      SELECT id FROM topics WHERE parent_id = ${topicId}
+      UNION ALL
+      SELECT t.id FROM topics t JOIN sub ON t.parent_id = sub.id
+    )
+    SELECT DISTINCT ON (m.year, m.title)
+           m.id, m.year, m.title, m.description,
+           COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END) AS source_url
+    FROM milestones m LEFT JOIN sources s ON s.id = m.source_id
+    WHERE m.topic_id IN (SELECT id FROM sub)
+    ORDER BY m.year, m.title`;
+  return inherited;
 }
 
 export interface ControversyView {

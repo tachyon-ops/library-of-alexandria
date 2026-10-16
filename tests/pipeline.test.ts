@@ -104,7 +104,8 @@ describe("agent validation", () => {
     expect(modelsFromEnv({ GEMINI_API_KEY: "g-key" } as never).reader).toBe("gemini-3.6-flash");
 
     const usage: Usage[] = [];
-    const fakeFetch: typeof fetch = async (_url, init) => {
+    let structuredCalls = 0;
+    const fakeFetch: typeof fetch = async (reqUrl, init) => {
       const body = JSON.parse(String(init?.body));
       if (body.tools) {
         return new Response(
@@ -122,6 +123,10 @@ describe("agent validation", () => {
             usageMetadata: { promptTokenCount: 12, candidatesTokenCount: 8 },
           }),
         );
+      }
+      structuredCalls++;
+      if (structuredCalls === 1 && String(reqUrl).includes("gemini-3.6-flash")) {
+        return new Response(JSON.stringify({ error: { code: 429, message: "Quota exceeded" } }), { status: 429 });
       }
       return new Response(
         JSON.stringify({
@@ -152,6 +157,7 @@ describe("agent validation", () => {
     }, "test-key", fakeFetch);
     const plan = await gemini.structured({ role: "scout", system: "s", prompt: "p", schema: PlanSchema });
     expect(plan.literatureQueries).toEqual(["oocyte vitrification"]);
+    expect(usage[0]!.model).toBe("gemini-3.7-flash");
     const web = await gemini.webResearch({ role: "web", system: "s", prompt: "p", maxSearches: 4 });
     expect(web.citations).toEqual([{ url: "https://madrid.example", title: "Clinic Madrid", citedText: null }]);
     expect(usage).toHaveLength(2);
@@ -231,6 +237,17 @@ describe.skipIf(!url)("research pipeline", () => {
 
     const milestones = await repo.topicMilestones(sql, root.id);
     expect(milestones).toHaveLength(1);
+
+    const sources = await repo.topicSources(sql, root.id);
+    expect(sources).toHaveLength(4);
+    expect(sources.every((s) => Boolean(s.url))).toBe(true);
+
+    // A parent discipline with no direct sources yet inherits sources and milestones from its subtree.
+    const superRoot = await repo.createTopic(sql, { title: "Reproductive Medicine", brief: "Umbrella discipline" });
+    await sql`UPDATE topics SET parent_id = ${superRoot.id} WHERE id = ${root.id}`;
+    expect(await repo.topicSources(sql, superRoot.id)).toHaveLength(4);
+    expect(await repo.topicMilestones(sql, superRoot.id)).toHaveLength(1);
+    await sql`UPDATE topics SET parent_id = NULL WHERE id = ${root.id}`;
 
     const controversies = await repo.topicControversies(sql, root.id);
     expect(controversies).toHaveLength(1);
