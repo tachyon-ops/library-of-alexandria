@@ -42,7 +42,9 @@ export async function createTopic(
 }
 
 export async function getTopic(sql: Sql, id: string): Promise<Topic | null> {
-  const [row] = await sql<Topic[]>`SELECT * FROM topics WHERE id = ${id}`;
+  const [row] = await sql<Topic[]>`
+    SELECT id, parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at
+    FROM topics WHERE id = ${id}`;
   return row ?? null;
 }
 
@@ -91,11 +93,15 @@ const SLUG_ALIASES = new Map<string, string>([
 ]);
 
 export async function getTopicBySlug(sql: Sql, slug: string): Promise<Topic | null> {
-  const [row] = await sql<Topic[]>`SELECT * FROM topics WHERE slug = ${slug}`;
+  const [row] = await sql<Topic[]>`
+    SELECT id, parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at
+    FROM topics WHERE slug = ${slug}`;
   if (row) return row;
   const alias = SLUG_ALIASES.get(slug);
   if (!alias) return null;
-  const [fallback] = await sql<Topic[]>`SELECT * FROM topics WHERE slug = ${alias}`;
+  const [fallback] = await sql<Topic[]>`
+    SELECT id, parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at
+    FROM topics WHERE slug = ${alias}`;
   return fallback ?? null;
 }
 
@@ -151,15 +157,20 @@ export async function moveTopic(sql: Sql, id: string, newParentId: string | null
 export async function getAncestors(sql: Sql, id: string): Promise<Topic[]> {
   return sql<Topic[]>`
     WITH RECURSIVE up AS (
-      SELECT t.*, 0 AS hop FROM topics t WHERE t.id = (SELECT parent_id FROM topics WHERE id = ${id})
+      SELECT t.id, t.parent_id, t.slug, t.title, t.brief, t.depth, t.status, t.summary, t.gaps, t.synthesis, t.last_researched_at, 0 AS hop
+      FROM topics t WHERE t.id = (SELECT parent_id FROM topics WHERE id = ${id})
       UNION ALL
-      SELECT t.*, up.hop + 1 FROM topics t JOIN up ON t.id = up.parent_id
+      SELECT t.id, t.parent_id, t.slug, t.title, t.brief, t.depth, t.status, t.summary, t.gaps, t.synthesis, t.last_researched_at, up.hop + 1
+      FROM topics t JOIN up ON t.id = up.parent_id
     )
-    SELECT * FROM up ORDER BY hop DESC`;
+    SELECT id, parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at
+    FROM up ORDER BY hop DESC`;
 }
 
 export async function getChildren(sql: Sql, id: string): Promise<Topic[]> {
-  return sql<Topic[]>`SELECT * FROM topics WHERE parent_id = ${id} ORDER BY title`;
+  return sql<Topic[]>`
+    SELECT id, parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at
+    FROM topics WHERE parent_id = ${id} ORDER BY title`;
 }
 
 export async function listTree(sql: Sql): Promise<TreeNode[]> {
