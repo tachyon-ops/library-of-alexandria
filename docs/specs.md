@@ -86,7 +86,7 @@ All roles use the `Llm` interface (`ClaudeLlm` for Anthropic, `GeminiLlm` for Ge
 | web     | one task, ≤ `MAX_WEB_SEARCHES_PER_JOB` searches, notes clipped to 20,000 characters | entities with key/value attributes and cited URLs                                                                      |
 | skeptic | all claims as `[index] (tier, label, source count, years) statement`, entity names  | summary, gaps, merges, relabels, controversies                                                                         |
 
-Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses scout/skeptic `gemini-2.5-pro`, reader/web `gemini-2.5-flash`; each overridable by environment variable.
+Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic fallback across `gemini-3-flash-preview` and `gemini-3.8-flash` on 503/404); each overridable by environment variable.
 
 ## 7. Front
 
