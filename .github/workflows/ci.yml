@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master]
+    tags: ["v*"]
+  pull_request:
+    branches: [develop, master]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: library
+          POSTGRES_PASSWORD: library
+          POSTGRES_DB: library_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U library -d library_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck packages, worker and tests
+        run: npm run typecheck
+
+      - name: Typecheck web front
+        run: (cd apps/web && npx tsc --noEmit)
+
+      - name: Run unit, parser and Postgres pipeline tests
+        env:
+          TEST_DATABASE_URL: postgres://library:library@localhost:5432/library_test
+        run: npm test
+
+      - name: Build web front
+        run: npm run build:web

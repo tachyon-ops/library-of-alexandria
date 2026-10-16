@@ -1,0 +1,15 @@
+import type { NextConfig } from "next";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+const config: NextConfig = {
+  // Workspace packages ship TypeScript source; Next compiles them.
+  transpilePackages: ["@lib/core", "@lib/db"],
+  serverExternalPackages: ["postgres"],
+  outputFileTracingRoot: root,
+  turbopack: { root },
+};
+
+export default config;
