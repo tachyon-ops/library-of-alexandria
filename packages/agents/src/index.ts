@@ -3,6 +3,7 @@ export {
   createLlm,
   DEFAULT_GEMINI_MODELS,
   DEFAULT_MODELS,
+  FallbackLlm,
   GeminiLlm,
   modelsFromEnv,
   providerFromEnv,

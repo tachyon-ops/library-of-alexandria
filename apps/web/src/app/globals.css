@@ -226,11 +226,23 @@ h3 {
 }
 
 .home {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 1.75rem clamp(16px, 3.5vw, 48px) 4rem;
+  max-width: 100%;
+  width: 100%;
+}
+
+.home-header {
+  max-width: 900px;
+}
+
+.home-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
-  gap: clamp(24px, 5vw, 72px);
-  padding: 2.5rem clamp(16px, 4vw, 40px) 4rem;
-  max-width: 1200px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: start;
 }
 
 .lede {
@@ -1332,11 +1344,25 @@ td {
 .graph3d-wrap {
   display: grid;
   gap: 0.75rem;
-  margin: 0 0 2rem;
+  margin: 0 0 1rem;
   padding: 1rem;
   background: var(--parchment-sheet);
   border: 1px solid var(--parchment-rule);
-  border-radius: 6px;
+  border-radius: 8px;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.graph3d-wrap[data-fullscreen="true"] {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+  padding: 1.25rem;
+  background: var(--parchment-sheet);
+  overflow-y: auto;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
 }
 
 .graph3d-toolbar {
@@ -1450,12 +1476,16 @@ td {
 .graph3d-canvas {
   display: block;
   width: 100%;
-  height: clamp(320px, 48vh, 460px);
-  border-radius: 4px;
+  height: clamp(540px, 78vh, 920px);
+  border-radius: 6px;
   border: 1px solid var(--parchment-rule);
   background: radial-gradient(circle at 50% 50%, var(--parchment-sheet) 0%, var(--parchment) 100%);
   cursor: grab;
   touch-action: none;
+}
+
+.graph3d-wrap[data-fullscreen="true"] .graph3d-canvas {
+  height: calc(100vh - 220px);
 }
 
 .graph3d-canvas:active {
@@ -1762,7 +1792,7 @@ td {
     gap: 0.85rem 1.25rem;
   }
 
-  .home,
+  .home-grid,
   .topic-layout {
     grid-template-columns: minmax(0, 1fr);
   }

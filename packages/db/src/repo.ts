@@ -660,6 +660,16 @@ export async function failJob(sql: Sql, job: Job, error: string, maxAttempts = 3
   return dead;
 }
 
+/** Requeues a job after a delay (e.g. on 429 rate limit) without counting against fatal attempts or failing the topic. */
+export async function requeueJobWithDelay(sql: Sql, jobId: string, delaySeconds: number, error?: string): Promise<void> {
+  await sql`
+    UPDATE jobs SET
+      status = 'queued',
+      error = ${error ? error.slice(0, 2000) : null},
+      run_after = now() + make_interval(secs => ${delaySeconds})
+    WHERE id = ${jobId}`;
+}
+
 /** Jobs left in flight after a crash go back to the queue. */
 export async function requeueStaleJobs(sql: Sql, olderThanMinutes = 15): Promise<number> {
   const rows = await sql`
@@ -691,6 +701,9 @@ export async function recentJobs(sql: Sql, topicId: string, limit = 12) {
 /** Starts (or restarts) research on a topic: the web app's "Research" button and the scout both call this. */
 export async function requestResearch(sql: Sql, topicId: string, autoDepth: number): Promise<void> {
   await setTopicStatus(sql, topicId, "queued");
+  await sql`
+    UPDATE jobs SET status = 'cancelled'
+    WHERE topic_id = ${topicId} AND status IN ('failed', 'queued')`;
   await enqueueJob(sql, "plan", topicId, { autoDepth });
 }
 

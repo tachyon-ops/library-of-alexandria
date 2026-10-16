@@ -28,11 +28,13 @@ export interface Llm {
   webResearch(args: { role: Role; system: string; prompt: string; maxSearches: number }): Promise<{ text: string; citations: Citation[] }>;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export const DEFAULT_MODELS: Record<Role, string> = {
-  scout: "claude-sonnet-5-5",
-  reader: "claude-haiku-5-5",
-  web: "claude-sonnet-5-5",
-  skeptic: "claude-opus-5-5",
+  scout: "claude-3-5-sonnet-latest",
+  reader: "claude-3-5-haiku-latest",
+  web: "claude-3-5-sonnet-latest",
+  skeptic: "claude-3-5-sonnet-latest",
 };
 
 export const DEFAULT_GEMINI_MODELS: Record<Role, string> = {
@@ -45,21 +47,22 @@ export const DEFAULT_GEMINI_MODELS: Record<Role, string> = {
 const GEMINI_FALLBACKS = [
   "gemini-3.6-flash",
   "gemini-3.7-flash",
-  "gemini-3-flash-preview",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
   "gemini-flash-latest",
-  "gemini-3.1-flash-lite",
-  "gemini-3.1-flash-lite-preview",
-  "gemini-flash-lite-latest",
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
+  "gemini-3-flash-preview",
   "gemini-3.8-flash",
 ];
 
 export function providerFromEnv(env = process.env): LlmProvider {
   const explicit = env.LLM_PROVIDER?.trim().toLowerCase();
-  if (explicit === "gemini") return "gemini";
   if (explicit === "anthropic") return "anthropic";
+  if (explicit === "gemini") return "gemini";
+  if (env.ANTHROPIC_API_KEY && !env.GEMINI_API_KEY) return "anthropic";
   if (env.GEMINI_API_KEY && !env.ANTHROPIC_API_KEY) return "gemini";
+  if (env.ANTHROPIC_API_KEY) return "anthropic";
+  if (env.GEMINI_API_KEY) return "gemini";
   return "anthropic";
 }
 
@@ -75,13 +78,73 @@ export function modelsFromEnv(env = process.env, provider = providerFromEnv(env)
 
 export function createLlm(onUsage: (u: Usage) => Promise<void> | void = () => {}, env = process.env): Llm {
   const provider = providerFromEnv(env);
-  const models = modelsFromEnv(env, provider);
-  if (provider === "gemini") {
-    const apiKey = env.GEMINI_API_KEY || env.AI_API_KEY || "";
-    return new GeminiLlm(models, onUsage, apiKey);
+  const geminiKey = env.GEMINI_API_KEY || (env.AI_API_KEY && !env.AI_API_KEY.startsWith("sk-ant-") ? env.AI_API_KEY : "");
+  const anthropicKey = env.ANTHROPIC_API_KEY || (env.AI_API_KEY?.startsWith("sk-ant-") ? env.AI_API_KEY : "");
+
+  const geminiLlm = geminiKey ? new GeminiLlm(modelsFromEnv(env, "gemini"), onUsage, geminiKey) : null;
+  const claudeLlm = anthropicKey
+    ? new ClaudeLlm(modelsFromEnv(env, "anthropic"), onUsage, new Anthropic({ apiKey: anthropicKey, maxRetries: 3 }))
+    : null;
+
+  if (provider === "anthropic" && claudeLlm) {
+    return geminiLlm ? new FallbackLlm(claudeLlm, geminiLlm) : claudeLlm;
   }
-  const apiKey = env.ANTHROPIC_API_KEY || env.AI_API_KEY;
-  return new ClaudeLlm(models, onUsage, apiKey ? new Anthropic({ apiKey }) : undefined);
+  if (provider === "gemini" && geminiLlm) {
+    return claudeLlm ? new FallbackLlm(geminiLlm, claudeLlm) : geminiLlm;
+  }
+  if (claudeLlm) return claudeLlm;
+  if (geminiLlm) return geminiLlm;
+  return new GeminiLlm(modelsFromEnv(env, "gemini"), onUsage, geminiKey);
+}
+
+/** Fallback wrapper that switches from primary to secondary provider upon transient rate limit or quota errors. */
+export class FallbackLlm implements Llm {
+  constructor(
+    private primary: Llm,
+    private secondary: Llm,
+  ) {}
+
+  async structured<T>(args: { role: Role; system: string; prompt: string; schema: z.ZodType<T>; maxTokens?: number }): Promise<T> {
+    try {
+      return await this.primary.structured(args);
+    } catch (err) {
+      if (this.isRateLimitOrTransient(err)) {
+        console.warn(
+          `[FallbackLlm] Primary provider hit transient/quota error (${err instanceof Error ? err.message : String(err)}). Falling back to secondary provider.`,
+        );
+        return await this.secondary.structured(args);
+      }
+      throw err;
+    }
+  }
+
+  async webResearch(args: { role: Role; system: string; prompt: string; maxSearches: number }): Promise<{ text: string; citations: Citation[] }> {
+    try {
+      return await this.primary.webResearch(args);
+    } catch (err) {
+      console.warn(
+        `[FallbackLlm] Primary web research encountered error (${err instanceof Error ? err.message : String(err)}). Falling back to secondary provider.`,
+      );
+      try {
+        return await this.secondary.webResearch(args);
+      } catch (secErr) {
+        console.warn(`[FallbackLlm] Secondary web research also encountered error. Returning empty search citations.`);
+        return { text: "", citations: [] };
+      }
+    }
+  }
+
+  private isRateLimitOrTransient(err: unknown): boolean {
+    if (!err) return false;
+    const msg = err instanceof Error ? err.message : String(err);
+    const status = (err as { status?: number }).status;
+    return (
+      status === 429 ||
+      status === 503 ||
+      status === 529 ||
+      /429|503|529|rate_limit|resourceexhausted|quota|overloaded/i.test(msg)
+    );
+  }
 }
 
 /** Claude API implementation: structured outputs for JSON, the server-side web search tool for the web. */
@@ -93,7 +156,7 @@ export class ClaudeLlm implements Llm {
     private onUsage: (u: Usage) => Promise<void> | void = () => {},
     client?: Anthropic,
   ) {
-    this.client = client ?? new Anthropic();
+    this.client = client ?? new Anthropic({ maxRetries: 3 });
   }
 
   async structured<T>(args: { role: Role; system: string; prompt: string; schema: z.ZodType<T>; maxTokens?: number }): Promise<T> {
@@ -163,12 +226,25 @@ interface GeminiResponse {
 
 /** Gemini API implementation: JSON Schema structured output and Google Search grounding. */
 export class GeminiLlm implements Llm {
+  private static lastCallTime = 0;
+
   constructor(
     private models: Record<Role, string> = modelsFromEnv(process.env, "gemini"),
     private onUsage: (u: Usage) => Promise<void> | void = () => {},
     private apiKey: string = process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "",
     private fetchImpl: typeof fetch = fetch,
   ) {}
+
+  private async pace(): Promise<void> {
+    if (process.env.NODE_ENV === "test" || process.env.VITEST) return;
+    const minIntervalMs = 3000;
+    const now = Date.now();
+    const elapsed = now - GeminiLlm.lastCallTime;
+    if (elapsed < minIntervalMs) {
+      await sleep(minIntervalMs - elapsed);
+    }
+    GeminiLlm.lastCallTime = Date.now();
+  }
 
   async structured<T>(args: { role: Role; system: string; prompt: string; schema: z.ZodType<T>; maxTokens?: number }): Promise<T> {
     const model = this.models[args.role];
@@ -215,7 +291,7 @@ export class GeminiLlm implements Llm {
       usedModel = res.usedModel;
     } catch (err) {
       // Free-tier Gemini keys may not have Google Search grounding quota enabled (429); degrade gracefully.
-      if (err instanceof Error && err.message.startsWith("Gemini 429:")) {
+      if (err instanceof Error && (err.message.startsWith("Gemini 429:") || err.message.includes("429"))) {
         return { text: "", citations: [] };
       }
       throw err;
@@ -244,7 +320,9 @@ export class GeminiLlm implements Llm {
     if (!this.apiKey) throw new Error("GEMINI_API_KEY (or AI_API_KEY) is not set");
     const candidates = [primary, ...GEMINI_FALLBACKS.filter((m) => m !== primary)];
     let lastError: unknown;
-    for (const model of candidates) {
+    for (let i = 0; i < candidates.length; i++) {
+      const model = candidates[i]!;
+      await this.pace();
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
       const res = await this.fetchImpl(url, {
         method: "POST",
@@ -254,7 +332,14 @@ export class GeminiLlm implements Llm {
       if (res.ok) return { data: (await res.json()) as GeminiResponse, usedModel: model };
       const text = (await res.text()).slice(0, 400);
       lastError = new Error(`Gemini ${res.status}: ${text}`);
-      if (res.status !== 503 && res.status !== 404 && res.status !== 429) throw lastError;
+      if (res.status === 429) {
+        if (!process.env.NODE_ENV && !process.env.VITEST) {
+          const delay = Math.min(3000 * (i + 1), 15000);
+          await sleep(delay);
+        }
+      } else if (res.status !== 503 && res.status !== 404) {
+        throw lastError;
+      }
     }
     throw lastError;
   }

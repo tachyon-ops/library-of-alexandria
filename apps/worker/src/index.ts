@@ -69,9 +69,16 @@ async function main() {
       await repo.completeJob(sql, job.id);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      const dead = await repo.failJob(sql, job, message);
-      deps.log(`job ${job.id} (${job.kind}) failed${dead ? " permanently" : ", will retry"}: ${message}`);
-      if (dead && job.topicId) await repo.setTopicStatus(sql, job.topicId, "error");
+      const isRateLimit = /429|quota|rate_limit|resourceexhausted/i.test(message);
+      if (isRateLimit) {
+        deps.log(`job ${job.id} (${job.kind}) hit rate limit: ${message}. Requeuing in 60s without failing topic.`);
+        await repo.requeueJobWithDelay(sql, job.id, 60, message);
+        await sleep(30_000);
+      } else {
+        const dead = await repo.failJob(sql, job, message);
+        deps.log(`job ${job.id} (${job.kind}) failed${dead ? " permanently" : ", will retry"}: ${message}`);
+        if (dead && job.topicId) await repo.setTopicStatus(sql, job.topicId, "error");
+      }
     } finally {
       currentJob = null;
     }
