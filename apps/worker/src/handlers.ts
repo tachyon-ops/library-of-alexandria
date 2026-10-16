@@ -63,6 +63,11 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
           known.add(s.title.toLowerCase());
           branchTitles.push(s.title);
           const child = await repo.createTopic(d.sql, { title: s.title, brief: s.brief, parentId: topic.id });
+          await repo.setTopicSummaryIfEmpty(
+            d.sql,
+            child.id,
+            `${s.title} is a sub-discipline of ${topic.title} examining ${s.brief.charAt(0).toLowerCase()}${s.brief.slice(1)}`,
+          );
           if (autoDepth > 0) await repo.requestResearch(d.sql, child.id, autoDepth - 1);
         }
       }
