@@ -2,7 +2,7 @@ import postgres from "postgres";
 
 export type Sql = postgres.Sql;
 
-const options = { onnotice: () => {}, transform: postgres.camel } as const;
+const options = { onnotice: () => {}, transform: postgres.camel, prepare: false } as const;
 
 let shared: Sql | undefined;
 
