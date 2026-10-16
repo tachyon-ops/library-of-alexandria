@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { parseClinicalTrials, parseEuropePmc, parseOpenAlex } from "@lib/crawlers";
+import { describe, expect, it, vi } from "vitest";
+import { openAlex, parseClinicalTrials, parseEuropePmc, parseOpenAlex } from "@lib/crawlers";
 import { clinicalTrialsResponse, europePmcResponse, openAlexResponse } from "./fixtures/responses";
 
 describe("Europe PMC parser", () => {
@@ -35,6 +35,41 @@ describe("OpenAlex parser", () => {
   });
   it("falls back to the landing page without a DOI", () => {
     expect(rows[1]).toMatchObject({ url: "https://example.org/b", abstract: null, venue: null });
+  });
+});
+
+describe("OpenAlex adapter search", () => {
+  it("attaches api_key and mailto when configured", async () => {
+    const prevKey = process.env.OPENALEX_API_KEY;
+    const prevMail = process.env.CONTACT_EMAIL;
+    process.env.OPENALEX_API_KEY = "test-openalex-key";
+    process.env.CONTACT_EMAIL = "researcher@example.org";
+
+    let requestedUrl = "";
+    let requestedHeaders: Record<string, string> = {};
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (input, init) => {
+      requestedUrl = String(input);
+      requestedHeaders = (init?.headers as Record<string, string>) ?? {};
+      return new Response(JSON.stringify(openAlexResponse), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+
+    try {
+      const results = await openAlex.search("vitrification", { limit: 5 });
+      expect(results).toHaveLength(2);
+      const url = new URL(requestedUrl);
+      expect(url.searchParams.get("api_key")).toBe("test-openalex-key");
+      expect(url.searchParams.get("mailto")).toBe("researcher@example.org");
+      expect(url.searchParams.get("per-page")).toBe("5");
+      expect(requestedHeaders["api-key"]).toBe("test-openalex-key");
+      expect(requestedHeaders["user-agent"]).toContain("mailto:researcher@example.org");
+    } finally {
+      fetchSpy.mockRestore();
+      process.env.OPENALEX_API_KEY = prevKey;
+      process.env.CONTACT_EMAIL = prevMail;
+    }
   });
 });
 

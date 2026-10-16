@@ -58,7 +58,10 @@ export const openAlex: SourceAdapter = {
     url.searchParams.set("filter", "has_abstract:true");
     url.searchParams.set("per-page", String(limit));
     url.searchParams.set("sort", "relevance_score:desc");
-    if (process.env.CONTACT_EMAIL) url.searchParams.set("mailto", process.env.CONTACT_EMAIL);
-    return parseOpenAlex(await getJson<OaResponse>(url.toString()));
+    const apiKey = process.env.OPENALEX_API_KEY?.trim();
+    if (apiKey) url.searchParams.set("api_key", apiKey);
+    if (process.env.CONTACT_EMAIL) url.searchParams.set("mailto", process.env.CONTACT_EMAIL.trim());
+    const headers = apiKey ? { "api-key": apiKey } : undefined;
+    return parseOpenAlex(await getJson<OaResponse>(url.toString(), { headers }));
   },
 };

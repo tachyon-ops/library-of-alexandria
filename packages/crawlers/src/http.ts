@@ -1,6 +1,9 @@
 /** Small fetch wrapper: timeout, a polite User-Agent, and retry on 429/5xx. */
-export async function getJson<T>(url: string, opts: { timeoutMs?: number; retries?: number } = {}): Promise<T> {
-  const { timeoutMs = 20_000, retries = 2 } = opts;
+export async function getJson<T>(
+  url: string,
+  opts: { timeoutMs?: number; retries?: number; headers?: Record<string, string> } = {},
+): Promise<T> {
+  const { timeoutMs = 20_000, retries = 2, headers: extraHeaders } = opts;
   const contact = process.env.CONTACT_EMAIL;
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -9,6 +12,7 @@ export async function getJson<T>(url: string, opts: { timeoutMs?: number; retrie
         headers: {
           accept: "application/json",
           "user-agent": `AlexandersLibrary/0.1${contact ? ` (mailto:${contact})` : ""}`,
+          ...extraHeaders,
         },
         signal: AbortSignal.timeout(timeoutMs),
       });
