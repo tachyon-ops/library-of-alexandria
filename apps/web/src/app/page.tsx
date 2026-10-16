@@ -26,7 +26,7 @@ export default async function Home() {
     <main className="home">
       <AutoRefresh active={busy} />
       <section className="home-tree">
-        <h1>The Tree of Knowledge</h1>
+        <h1 className="home-tree-heading">The Tree of Knowledge</h1>
         <p className="lede">
           We ask, and it is gathered from humanity&rsquo;s scientific archive. Autonomous research workers search the
           open literature, clinical trial registries, and the web; organise fields by canonical scientific taxonomy;
