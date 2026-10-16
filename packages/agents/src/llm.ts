@@ -42,7 +42,13 @@ export const DEFAULT_GEMINI_MODELS: Record<Role, string> = {
   skeptic: "gemini-3.6-flash",
 };
 
-const GEMINI_FALLBACKS = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.8-flash"];
+const GEMINI_FALLBACKS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3-flash-preview",
+  "gemini-3.5-flash-lite",
+  "gemini-3.8-flash",
+];
 
 export function providerFromEnv(env = process.env): LlmProvider {
   const explicit = env.LLM_PROVIDER?.trim().toLowerCase();
