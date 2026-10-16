@@ -125,7 +125,7 @@ export async function moveTopic(sql: Sql, id: string, newParentId: string | null
 
   await sql`
     UPDATE topics
-    SET parent_id = ${newParentId}, updated_at = now()
+    SET parent_id = ${newParentId}
     WHERE id = ${id}`;
 
   await sql`
@@ -139,7 +139,7 @@ export async function moveTopic(sql: Sql, id: string, newParentId: string | null
       JOIN sub ON c.parent_id = sub.id
     )
     UPDATE topics t
-    SET depth = sub.new_depth, updated_at = now()
+    SET depth = sub.new_depth
     FROM sub
     WHERE t.id = sub.id`;
 
