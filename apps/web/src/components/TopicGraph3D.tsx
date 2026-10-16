@@ -274,6 +274,8 @@ export function TopicGraph3D({
   const viewRef = useRef({
     yaw: 0.42,
     pitch: 0.24,
+    velYaw: 0,
+    velPitch: 0,
     zoom: 1.0,
     targetZoom: 1.0,
     camX: 0,
@@ -284,9 +286,13 @@ export function TopicGraph3D({
     targetCamZ: 0,
     dragging: false,
     dragMoved: false,
+    dragMode: "orbit" as "orbit" | "pan",
     lastX: 0,
     lastY: 0,
   });
+
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchDistRef = useRef<number | null>(null);
 
   const projectedRef = useRef<
     { id: string; slug: string; sx: number; sy: number; r: number; zCam: number; visible: boolean }[]
@@ -336,6 +342,33 @@ export function TopicGraph3D({
     return results;
   }, [roots, activeNode, crossLinks]);
 
+  // Keep live render state in a ref so the RAF loop runs continuously without tearing down on hover/selection
+  const renderStateRef = useRef({
+    nodes,
+    edges,
+    crossLinks,
+    autoRotate,
+    hoveredId,
+    selectedId,
+    maxDepth,
+    normalizedQuery,
+    visibleNodeIds,
+  });
+
+  useEffect(() => {
+    renderStateRef.current = {
+      nodes,
+      edges,
+      crossLinks,
+      autoRotate,
+      hoveredId,
+      selectedId,
+      maxDepth,
+      normalizedQuery,
+      visibleNodeIds,
+    };
+  });
+
   function toggleCollapse(id: string) {
     setCollapsedIds((prev) => {
       const next = new Set(prev);
@@ -370,13 +403,49 @@ export function TopicGraph3D({
 
   function resetView() {
     setFocusRootId(null);
-    viewRef.current.targetCamX = 0;
-    viewRef.current.targetCamY = 0;
-    viewRef.current.targetCamZ = 0;
-    viewRef.current.targetZoom = 1.0;
-    viewRef.current.yaw = 0.42;
-    viewRef.current.pitch = 0.24;
+    const v = viewRef.current;
+    v.targetCamX = 0;
+    v.targetCamY = 0;
+    v.targetCamZ = 0;
+    v.targetZoom = 1.0;
+    v.yaw = 0.42;
+    v.pitch = 0.24;
+    v.velYaw = 0;
+    v.velPitch = 0;
   }
+
+  // Non-passive wheel event listener attached directly to the canvas element:
+  // prevents default document scroll while providing smooth, continuous normalized zoom.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      let delta = e.deltaY;
+      if (e.deltaMode === 1) {
+        delta *= 16;
+      } else if (e.deltaMode === 2) {
+        delta *= 100;
+      }
+
+      // Trackpad pinch-to-zoom (ctrlKey) vs standard wheel/trackpad scroll
+      const isPinch = e.ctrlKey;
+      const sensitivity = isPinch ? 0.008 : 0.0016;
+      const clampedDelta = Math.max(-120, Math.min(120, delta));
+      const factor = Math.exp(-clampedDelta * sensitivity);
+
+      const v = viewRef.current;
+      v.targetZoom = Math.max(0.4, Math.min(3.2, v.targetZoom * factor));
+    };
+
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      canvas.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
 
   function focusOnBranch(id: string | null) {
     setFocusRootId(id);
@@ -455,14 +524,32 @@ export function TopicGraph3D({
       const colT4 = style.getPropertyValue("--t4").trim() || "#a3b4e6";
       const colErr = style.getPropertyValue("--hype-ink").trim() || "#8c2618";
 
+      const state = renderStateRef.current;
       const v = viewRef.current;
-      v.camX += (v.targetCamX - v.camX) * 0.08;
-      v.camY += (v.targetCamY - v.camY) * 0.08;
-      v.camZ += (v.targetCamZ - v.camZ) * 0.08;
-      v.zoom += (v.targetZoom - v.zoom) * 0.08;
 
-      if (autoRotate && !v.dragging && !hoveredId) {
-        v.yaw += 0.0003;
+      v.camX += (v.targetCamX - v.camX) * 0.12;
+      v.camY += (v.targetCamY - v.camY) * 0.12;
+      v.camZ += (v.targetCamZ - v.camZ) * 0.12;
+      v.zoom += (v.targetZoom - v.zoom) * 0.14;
+
+      if (!v.dragging) {
+        if (Math.abs(v.velYaw) > 0.00002) {
+          v.yaw += v.velYaw;
+          v.velYaw *= 0.92;
+        } else {
+          v.velYaw = 0;
+        }
+
+        if (Math.abs(v.velPitch) > 0.00002) {
+          v.pitch = Math.max(-1.25, Math.min(1.25, v.pitch + v.velPitch));
+          v.velPitch *= 0.92;
+        } else {
+          v.velPitch = 0;
+        }
+
+        if (state.autoRotate && !state.hoveredId && Math.abs(v.velYaw) < 0.0001) {
+          v.yaw += 0.0004;
+        }
       }
 
       const w = canvas.width;
@@ -498,9 +585,9 @@ export function TopicGraph3D({
       const sinP = Math.sin(v.pitch);
       const fov = 560;
 
-      const activeId = hoveredId ?? selectedId;
+      const activeId = state.hoveredId ?? state.selectedId;
 
-      const proj = nodes.map((n) => {
+      const proj = state.nodes.map((n) => {
         const rx = n.x - v.camX;
         const ry = n.y - v.camY;
         const rz = n.z - v.camZ;
@@ -525,8 +612,8 @@ export function TopicGraph3D({
                 : 4.8;
         const claimBoost = Math.min(4.8, Math.sqrt(n.subtreeClaims) * 0.9);
         const r = Math.max(3.5 * dpr, (baseR + claimBoost) * scale);
-        const visible = n.relativeDepth <= maxDepth;
-        const matched = visibleNodeIds.has(n.id);
+        const visible = n.relativeDepth <= state.maxDepth;
+        const matched = state.visibleNodeIds.has(n.id);
         return { node: n, sx, sy, r, zCam: z2, scale, visible, matched, isActive };
       });
 
@@ -550,20 +637,20 @@ export function TopicGraph3D({
         let currPId = activeProj.node.parentId;
         while (currPId) {
           ancestorIds.add(currPId);
-          const pNode = nodes.find((n) => n.id === currPId);
+          const pNode = state.nodes.find((n) => n.id === currPId);
           currPId = pNode ? pNode.parentId : null;
         }
       }
 
       const childIds = new Set<string>();
       if (activeId) {
-        for (const n of nodes) {
+        for (const n of state.nodes) {
           if (n.parentId === activeId) childIds.add(n.id);
         }
       }
 
       // 1. Draw background / normal edges (excluding active child tubes and parent conduit)
-      const sortedEdges = [...edges].sort((a, b) => {
+      const sortedEdges = [...state.edges].sort((a, b) => {
         const za = (proj[a.source]!.zCam + proj[a.target]!.zCam) / 2;
         const zb = (proj[b.source]!.zCam + proj[b.target]!.zCam) / 2;
         return zb - za;
@@ -581,7 +668,7 @@ export function TopicGraph3D({
           (b.node.id === activeId && a.node.id === parentId);
         if (isChildEdge || isParentEdge) continue;
 
-        const dimmed = normalizedQuery.length > 0 && !a.matched && !b.matched;
+        const dimmed = state.normalizedQuery.length > 0 && !a.matched && !b.matched;
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(a.sx, a.sy);
@@ -594,9 +681,9 @@ export function TopicGraph3D({
       }
 
       // 2. Draw cross-branch bridge arcs
-      if (crossLinks.length > 0) {
+      if (state.crossLinks.length > 0) {
         const projById = new Map(proj.map((p) => [p.node.id, p]));
-        for (const cl of crossLinks) {
+        for (const cl of state.crossLinks) {
           const a = projById.get(cl.sourceId);
           const b = projById.get(cl.targetId);
           if (!a || !b || !a.visible || !b.visible) continue;
@@ -739,9 +826,9 @@ export function TopicGraph3D({
         const isAncestor = ancestorIds.has(node.id);
         const isDirectParent = node.id === parentId;
         const isChild = childIds.has(node.id);
-        const isSelected = node.id === selectedId;
-        const isHovered = node.id === hoveredId;
-        const dimmed = normalizedQuery.length > 0 && !matched;
+        const isSelected = node.id === state.selectedId;
+        const isHovered = node.id === state.hoveredId;
+        const dimmed = state.normalizedQuery.length > 0 && !matched;
 
         // --- FORM A: Ancestors / Parents ("seen in another form") ---
         if (isAncestor || isDirectParent) {
@@ -926,7 +1013,7 @@ export function TopicGraph3D({
         const showLabel =
           isHovered ||
           isSelected ||
-          (normalizedQuery.length > 0 && matched);
+          (state.normalizedQuery.length > 0 && matched);
 
         if (showLabel) {
           ctx.globalAlpha = 0.9;
@@ -950,7 +1037,7 @@ export function TopicGraph3D({
 
     rafId = window.requestAnimationFrame(render);
     return () => window.cancelAnimationFrame(rafId);
-  }, [nodes, edges, crossLinks, autoRotate, hoveredId, selectedId, maxDepth, normalizedQuery, visibleNodeIds]);
+  }, []);
 
   function findHitNode(clientX: number, clientY: number) {
     const canvas = canvasRef.current;
@@ -1021,12 +1108,7 @@ export function TopicGraph3D({
           <button
             type="button"
             className="quiet-button"
-            onClick={() => {
-              setFocusRootId(null);
-              viewRef.current.yaw = 0.42;
-              viewRef.current.pitch = 0.24;
-              viewRef.current.zoom = 1.0;
-            }}
+            onClick={resetView}
           >
             Reset view
           </button>
@@ -1078,42 +1160,110 @@ export function TopicGraph3D({
           ref={canvasRef}
           className="graph3d-canvas"
           tabIndex={0}
-          aria-label="Interactive 3D node map of scientific fields. Use arrow keys or drag to rotate, plus or minus to zoom."
+          aria-label="Interactive 3D node map of scientific fields. Drag to orbit, Shift+drag or right-click to pan, scroll to zoom."
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
+            activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+            const isPan = e.button === 1 || e.button === 2 || (e.button === 0 && e.shiftKey);
             viewRef.current.dragging = true;
             viewRef.current.dragMoved = false;
+            viewRef.current.dragMode = isPan ? "pan" : "orbit";
             viewRef.current.lastX = e.clientX;
             viewRef.current.lastY = e.clientY;
+            viewRef.current.velYaw = 0;
+            viewRef.current.velPitch = 0;
+
+            if (activePointersRef.current.size === 2) {
+              const pts = Array.from(activePointersRef.current.values());
+              pinchDistRef.current = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+            }
           }}
           onPointerMove={(e) => {
+            activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+            // Multi-touch pinch-to-zoom on touchscreens / tablets
+            if (activePointersRef.current.size >= 2) {
+              const pts = Array.from(activePointersRef.current.values());
+              const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+              if (pinchDistRef.current && pinchDistRef.current > 0) {
+                const factor = dist / pinchDistRef.current;
+                viewRef.current.targetZoom = Math.max(0.4, Math.min(3.2, viewRef.current.targetZoom * factor));
+                viewRef.current.dragMoved = true;
+              }
+              pinchDistRef.current = dist;
+              return;
+            }
+
             if (viewRef.current.dragging) {
               const dx = e.clientX - viewRef.current.lastX;
               const dy = e.clientY - viewRef.current.lastY;
               if (Math.abs(dx) + Math.abs(dy) > 3) viewRef.current.dragMoved = true;
-              viewRef.current.yaw += dx * 0.0075;
-              viewRef.current.pitch = Math.max(-1.25, Math.min(1.25, viewRef.current.pitch + dy * 0.0075));
+
+              if (viewRef.current.dragMode === "pan") {
+                const v = viewRef.current;
+                const cosY = Math.cos(v.yaw);
+                const sinY = Math.sin(v.yaw);
+                const cosP = Math.cos(v.pitch);
+                const sinP = Math.sin(v.pitch);
+                const invScale = 0.85 / (v.zoom || 1);
+
+                const dWorldX = -dx * cosY * invScale + dy * sinY * sinP * invScale;
+                const dWorldY = -dy * cosP * invScale;
+                const dWorldZ = dx * sinY * invScale + dy * cosY * sinP * invScale;
+
+                v.targetCamX += dWorldX;
+                v.targetCamY += dWorldY;
+                v.targetCamZ += dWorldZ;
+              } else {
+                const vx = dx * 0.0065;
+                const vy = dy * 0.0065;
+                viewRef.current.yaw += vx;
+                viewRef.current.pitch = Math.max(-1.25, Math.min(1.25, viewRef.current.pitch + vy));
+                viewRef.current.velYaw = vx;
+                viewRef.current.velPitch = vy;
+              }
+
               viewRef.current.lastX = e.clientX;
               viewRef.current.lastY = e.clientY;
               return;
             }
+
             const hit = findHitNode(e.clientX, e.clientY);
-            setHoveredId(hit?.id ?? null);
+            const newHoveredId = hit?.id ?? null;
+            if (newHoveredId !== hoveredId) {
+              setHoveredId(newHoveredId);
+            }
           }}
           onPointerUp={(e) => {
-            const wasDrag = viewRef.current.dragMoved;
-            viewRef.current.dragging = false;
-            if (!wasDrag) {
-              const hit = findHitNode(e.clientX, e.clientY);
-              if (hit) {
-                // If clicking an already-selected node that has children, toggle its fold state!
-                const targetNode = nodes.find((n) => n.id === hit.id);
-                if (hit.id === selectedId && targetNode && targetNode.childCount > 0) {
-                  toggleCollapse(hit.id);
-                } else {
-                  setSelectedId(hit.id);
+            activePointersRef.current.delete(e.pointerId);
+            if (activePointersRef.current.size < 2) {
+              pinchDistRef.current = null;
+            }
+            if (activePointersRef.current.size === 0) {
+              const wasDrag = viewRef.current.dragMoved;
+              viewRef.current.dragging = false;
+              if (!wasDrag) {
+                const hit = findHitNode(e.clientX, e.clientY);
+                if (hit) {
+                  const targetNode = nodes.find((n) => n.id === hit.id);
+                  if (hit.id === selectedId && targetNode && targetNode.childCount > 0) {
+                    toggleCollapse(hit.id);
+                  } else {
+                    setSelectedId(hit.id);
+                  }
                 }
               }
+            }
+          }}
+          onPointerCancel={(e) => {
+            activePointersRef.current.delete(e.pointerId);
+            if (activePointersRef.current.size === 0) {
+              viewRef.current.dragging = false;
+              pinchDistRef.current = null;
             }
           }}
           onDoubleClick={(e) => {
@@ -1126,23 +1276,37 @@ export function TopicGraph3D({
               router.push(`/topic/${hit.slug}`);
             }
           }}
-          onWheel={(e) => {
-            e.preventDefault();
-            const factor = e.deltaY < 0 ? 1.1 : 0.9;
-            viewRef.current.zoom = Math.max(0.45, Math.min(2.6, viewRef.current.zoom * factor));
-          }}
           onKeyDown={(e) => {
-            if (e.key === "ArrowLeft") viewRef.current.yaw -= 0.1;
-            else if (e.key === "ArrowRight") viewRef.current.yaw += 0.1;
-            else if (e.key === "ArrowUp") viewRef.current.pitch = Math.max(-1.25, viewRef.current.pitch - 0.1);
-            else if (e.key === "ArrowDown") viewRef.current.pitch = Math.min(1.25, viewRef.current.pitch + 0.1);
-            else if (e.key === "+" || e.key === "=") viewRef.current.zoom = Math.min(2.6, viewRef.current.zoom * 1.12);
-            else if (e.key === "-") viewRef.current.zoom = Math.max(0.45, viewRef.current.zoom * 0.88);
+            if (e.key === "ArrowLeft") {
+              e.preventDefault();
+              viewRef.current.yaw -= 0.08;
+              viewRef.current.velYaw = 0;
+            } else if (e.key === "ArrowRight") {
+              e.preventDefault();
+              viewRef.current.yaw += 0.08;
+              viewRef.current.velYaw = 0;
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              viewRef.current.pitch = Math.max(-1.25, viewRef.current.pitch - 0.08);
+              viewRef.current.velPitch = 0;
+            } else if (e.key === "ArrowDown") {
+              e.preventDefault();
+              viewRef.current.pitch = Math.min(1.25, viewRef.current.pitch + 0.08);
+              viewRef.current.velPitch = 0;
+            } else if (e.key === "+" || e.key === "=") {
+              e.preventDefault();
+              viewRef.current.targetZoom = Math.min(3.2, viewRef.current.targetZoom * 1.15);
+            } else if (e.key === "-" || e.key === "_") {
+              e.preventDefault();
+              viewRef.current.targetZoom = Math.max(0.4, viewRef.current.targetZoom * 0.85);
+            } else if (e.key === "0") {
+              e.preventDefault();
+              resetView();
+            }
           }}
         />
         <p className="graph3d-hint muted small">
-          Drag to orbit · Scroll to zoom · Click a node to inspect (click again to unfold <code>[+N]</code> children) ·
-          Double-click a parent to focus its subtree
+          Drag to orbit · Shift+drag or right-click to pan · Scroll to zoom · Click to inspect (click again to unfold <code>[+N]</code> children) · Double-click to focus subtree
         </p>
       </div>
 

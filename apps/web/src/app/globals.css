@@ -1351,6 +1351,7 @@ td {
   border-radius: 8px;
   width: 100%;
   transition: all 0.2s ease;
+  overscroll-behavior: contain;
 }
 
 .graph3d-wrap[data-fullscreen="true"] {
@@ -1471,6 +1472,7 @@ td {
 
 .graph3d-stage {
   position: relative;
+  overscroll-behavior: contain;
 }
 
 .graph3d-canvas {
@@ -1482,6 +1484,7 @@ td {
   background: radial-gradient(circle at 50% 50%, var(--parchment-sheet) 0%, var(--parchment) 100%);
   cursor: grab;
   touch-action: none;
+  overscroll-behavior: contain;
 }
 
 .graph3d-wrap[data-fullscreen="true"] .graph3d-canvas {
