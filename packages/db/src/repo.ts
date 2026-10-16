@@ -45,9 +45,56 @@ export async function getTopic(sql: Sql, id: string): Promise<Topic | null> {
   return row ?? null;
 }
 
+const SLUG_PAIRS: [string, string][] = [
+  ["human-fertility", "reproductive-medicine-human-fertility"],
+  ["human-fertility-using-eggs-vitrified-at-a-younger-age", "ovarian-reserve-oocyte-cryopreservation"],
+  ["human-fertility-uterine-receptivity-and-implantation-failure", "endometrial-receptivity-implantation-biology"],
+  ["human-fertility-male-factor-after-40", "andrology-male-factor-infertility"],
+  ["human-fertility-donor-eggs-in-europe", "assisted-reproductive-technology-gamete-donation"],
+  ["human-fertility-frontier-fertility-treatments", "translational-geroprotective-reproductive-biology"],
+  ["human-fertility-pregnancy-after-44", "maternal-fetal-medicine-obstetric-perinatology"],
+  [
+    "human-fertility-pregnancy-after-44-pre-eclampsia-prophylaxis-and-biomarker-based",
+    "pre-eclampsia-pathophysiology-biomarkers-prophylaxis",
+  ],
+  [
+    "human-fertility-male-factor-after-40-paternal-age-effect-on-embryo-and-offspring",
+    "paternal-age-effects-on-gamete-embryo-offspring-health",
+  ],
+  [
+    "human-fertility-frontier-fertility-treatments-in-vitro-gametogenesis-ivg",
+    "in-vitro-gametogenesis-pluripotent-stem-cell-reprogramming",
+  ],
+  [
+    "human-fertility-frontier-fertility-treatments-mitochondrial-replacement-transfer",
+    "mitochondrial-replacement-therapy-ooplasmic-transfer",
+  ],
+  [
+    "human-fertility-frontier-fertility-treatments-ovarian-rejuvenation-intraovarian-",
+    "intraovarian-platelet-rich-plasma-stem-cell-biologics",
+  ],
+  [
+    "human-fertility-frontier-fertility-treatments-ovarian-tissue-cryopreservation-tr",
+    "ovarian-tissue-cryopreservation-orthotopic-transplantation",
+  ],
+  [
+    "human-fertility-frontier-fertility-treatments-rapamycin-mtor-inhibition-for-ovar",
+    "mtor-pathway-modulation-follicular-longevity",
+  ],
+];
+
+const SLUG_ALIASES = new Map<string, string>([
+  ...SLUG_PAIRS,
+  ...SLUG_PAIRS.map(([a, b]): [string, string] => [b, a]),
+]);
+
 export async function getTopicBySlug(sql: Sql, slug: string): Promise<Topic | null> {
   const [row] = await sql<Topic[]>`SELECT * FROM topics WHERE slug = ${slug}`;
-  return row ?? null;
+  if (row) return row;
+  const alias = SLUG_ALIASES.get(slug);
+  if (!alias) return null;
+  const [fallback] = await sql<Topic[]>`SELECT * FROM topics WHERE slug = ${alias}`;
+  return fallback ?? null;
 }
 
 /** Root first. */
@@ -155,7 +202,27 @@ export async function topicSources(sql: Sql, topicId: string): Promise<SourceVie
       UNION
       SELECT cs.source_id FROM claim_sources cs JOIN claims c ON c.id = cs.claim_id WHERE c.topic_id IN (SELECT id FROM sub) AND NOT c.superseded
     )`;
-  return inherited.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
+  if (inherited.length > 0) {
+    return inherited.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
+  }
+  const fromAncestors = await sql<SourceView[]>`
+    WITH RECURSIVE up AS (
+      SELECT parent_id AS id FROM topics WHERE id = ${topicId} AND parent_id IS NOT NULL
+      UNION ALL
+      SELECT t.parent_id AS id FROM topics t JOIN up ON t.id = up.id WHERE t.parent_id IS NOT NULL
+    )
+    SELECT DISTINCT ON (s.id)
+      s.id, s.kind, s.origin, s.title,
+      COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END) AS url,
+      s.doi, s.venue, s.year, s.authors, s.cited_by,
+      COALESCE(s.design, s.declared_design) AS design
+    FROM sources s
+    WHERE s.id IN (
+      SELECT ts.source_id FROM topic_sources ts WHERE ts.topic_id IN (SELECT id FROM up)
+      UNION
+      SELECT cs.source_id FROM claim_sources cs JOIN claims c ON c.id = cs.claim_id WHERE c.topic_id IN (SELECT id FROM up) AND NOT c.superseded
+    )`;
+  return fromAncestors.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
 }
 
 /** Stores sources once (matched by origin id or DOI) and links them to the topic. Returns stored ids. */
