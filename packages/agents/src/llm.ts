@@ -36,11 +36,13 @@ export const DEFAULT_MODELS: Record<Role, string> = {
 };
 
 export const DEFAULT_GEMINI_MODELS: Record<Role, string> = {
-  scout: "gemini-2.5-pro",
-  reader: "gemini-2.5-flash",
-  web: "gemini-2.5-flash",
-  skeptic: "gemini-2.5-pro",
+  scout: "gemini-3.6-flash",
+  reader: "gemini-3.6-flash",
+  web: "gemini-3.6-flash",
+  skeptic: "gemini-3.6-flash",
 };
+
+const GEMINI_FALLBACKS = ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.8-flash"];
 
 export function providerFromEnv(env = process.env): LlmProvider {
   const explicit = env.LLM_PROVIDER?.trim().toLowerCase();
@@ -161,7 +163,7 @@ export class GeminiLlm implements Llm {
     const model = this.models[args.role];
     const jsonSchema = { ...(z.toJSONSchema(args.schema) as Record<string, unknown>) };
     delete jsonSchema.$schema;
-    const data = await this.call(model, {
+    const { data, usedModel } = await this.callWithFallback(model, {
       systemInstruction: { parts: [{ text: args.system }] },
       contents: [{ role: "user", parts: [{ text: args.prompt }] }],
       generationConfig: {
@@ -173,7 +175,7 @@ export class GeminiLlm implements Llm {
     const cand = data.candidates?.[0];
     await this.onUsage({
       role: args.role,
-      model,
+      model: usedModel,
       inputTokens: data.usageMetadata?.promptTokenCount ?? 0,
       outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
       webSearches: 0,
@@ -189,17 +191,29 @@ export class GeminiLlm implements Llm {
 
   async webResearch(args: { role: Role; system: string; prompt: string; maxSearches: number }) {
     const model = this.models[args.role];
-    const data = await this.call(model, {
-      systemInstruction: { parts: [{ text: args.system }] },
-      contents: [{ role: "user", parts: [{ text: args.prompt }] }],
-      tools: [{ google_search: {} }],
-      generationConfig: { maxOutputTokens: 8000 },
-    });
+    let data: GeminiResponse;
+    let usedModel = model;
+    try {
+      const res = await this.callWithFallback(model, {
+        systemInstruction: { parts: [{ text: args.system }] },
+        contents: [{ role: "user", parts: [{ text: args.prompt }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { maxOutputTokens: 8000 },
+      });
+      data = res.data;
+      usedModel = res.usedModel;
+    } catch (err) {
+      // Free-tier Gemini keys may not have Google Search grounding quota enabled (429); degrade gracefully.
+      if (err instanceof Error && err.message.startsWith("Gemini 429:")) {
+        return { text: "", citations: [] };
+      }
+      throw err;
+    }
     const cand = data.candidates?.[0];
     const gm = cand?.groundingMetadata;
     await this.onUsage({
       role: args.role,
-      model,
+      model: usedModel,
       inputTokens: data.usageMetadata?.promptTokenCount ?? 0,
       outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
       webSearches: Math.min(args.maxSearches, gm?.webSearchQueries?.length ?? 0),
@@ -215,15 +229,22 @@ export class GeminiLlm implements Llm {
     return { text, citations: [...citations.values()] };
   }
 
-  private async call(model: string, body: Record<string, unknown>): Promise<GeminiResponse> {
+  private async callWithFallback(primary: string, body: Record<string, unknown>): Promise<{ data: GeminiResponse; usedModel: string }> {
     if (!this.apiKey) throw new Error("GEMINI_API_KEY (or AI_API_KEY) is not set");
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-    const res = await this.fetchImpl(url, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 400)}`);
-    return (await res.json()) as GeminiResponse;
+    const candidates = [primary, ...GEMINI_FALLBACKS.filter((m) => m !== primary)];
+    let lastError: unknown;
+    for (const model of candidates) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+      const res = await this.fetchImpl(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) return { data: (await res.json()) as GeminiResponse, usedModel: model };
+      const text = (await res.text()).slice(0, 400);
+      lastError = new Error(`Gemini ${res.status}: ${text}`);
+      if (res.status !== 503 && res.status !== 404) throw lastError;
+    }
+    throw lastError;
   }
 }

@@ -101,7 +101,7 @@ describe("agent validation", () => {
   it("auto-selects provider and models from environment and runs GeminiLlm", async () => {
     expect(providerFromEnv({ GEMINI_API_KEY: "g-key" } as never)).toBe("gemini");
     expect(providerFromEnv({ ANTHROPIC_API_KEY: "a-key" } as never)).toBe("anthropic");
-    expect(modelsFromEnv({ GEMINI_API_KEY: "g-key" } as never).reader).toBe("gemini-2.5-flash");
+    expect(modelsFromEnv({ GEMINI_API_KEY: "g-key" } as never).reader).toBe("gemini-3.6-flash");
 
     const usage: Usage[] = [];
     const fakeFetch: typeof fetch = async (_url, init) => {
