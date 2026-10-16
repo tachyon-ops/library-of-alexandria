@@ -52,7 +52,8 @@ const SLUG_PAIRS: [string, string][] = [
   ["human-fertility-male-factor-after-40", "andrology-male-factor-infertility"],
   ["human-fertility-donor-eggs-in-europe", "assisted-reproductive-technology-gamete-donation"],
   ["human-fertility-frontier-fertility-treatments", "translational-geroprotective-reproductive-biology"],
-  ["human-fertility-pregnancy-after-44", "maternal-fetal-medicine-obstetric-perinatology"],
+  ["human-fertility-pregnancy-after-44", "advanced-maternal-age-pregnancy-after-40"],
+  ["maternal-fetal-medicine-obstetric-perinatology", "advanced-maternal-age-pregnancy-after-40"],
   [
     "human-fertility-pregnancy-after-44-pre-eclampsia-prophylaxis-and-biomarker-based",
     "pre-eclampsia-pathophysiology-biomarkers-prophylaxis",
@@ -84,8 +85,8 @@ const SLUG_PAIRS: [string, string][] = [
 ];
 
 const SLUG_ALIASES = new Map<string, string>([
-  ...SLUG_PAIRS,
   ...SLUG_PAIRS.map(([a, b]): [string, string] => [b, a]),
+  ...SLUG_PAIRS,
 ]);
 
 export async function getTopicBySlug(sql: Sql, slug: string): Promise<Topic | null> {
@@ -95,6 +96,54 @@ export async function getTopicBySlug(sql: Sql, slug: string): Promise<Topic | nu
   if (!alias) return null;
   const [fallback] = await sql<Topic[]>`SELECT * FROM topics WHERE slug = ${alias}`;
   return fallback ?? null;
+}
+
+/**
+ * Moves a topic (including a root node) under a new parent (or to the root level if
+ * newParentId is null), rejecting cycles and recalculating depth across the moved subtree.
+ */
+export async function moveTopic(sql: Sql, id: string, newParentId: string | null): Promise<Topic> {
+  if (newParentId === id) {
+    throw new Error("Cannot move a topic under itself");
+  }
+  const topic = await getTopic(sql, id);
+  if (!topic) {
+    throw new Error(`Topic not found: ${id}`);
+  }
+  let baseDepth = 0;
+  if (newParentId !== null) {
+    const newParent = await getTopic(sql, newParentId);
+    if (!newParent) {
+      throw new Error(`New parent topic not found: ${newParentId}`);
+    }
+    const ancestors = await getAncestors(sql, newParentId);
+    if (ancestors.some((a) => a.id === id)) {
+      throw new Error("Cannot move a topic under one of its own descendants");
+    }
+    baseDepth = newParent.depth + 1;
+  }
+
+  await sql`
+    UPDATE topics
+    SET parent_id = ${newParentId}, updated_at = now()
+    WHERE id = ${id}`;
+
+  await sql`
+    WITH RECURSIVE sub AS (
+      SELECT id, ${baseDepth}::int AS new_depth
+      FROM topics
+      WHERE id = ${id}
+      UNION ALL
+      SELECT c.id, sub.new_depth + 1
+      FROM topics c
+      JOIN sub ON c.parent_id = sub.id
+    )
+    UPDATE topics t
+    SET depth = sub.new_depth, updated_at = now()
+    FROM sub
+    WHERE t.id = sub.id`;
+
+  return (await getTopic(sql, id))!;
 }
 
 /** Root first. */
