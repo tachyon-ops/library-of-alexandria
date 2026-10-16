@@ -1,0 +1,29 @@
+{
+  "name": "alexanders-library",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A tree of knowledge filled by AI research workers that read the open scientific literature, trial registries and the web.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "db:migrate": "tsx --env-file-if-exists=.env packages/db/src/migrate.ts",
+    "db:seed": "tsx --env-file-if-exists=.env packages/db/src/seed.ts",
+    "dev:web": "npm -w @lib/web run dev",
+    "dev:worker": "npm -w @lib/worker run dev",
+    "build:web": "npm -w @lib/web run build",
+    "probe": "npm -w @lib/worker run probe --"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
