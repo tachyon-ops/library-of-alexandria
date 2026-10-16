@@ -2,7 +2,15 @@ import { usageSummary } from "@lib/db";
 import { Tree } from "@/components/Tree";
 import { NewTopicForm } from "@/components/NewTopicForm";
 import { AutoRefresh } from "@/components/AutoRefresh";
-import { anyBusy, loadTree, sql } from "@/lib/data";
+import {
+  AUTHOR_SITE_URL,
+  GITHUB_PROFILE_URL,
+  GITHUB_SPONSORS_URL,
+  PAYPAL_DONATE_URL,
+  anyBusy,
+  loadTree,
+  sql,
+} from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +44,41 @@ export default async function Home() {
             <li data-tier="T6">Opinion, news and unverified claims</li>
           </ol>
           <p className="muted small">Frontier and contested ideas stay in the library, labelled rather than removed.</p>
+        </section>
+        <section className="support-box">
+          <h2>Support the library</h2>
+          <p className="muted small">
+            Each branch researched uses paid model and web-search calls. Contributions help keep the library open and fund new
+            research runs.
+          </p>
+          <div className="support-actions">
+            <a
+              href={PAYPAL_DONATE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="donate-button"
+            >
+              Donate via PayPal
+            </a>
+            <a
+              href={GITHUB_SPONSORS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="support-link"
+            >
+              GitHub Sponsors
+            </a>
+          </div>
+          <p className="muted small">
+            By Nuno Ribeiro ·{" "}
+            <a href={AUTHOR_SITE_URL} target="_blank" rel="noopener noreferrer">
+              nuuno.art
+            </a>{" "}
+            ·{" "}
+            <a href={GITHUB_PROFILE_URL} target="_blank" rel="noopener noreferrer">
+              @tachyon-ops
+            </a>
+          </p>
         </section>
         <p className="muted small">
           Last 30 days: {calls} model calls, {searches} web searches.

@@ -77,7 +77,7 @@ All requests go through `getJson`: 20 s timeout, two retries on 429, 5xx or time
 
 ## 6. Agent roles
 
-All roles use the `Llm` interface; JSON outputs use Claude structured outputs with the zod schemas exported by each file.
+All roles use the `Llm` interface (`ClaudeLlm` for Anthropic, `GeminiLlm` for Gemini); JSON outputs use structured outputs with the zod schemas exported by each file.
 
 | Role    | Input limit                                                                         | Output contract                                                                                                        |
 | ------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -86,31 +86,34 @@ All roles use the `Llm` interface; JSON outputs use Claude structured outputs wi
 | web     | one task, ≤ `MAX_WEB_SEARCHES_PER_JOB` searches, notes clipped to 20,000 characters | entities with key/value attributes and cited URLs                                                                      |
 | skeptic | all claims as `[index] (tier, label, source count, years) statement`, entity names  | summary, gaps, merges, relabels, controversies                                                                         |
 
-Default models: scout and web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; each overridable by environment variable.
+Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic fallback across `gemini-3.5-flash`, `gemini-3-flash-preview`, `gemini-3.5-flash-lite` and `gemini-3.8-flash` on 503/404); each overridable by environment variable.
 
 ## 7. Front
 
 | Route           | Shows                                                                                                                                                       | Actions                                                                   |
 | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `/`             | tree with status and finding counts; grading legend; 30-day usage                                                                                           | add a root branch, optionally starting research with `AUTO_EXPAND_DEPTH`  |
+| `/`             | tree with status and finding counts; grading legend; support and author links; 30-day usage                                                                 | add a root branch, optionally starting research with `AUTO_EXPAND_DEPTH`  |
 | `/topic/[slug]` | path, brief, research bar with job status, summary, findings grouped by tier, debates, entities by kind, milestones, open questions, branches, sources read | research (optionally with the next level of branches); add a child branch |
 
-The page refreshes every 5 s while the topic has open jobs or is `queued` or `researching`. Rendering is server-side; writes are server actions.
+Every page shares a masthead and footer with links to the author (`nuuno.art`, `@tachyon-ops`) and donation options (PayPal Donate and GitHub Sponsors). The page refreshes every 5 s while the topic has open jobs or is `queued` or `researching`. Rendering is server-side; writes are server actions.
 
 ## 8. Configuration
 
-| Variable                                                    | Default | Effect                                      |
-| ----------------------------------------------------------- | ------- | ------------------------------------------- |
-| `DATABASE_URL`                                              | none    | Postgres connection                         |
-| `ANTHROPIC_API_KEY`                                         | none    | Claude API                                  |
-| `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC` | see §6  | model per role                              |
-| `CONTACT_EMAIL`                                             | none    | polite-pool contact for sources             |
-| `MAX_LLM_CALLS_PER_DAY`                                     | 400     | worker pauses when reached                  |
-| `MAX_WEB_SEARCHES_PER_JOB`                                  | 8       | per web task                                |
-| `SOURCES_PER_QUERY`                                         | 10      | results per adapter per query               |
-| `MAX_SOURCES_PER_TOPIC`                                     | 60      | abstracts read per research run             |
-| `AUTO_EXPAND_DEPTH`                                         | 1       | levels of branches researched automatically |
-| `WORKER_POLL_MS`                                            | 3000    | idle poll interval                          |
+| Variable                                                    | Default     | Effect                                                    |
+| ----------------------------------------------------------- | ----------- | --------------------------------------------------------- |
+| `DATABASE_URL`                                              | none        | Postgres connection                                       |
+| `LLM_PROVIDER`                                              | auto-detect | `anthropic` or `gemini`                                   |
+| `AI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`         | none        | API key for the chosen provider                           |
+| `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC` | see §6      | model per role                                            |
+| `CONTACT_EMAIL`                                             | none        | polite-pool contact for sources                           |
+| `MAX_LLM_CALLS_PER_DAY`                                     | 400         | worker pauses (or exits in drain mode) when reached       |
+| `MAX_WEB_SEARCHES_PER_JOB`                                  | 8           | per web task                                              |
+| `SOURCES_PER_QUERY`                                         | 10          | results per adapter per query                             |
+| `MAX_SOURCES_PER_TOPIC`                                     | 60          | abstracts read per research run                           |
+| `AUTO_EXPAND_DEPTH`                                         | 1           | levels of branches researched automatically               |
+| `WORKER_POLL_MS`                                            | 3000        | idle poll interval                                        |
+| `WORKER_DRAIN`                                              | `false`     | when `1`/`true` (or `--drain`), drain queue and exit      |
+| `GITHUB_REPO`, `GITHUB_REF`, `GITHUB_DISPATCH_TOKEN`        | none        | optional webhook dispatch from web actions to `worker.yml` |
 
 ## 9. Non-functional requirements
 

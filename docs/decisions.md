@@ -81,3 +81,20 @@ Date: 2026-10-16 · Status: accepted
 **Context.** Every change must pass typechecking, tests (including the Postgres pipeline test) and the web build before integration or release, and `develop` must remain the persistent base for new work.
 **Decision.** All work branches from `develop`, opens a PR to `develop`, and merges after `.github/workflows/ci.yml` passes. Releases open a PR from `develop` to `master`, tag `vX.Y.Z`, wait for CI to pass, and merge to `master` without deleting `develop`. No direct commits to `develop` or `master`.
 **Consequences.** Every commit on `develop` and `master` is verified against a real Postgres 16 container in GitHub Actions.
+
+## D-011: Dual LLM provider adapters (Anthropic and Gemini) behind `Llm`
+
+Date: 2026-10-16 · Status: accepted
+
+**Context.** The worker must be able to run with either an Anthropic or a Gemini API key without changing agent logic or schemas.
+**Decision.** Add `GeminiLlm` (`responseJsonSchema` via `z.toJSONSchema` for `structured`, `google_search` grounding for `webResearch`) alongside `ClaudeLlm`, selected by `createLlm` from `LLM_PROVIDER`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, or `AI_API_KEY`.
+**Consequences.** Either provider can be used by setting one key in `.env`; no new runtime dependencies required.
+
+## D-012: Zero-cost managed hosting via Neon, Vercel, and GitHub Actions drain worker
+
+Date: 2026-10-16 · Status: accepted
+
+**Context.** As an open-source public-good project, Alexander's Library needs a zero-cost hosting stack without maintaining a paid 24/7 worker VM.
+**Decision.** Host Postgres 16 on Neon's free tier, the Next.js front (`@lib/web`) on Vercel's free tier, and run the research worker via `.github/workflows/worker.yml` (`npm run drain:worker`, which drains the Postgres `jobs` queue and exits). Web server actions optionally dispatch `worker.yml` immediately when `GITHUB_DISPATCH_TOKEN` and `GITHUB_REPO` are set.
+**Consequences.** Zero monthly infrastructure cost on public repositories; worker runs on demand (`workflow_dispatch`) and every 15 minutes (`schedule`).
+
