@@ -98,3 +98,11 @@ Date: 2026-10-16 · Status: accepted
 **Decision.** Host Postgres 16 on Neon's free tier, the Next.js front (`@lib/web`) on Vercel's free tier, and run the research worker via `.github/workflows/worker.yml` (`npm run drain:worker`, which drains the Postgres `jobs` queue and exits). Web server actions optionally dispatch `worker.yml` immediately when `GITHUB_DISPATCH_TOKEN` and `GITHUB_REPO` are set.
 **Consequences.** Zero monthly infrastructure cost on public repositories; worker runs on demand (`workflow_dispatch`) and every 15 minutes (`schedule`).
 
+## D-013: Topic synthesis as an evaluated decision ledger alongside evidence grading
+
+Date: 2026-10-16 · Status: accepted
+
+**Context.** Scientific inquiry requires actionable calibration across clinical or demographic subgroups rather than isolated methodological tiers (T1–T6 claims list). Readers need prior odds at a glance, structured interventions evaluated by measured effect sizes and landmark trials, consultations questions, and an uncluttered interface where everything starts collapsed.
+**Decision.** Extend `Topic` with a `synthesis jsonb` column holding `benchmarks` (baseline probabilities), `levers` (interventions with effect sizes, landmark trials, and verdicts), `clinicalQuestions` (specialist checklist), and `sweepQueue` (frontier trial tracking). The `skeptic` agent extracts this schema during review. The Next.js front renders the decision ledger prominently while deep academic evidence tiers (T1–T6) and sources are collapsed into clean accordions. Tree navigation defaults to focused mode (`containsSlug(node, activeSlug)`), keeping all inactive branches collapsed.
+**Consequences.** Results are immediately actionable and quantitative for any reader in a clinical subgroup without sacrificing objective study-design grading or literature provenance.
+

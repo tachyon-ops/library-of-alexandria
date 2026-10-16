@@ -12,7 +12,7 @@ const STATUS_WORD: Record<string, string> = {
   error: "stopped on an error",
 };
 
-type FoldMode = "smart" | "deep-collapsed" | "trunks-only" | "expanded";
+type FoldMode = "focused" | "expanded" | "collapsed";
 
 function containsSlug(node: TreeBranch, slug?: string): boolean {
   if (!slug) return false;
@@ -29,15 +29,10 @@ function countDescendants(node: TreeBranch): number {
 }
 
 function isOpenForMode(node: TreeBranch, mode: FoldMode, activeSlug?: string): boolean {
-  if (containsSlug(node, activeSlug)) return true;
   if (mode === "expanded") return true;
-  if (mode === "trunks-only") return false;
-  if (mode === "deep-collapsed") {
-    return node.depth < 2 && subtreeClaims(node) > 0;
-  }
-  // "smart": unfold trunks/branches up to depth 2 that contain findings; fold nodes >= 3 hops away
-  if (node.depth >= 3) return false;
-  return subtreeClaims(node) > 0;
+  if (mode === "collapsed") return false;
+  // "focused" (default): everything is collapsed all the time and only open what we're in
+  return containsSlug(node, activeSlug);
 }
 
 function Branch({
@@ -91,7 +86,7 @@ function Branch({
 }
 
 export function Tree({ roots, activeSlug }: { roots: TreeBranch[]; activeSlug?: string }) {
-  const [mode, setMode] = useState<FoldMode>("smart");
+  const [mode, setMode] = useState<FoldMode>("focused");
   const [version, setVersion] = useState(0);
 
   if (roots.length === 0) return <p className="muted">The library is empty. Start the first branch below.</p>;
@@ -107,11 +102,19 @@ export function Tree({ roots, activeSlug }: { roots: TreeBranch[]; activeSlug?: 
         <button
           type="button"
           className="crumb-pill"
-          data-active={mode === "smart" ? "true" : undefined}
-          onClick={() => selectMode("smart")}
-          title="Unfold researched trunks and fold branches 3+ hops deep"
+          data-active={mode === "focused" ? "true" : undefined}
+          onClick={() => selectMode("focused")}
+          title="Only unfold the active branch; keep everything else collapsed"
         >
-          Smart fold (≤ 3 hops)
+          Active branch only
+        </button>
+        <button
+          type="button"
+          className="crumb-pill"
+          data-active={mode === "collapsed" ? "true" : undefined}
+          onClick={() => selectMode("collapsed")}
+        >
+          Collapse all
         </button>
         <button
           type="button"
@@ -120,14 +123,6 @@ export function Tree({ roots, activeSlug }: { roots: TreeBranch[]; activeSlug?: 
           onClick={() => selectMode("expanded")}
         >
           Expand all
-        </button>
-        <button
-          type="button"
-          className="crumb-pill"
-          data-active={mode === "trunks-only" ? "true" : undefined}
-          onClick={() => selectMode("trunks-only")}
-        >
-          Collapse all
         </button>
       </div>
       <ul className="tree">
