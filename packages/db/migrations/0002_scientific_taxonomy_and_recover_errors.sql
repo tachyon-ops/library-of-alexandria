@@ -1,5 +1,7 @@
 -- 0002: Normalise legacy personal-case seed topics to canonical scientific taxonomy
--- across the general human population, and recover topics stopped on 429 quota errors.
+-- across the general human population ("Advanced Maternal Age & Pregnancy After 40"),
+-- seed top-level encyclopaedic trunks of human knowledge, reparent Reproductive Medicine
+-- under Natural & Life Sciences -> Medicine, Health & Longevity, and recover 429 errors.
 
 UPDATE topics
 SET title = 'Reproductive Medicine & Human Fertility',
@@ -25,7 +27,7 @@ WHERE slug = 'human-fertility-uterine-receptivity-and-implantation-failure'
 UPDATE topics
 SET title = 'Andrology & Male Factor Infertility',
     slug = 'andrology-male-factor-infertility',
-    brief = 'Spermatogenesis, sperm chromatin and DNA integrity, paternal age effects across the population, varicocele, and clinical interventions.'
+    brief = 'Spermatogenesis, sperm chromatin and DNA integrity, paternal age effects after 40 across the population, varicocele, and clinical interventions.'
 WHERE slug = 'human-fertility-male-factor-after-40'
   AND NOT EXISTS (SELECT 1 FROM topics WHERE slug = 'andrology-male-factor-infertility');
 
@@ -44,11 +46,11 @@ WHERE slug = 'human-fertility-frontier-fertility-treatments'
   AND NOT EXISTS (SELECT 1 FROM topics WHERE slug = 'translational-geroprotective-reproductive-biology');
 
 UPDATE topics
-SET title = 'Maternal-Fetal Medicine & Obstetric Perinatology',
-    slug = 'maternal-fetal-medicine-obstetric-perinatology',
-    brief = 'Maternal cardiovascular and metabolic adaptation, hypertensive disorders of pregnancy, gestational diabetes, placental biology, and age-stratified perinatal outcomes.'
-WHERE slug = 'human-fertility-pregnancy-after-44'
-  AND NOT EXISTS (SELECT 1 FROM topics WHERE slug = 'maternal-fetal-medicine-obstetric-perinatology');
+SET title = 'Advanced Maternal Age & Pregnancy After 40',
+    slug = 'advanced-maternal-age-pregnancy-after-40',
+    brief = 'Maternal cardiovascular and metabolic adaptation, hypertensive disorders of pregnancy, gestational diabetes, placental biology, and perinatal outcomes in pregnancy after age 40.'
+WHERE slug IN ('human-fertility-pregnancy-after-44', 'maternal-fetal-medicine-obstetric-perinatology')
+  AND NOT EXISTS (SELECT 1 FROM topics WHERE slug = 'advanced-maternal-age-pregnancy-after-40');
 
 UPDATE topics
 SET title = 'Autologous versus Donor Oocyte Perinatal Outcomes',
@@ -182,6 +184,65 @@ SET title = 'mTOR Pathway Modulation & Follicular Longevity',
     brief = 'Mechanistic and translational studies of mTORC1 inhibition (rapamycin/sirolimus) on primordial follicle activation and reproductive aging.'
 WHERE slug = 'human-fertility-frontier-fertility-treatments-rapamycin-mtor-inhibition-for-ovar'
   AND NOT EXISTS (SELECT 1 FROM topics WHERE slug = 'mtor-pathway-modulation-follicular-longevity');
+
+-- Replace any remaining "after 44" / "44+" strings in topic titles or briefs with generic "after 40":
+UPDATE topics
+SET title = REPLACE(REPLACE(title, 'after 44', 'after 40'), 'After 44', 'After 40'),
+    brief = REPLACE(REPLACE(brief, 'after 44', 'after 40'), '44+', '40+')
+WHERE title ILIKE '%44%' OR brief ILIKE '%44%';
+
+-- Create top-level encyclopaedic trunks of human knowledge if the library already has topics:
+INSERT INTO topics (parent_id, slug, title, brief, depth)
+SELECT NULL, v.slug, v.title, v.brief, 0
+FROM (
+  VALUES
+    ('natural-and-life-sciences', 'Natural & Life Sciences', 'Physics, chemistry, earth and planetary sciences, molecular and cellular biology, organismal biology, ecology, and biomedical sciences.'),
+    ('formal-sciences-mathematics-and-computing', 'Formal Sciences, Mathematics & Computing', 'Pure and applied mathematics, logic, statistics, theoretical computer science, artificial intelligence, and systems architecture.'),
+    ('economics-and-political-economy', 'Economics & Political Economy', 'Microeconomics, macroeconomics, econometrics, economic history, public finance, industrial organisation, and global trade.'),
+    ('law-and-jurisprudence', 'Law & Jurisprudence', 'Constitutional, civil, criminal, administrative, and international law, comparative legal theory, bioethics, and regulatory frameworks.'),
+    ('politics-governance-and-international-relations', 'Politics, Governance & International Relations', 'Political theory, comparative institutions, public policy, diplomacy, security studies, and civic administration.'),
+    ('history-and-archaeology', 'History & Archaeology', 'Ancient, medieval, early-modern, and contemporary world history, epigraphy, philology, historiography, and material archaeology.'),
+    ('architecture-engineering-and-urbanism', 'Architecture, Engineering & Urbanism', 'Structural and civil engineering, architectural history and theory, sustainable materials, urban planning, and infrastructure systems.'),
+    ('arts-literature-and-aesthetics', 'Arts, Literature & Aesthetics', 'Visual arts, musicology, comparative literature, poetics, performing arts, and aesthetic philosophy across cultures.'),
+    ('philosophy-ethics-and-epistemology', 'Philosophy, Ethics & Epistemology', 'Metaphysics, epistemology, philosophy of science, moral philosophy, and history of human thought.')
+) AS v(slug, title, brief)
+WHERE EXISTS (SELECT 1 FROM topics)
+  AND NOT EXISTS (SELECT 1 FROM topics t WHERE t.slug = v.slug);
+
+-- Create "Medicine, Health & Longevity" under "Natural & Life Sciences" if topics exist:
+INSERT INTO topics (parent_id, slug, title, brief, depth)
+SELECT nls.id,
+       'medicine-health-and-longevity',
+       'Medicine, Health & Longevity',
+       'Clinical medicine, pathophysiology, epidemiology, pharmacology, geroscience, preventive medicine, and translational therapeutics across the human lifespan.',
+       1
+FROM topics nls
+WHERE nls.slug = 'natural-and-life-sciences'
+  AND NOT EXISTS (SELECT 1 FROM topics t WHERE t.slug = 'medicine-health-and-longevity');
+
+-- Reparent "Reproductive Medicine & Human Fertility" under "Medicine, Health & Longevity":
+UPDATE topics rf
+SET parent_id = mhl.id
+FROM topics mhl
+WHERE rf.slug IN ('reproductive-medicine-human-fertility', 'human-fertility')
+  AND mhl.slug = 'medicine-health-and-longevity'
+  AND (rf.parent_id IS NULL OR rf.parent_id <> mhl.id);
+
+-- Recalculate depth across the entire topic forest so every reparented branch has exact depth:
+WITH RECURSIVE tree AS (
+  SELECT id, 0 AS calc_depth
+  FROM topics
+  WHERE parent_id IS NULL
+  UNION ALL
+  SELECT c.id, tree.calc_depth + 1
+  FROM topics c
+  JOIN tree ON c.parent_id = tree.id
+)
+UPDATE topics t
+SET depth = tree.calc_depth
+FROM tree
+WHERE t.id = tree.id
+  AND t.depth <> tree.calc_depth;
 
 -- Recover topics that stopped on 429 quota errors:
 UPDATE topics t

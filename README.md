@@ -2,7 +2,8 @@
 
 > *The search for the elixir of youth — what the record actually says, and how strongly.*
 
-![Ex Libris Bibliotheca Alexandrina](apps/web/public/archival-library.jpg)
+![Ex Libris Bibliotheca Alexandrina (AI-generated allegorical frontispiece)](apps/web/public/archival-library.jpg)
+*Fig. 1 (AI) — Ex Libris Bibliotheca Alexandrina (AI-generated allegorical frontispiece, 2026).*
 
 **Library of Alexandria** (*Alexander's Library*) is an open-source **Tree of Knowledge** for all of humanity, filled by autonomous AI research workers.
 

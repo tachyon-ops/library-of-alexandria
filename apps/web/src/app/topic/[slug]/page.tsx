@@ -20,7 +20,7 @@ import { researchTopic } from "@/app/actions";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { NewTopicForm } from "@/components/NewTopicForm";
 import { Tree } from "@/components/Tree";
-import { loadTree, sql } from "@/lib/data";
+import { loadTree, normaliseTopicTitle, sql } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -66,13 +66,14 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
   const entityGroups = groupBy(entities, (e) => e.kind);
   const running = jobs.find((j) => j.status === "running") ?? jobs.find((j) => j.status === "queued");
   const failed = jobs.find((j) => j.status === "failed");
+  const displayTitle = normaliseTopicTitle(topic.title);
   const briefText =
-    topic.brief ??
+    (topic.brief ? topic.brief.replace(/after 44/gi, "after 40") : null) ??
     (ancestors.length > 0
-      ? `Scientific synthesis, primary literature, and graded evidence within ${ancestors[ancestors.length - 1]!.title}.`
-      : `Scientific synthesis, primary literature, and graded evidence across ${topic.title}.`);
+      ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
+      : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
   const descriptionText =
-    topic.summary ?? describeTopicFallback(topic, ancestors, children, sources.length, claims.length);
+    topic.summary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, claims.length);
 
   return (
     <main className="topic-layout">
@@ -87,11 +88,11 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           {ancestors.map((a) => (
             <span key={a.id}>
               {" / "}
-              <Link href={`/topic/${a.slug}`}>{a.title}</Link>
+              <Link href={`/topic/${a.slug}`}>{normaliseTopicTitle(a.title)}</Link>
             </span>
           ))}
         </p>
-        <h1>{topic.title}</h1>
+        <h1>{displayTitle}</h1>
         <p className="brief">{briefText}</p>
 
         <form action={researchTopic} className="research-bar">
