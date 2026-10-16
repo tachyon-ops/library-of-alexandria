@@ -1,8 +1,8 @@
 # Deployment and release guide
 
-## Current status (POC)
+## Overview
 
-Alexander's Library currently runs locally as a proof of concept. There is no hosted website yet. If the POC proves effective, a hosted deployment will be added once authentication is in place (see `D-009` in `docs/decisions.md` and milestone M5 in `docs/roadmap.md`).
+Alexander's Library can run either locally (with Docker Postgres and a continuous worker) or on the zero-cost managed open-source stack (**Neon Postgres 16** + **Vercel** for `@lib/web` + **GitHub Actions** for `@lib/worker`, see `D-012` in `docs/decisions.md`).
 
 ## Branching and release workflow
 
@@ -72,25 +72,67 @@ Every pull request and push to `develop` or `master`, as well as every `v*` tag,
 
 All five steps must pass before a pull request is merged.
 
-## Running locally during the POC
+## Running locally
 
-Requirements: Node 20+, Docker (for Postgres 16) or a local Postgres 16 instance, and a Claude API key.
+Requirements: Node 20+, Docker (for Postgres 16) or a local Postgres 16 instance, and a Gemini or Anthropic API key.
 
 ```bash
-cp .env.example .env            # set ANTHROPIC_API_KEY and CONTACT_EMAIL
+cp env.template .env            # set GEMINI_API_KEY (or ANTHROPIC_API_KEY) and CONTACT_EMAIL
 docker compose up -d db         # starts Postgres 16 on localhost:5432
 npm ci
 npm run db:migrate
 npm run db:seed                 # seeds the initial fertility branch
 npm run probe                   # live check of Europe PMC, OpenAlex, ClinicalTrials.gov
-npm run dev:worker              # terminal 1: job queue worker
+npm run dev:worker              # terminal 1: continuous job queue worker (or `npm run drain:worker` for one-shot)
 npm run dev:web                 # terminal 2: Next.js front on http://localhost:3000
 ```
 
-## Future website deployment (post-POC)
+## Zero-cost managed deployment (Neon + Vercel + GitHub Actions)
 
-When the POC is validated and ready to host:
+For open-source / public-good hosting (`D-012`), the entire stack runs on free tiers with zero servers to maintain:
 
-1. Complete milestone M5 (`docs/roadmap.md`): add authentication before exposing any public URL (`D-009`).
-2. Provision managed Postgres 16, a web host running `npm run build:web && npm -w @lib/web run start`, and a long-running worker process running `npm -w @lib/worker run start`.
-3. Trigger production deployments from `master` after the release PR and `v*` tag pass CI.
+```mermaid
+flowchart LR
+  user["Reader / Browser"] --> vercel["Vercel (@lib/web)"]
+  vercel -- "SQL read + enqueue job" --> neon[("Neon Postgres 16")]
+  vercel -. "optional workflow_dispatch" .-> gha["GitHub Actions (worker.yml)"]
+  gha -- "npm run drain:worker (every 15m or on dispatch)" --> neon
+```
+
+### Step 1: Database — Neon (Free Tier)
+
+1. Create a free project at [neon.tech](https://neon.tech) (PostgreSQL 16).
+2. Copy the connection string (`postgresql://<user>:<pass>@<host>/<db>?sslmode=require`).
+3. Initialize the schema and initial seed once from your machine (or let the first GitHub Actions worker run do it automatically):
+   ```bash
+   DATABASE_URL="postgresql://...?sslmode=require" npm run db:migrate
+   DATABASE_URL="postgresql://...?sslmode=require" npm run db:seed
+   ```
+
+### Step 2: Background Worker — GitHub Actions (`.github/workflows/worker.yml`)
+
+The workflow in `.github/workflows/worker.yml` runs on `workflow_dispatch` (on-demand) and every 15 minutes (`schedule`), executing `npm run drain:worker` until the `jobs` queue is empty and then exiting cleanly.
+
+In your GitHub repository, open **Settings → Secrets and variables → Actions → New repository secret** and add:
+
+| Secret | Value |
+| --- | --- |
+| `DATABASE_URL` | Your Neon Postgres connection string |
+| `LLM_PROVIDER` | `gemini` (or `anthropic`) |
+| `GEMINI_API_KEY` | Your Gemini API key (or `ANTHROPIC_API_KEY` if using Anthropic) |
+| `CONTACT_EMAIL` | Your polite-pool contact email (e.g. `nmpribeiro@gmail.com`) |
+
+You can also trigger a worker run manually anytime from the **Actions → Research Worker → Run workflow** button on GitHub.
+
+### Step 3: Web Front — Vercel (Free Hobby / Open Source Tier)
+
+1. Import `tachyon-ops/library-of-alexandria` into [vercel.com](https://vercel.com).
+2. Set **Root Directory** to `apps/web` and **Production Branch** to `master` (with preview deployments on `develop` / PRs).
+3. Add the following Environment Variables in Vercel:
+   - `DATABASE_URL` — the same Neon Postgres connection string.
+   - `AUTO_EXPAND_DEPTH` — `1` (optional default).
+   - *(Optional, for instant worker wakeup when clicking "Research this topic")*:
+     - `GITHUB_REPO` — `tachyon-ops/library-of-alexandria`
+     - `GITHUB_REF` — `master`
+     - `GITHUB_DISPATCH_TOKEN` — a fine-grained GitHub Personal Access Token scoped to `tachyon-ops/library-of-alexandria` with **Actions: Read and write** permission.
+4. Deploy. Production updates deploy automatically whenever a release PR is merged from `develop` into `master`.

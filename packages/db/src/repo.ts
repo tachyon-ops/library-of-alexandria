@@ -392,6 +392,14 @@ export async function openJobCount(sql: Sql, topicId: string): Promise<number> {
   return row?.n ?? 0;
 }
 
+/** Milliseconds until the earliest queued job is due (<= 0 when due now), or null when the queue is empty. */
+export async function nextQueuedDelayMs(sql: Sql): Promise<number | null> {
+  const [row] = await sql<{ ms: number | null }[]>`
+    SELECT (EXTRACT(EPOCH FROM (min(run_after) - now())) * 1000)::int AS ms
+    FROM jobs WHERE status = 'queued'`;
+  return row?.ms ?? null;
+}
+
 export async function recentJobs(sql: Sql, topicId: string, limit = 12) {
   return sql<{ id: string; kind: JobKind; status: string; attempts: number; error: string | null; createdAt: Date }[]>`
     SELECT id, kind, status, attempts, error, created_at FROM jobs WHERE topic_id = ${topicId}

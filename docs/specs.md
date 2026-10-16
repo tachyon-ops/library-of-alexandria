@@ -86,7 +86,7 @@ All roles use the `Llm` interface (`ClaudeLlm` for Anthropic, `GeminiLlm` for Ge
 | web     | one task, ≤ `MAX_WEB_SEARCHES_PER_JOB` searches, notes clipped to 20,000 characters | entities with key/value attributes and cited URLs                                                                      |
 | skeptic | all claims as `[index] (tier, label, source count, years) statement`, entity names  | summary, gaps, merges, relabels, controversies                                                                         |
 
-Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic fallback across `gemini-3-flash-preview` and `gemini-3.8-flash` on 503/404); each overridable by environment variable.
+Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic fallback across `gemini-3.5-flash`, `gemini-3-flash-preview`, `gemini-3.5-flash-lite` and `gemini-3.8-flash` on 503/404); each overridable by environment variable.
 
 ## 7. Front
 
@@ -99,19 +99,21 @@ The page refreshes every 5 s while the topic has open jobs or is `queued` or `re
 
 ## 8. Configuration
 
-| Variable                                                    | Default     | Effect                                      |
-| ----------------------------------------------------------- | ----------- | ------------------------------------------- |
-| `DATABASE_URL`                                              | none        | Postgres connection                         |
-| `LLM_PROVIDER`                                              | auto-detect | `anthropic` or `gemini`                     |
-| `AI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`         | none        | API key for the chosen provider             |
-| `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC` | see §6      | model per role                              |
-| `CONTACT_EMAIL`                                             | none        | polite-pool contact for sources             |
-| `MAX_LLM_CALLS_PER_DAY`                                     | 400     | worker pauses when reached                  |
-| `MAX_WEB_SEARCHES_PER_JOB`                                  | 8       | per web task                                |
-| `SOURCES_PER_QUERY`                                         | 10      | results per adapter per query               |
-| `MAX_SOURCES_PER_TOPIC`                                     | 60      | abstracts read per research run             |
-| `AUTO_EXPAND_DEPTH`                                         | 1       | levels of branches researched automatically |
-| `WORKER_POLL_MS`                                            | 3000    | idle poll interval                          |
+| Variable                                                    | Default     | Effect                                                    |
+| ----------------------------------------------------------- | ----------- | --------------------------------------------------------- |
+| `DATABASE_URL`                                              | none        | Postgres connection                                       |
+| `LLM_PROVIDER`                                              | auto-detect | `anthropic` or `gemini`                                   |
+| `AI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`         | none        | API key for the chosen provider                           |
+| `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC` | see §6      | model per role                                            |
+| `CONTACT_EMAIL`                                             | none        | polite-pool contact for sources                           |
+| `MAX_LLM_CALLS_PER_DAY`                                     | 400         | worker pauses (or exits in drain mode) when reached       |
+| `MAX_WEB_SEARCHES_PER_JOB`                                  | 8           | per web task                                              |
+| `SOURCES_PER_QUERY`                                         | 10          | results per adapter per query                             |
+| `MAX_SOURCES_PER_TOPIC`                                     | 60          | abstracts read per research run                           |
+| `AUTO_EXPAND_DEPTH`                                         | 1           | levels of branches researched automatically               |
+| `WORKER_POLL_MS`                                            | 3000        | idle poll interval                                        |
+| `WORKER_DRAIN`                                              | `false`     | when `1`/`true` (or `--drain`), drain queue and exit      |
+| `GITHUB_REPO`, `GITHUB_REF`, `GITHUB_DISPATCH_TOKEN`        | none        | optional webhook dispatch from web actions to `worker.yml` |
 
 ## 9. Non-functional requirements
 

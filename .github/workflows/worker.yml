@@ -1,0 +1,62 @@
+name: Research Worker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+concurrency:
+  group: research-worker
+  cancel-in-progress: false
+
+jobs:
+  drain:
+    name: Drain Postgres job queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'gemini' }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      AI_API_KEY: ${{ secrets.AI_API_KEY }}
+      CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+      MODEL_SCOUT: ${{ secrets.MODEL_SCOUT }}
+      MODEL_READER: ${{ secrets.MODEL_READER }}
+      MODEL_SKEPTIC: ${{ secrets.MODEL_SKEPTIC }}
+      MODEL_WEB: ${{ secrets.MODEL_WEB }}
+    steps:
+      - name: Check secrets configured
+        id: check
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL secret is not configured yet; skipping worker drain."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.check.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Migrate and seed database (idempotent)
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          npm run db:migrate
+          npm run db:seed
+
+      - name: Drain queued research jobs
+        if: steps.check.outputs.ready == 'true'
+        run: npm run drain:worker

@@ -239,5 +239,14 @@ describe.skipIf(!url)("research pipeline", () => {
     const done = await repo.getTopic(sql, root.id);
     expect(done).toMatchObject({ status: "ready", summary: "Age at freezing and egg count drive success.", gaps: ["Outcomes above 45 at transfer"] });
     expect(llm.calls).toEqual(["scout", "web-search", "web", "reader", "skeptic"]);
+
+    // Drain helper returns null when queue is empty and positive ms when a delayed job is queued.
+    expect(await repo.nextQueuedDelayMs(sql)).toBeNull();
+    const delayedId = await repo.enqueueJob(sql, "review", root.id, {}, 10);
+    const delayMs = await repo.nextQueuedDelayMs(sql);
+    expect(delayMs).not.toBeNull();
+    expect(delayMs!).toBeGreaterThan(1000);
+    await repo.completeJob(sql, delayedId);
+    expect(await repo.nextQueuedDelayMs(sql)).toBeNull();
   });
 });

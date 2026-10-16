@@ -12,6 +12,7 @@ async function main() {
   await repo.migrate(sql);
   const maxCallsPerDay = Number(process.env.MAX_LLM_CALLS_PER_DAY ?? 400);
   const pollMs = Number(process.env.WORKER_POLL_MS ?? 3000);
+  const drain = process.argv.includes("--drain") || /^(1|true)$/i.test(process.env.WORKER_DRAIN ?? "");
   let currentJob: string | null = null;
 
   const llm = createLlm((u) =>
@@ -32,17 +33,34 @@ async function main() {
 
   const requeued = await repo.requeueStaleJobs(sql);
   if (requeued) deps.log(`requeued ${requeued} stale jobs`);
-  deps.log("worker ready");
+  deps.log(drain ? "worker ready (drain mode)" : "worker ready");
 
   while (!stopping) {
     if ((await repo.llmCallsToday(sql)) >= maxCallsPerDay) {
+      if (drain) {
+        deps.log(`daily LLM budget (${maxCallsPerDay} calls) reached; exiting drain`);
+        break;
+      }
       deps.log(`daily LLM budget (${maxCallsPerDay} calls) reached; pausing 10 minutes`);
       await sleep(600_000);
       continue;
     }
     const job = await repo.claimNextJob(sql);
     if (!job) {
-      await sleep(pollMs);
+      if (!drain) {
+        await sleep(pollMs);
+        continue;
+      }
+      const waitMs = await repo.nextQueuedDelayMs(sql);
+      if (waitMs === null) {
+        deps.log("queue drained; exiting");
+        break;
+      }
+      if (waitMs > 65_000) {
+        deps.log(`next queued job in ${Math.round(waitMs / 1000)}s; exiting drain`);
+        break;
+      }
+      await sleep(Math.max(250, waitMs + 200));
       continue;
     }
     currentJob = job.id;
