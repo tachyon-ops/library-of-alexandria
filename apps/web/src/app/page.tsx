@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { usageSummary } from "@lib/db";
+import { listTopicLinks, usageSummary } from "@lib/db";
 import { Tree } from "@/components/Tree";
 import { TopicGraph3D } from "@/components/TopicGraph3D";
 import { NewTopicForm } from "@/components/NewTopicForm";
@@ -17,7 +17,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [roots, usage] = await Promise.all([loadTree(), usageSummary(sql())]);
+  const [roots, usage, crossLinks] = await Promise.all([loadTree(), usageSummary(sql()), listTopicLinks(sql())]);
   const busy = anyBusy(roots);
   const calls = usage.reduce((n, u) => n + u.calls, 0);
   const searches = usage.reduce((n, u) => n + u.webSearches, 0);
@@ -33,7 +33,7 @@ export default async function Home() {
           grade every finding by study design; and keep frontier and disputed ideas visible.{" "}
           <Link href="/about">Read the chronicle of the quest →</Link>
         </p>
-        {roots.length > 0 && <TopicGraph3D roots={roots} />}
+        {roots.length > 0 && <TopicGraph3D roots={roots} crossLinks={crossLinks} />}
         <h2 className="index-heading">Catalogue of scientific disciplines</h2>
         <Tree roots={roots} />
       </section>

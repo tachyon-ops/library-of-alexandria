@@ -7,6 +7,7 @@ import {
   topicClaims,
   topicControversies,
   topicEntities,
+  topicLinks,
   topicMilestones,
   topicSources,
   type ClaimView,
@@ -48,10 +49,11 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
   const topic = await getTopicBySlug(db, slug);
   if (!topic) notFound();
 
-  const [roots, ancestors, children, claims, dbSources, entities, milestones, debates, open, jobs] = await Promise.all([
+  const [roots, ancestors, children, connectedTopics, claims, dbSources, entities, milestones, debates, open, jobs] = await Promise.all([
     loadTree(),
     getAncestors(db, topic.id),
     getChildren(db, topic.id),
+    topicLinks(db, topic.id),
     topicClaims(db, topic.id),
     topicSources(db, topic.id),
     topicEntities(db, topic.id),
@@ -113,7 +115,7 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </span>
         </form>
 
-        <section className="summary" aria-label="Topic overview">
+        <section className="summary">
           <p>{descriptionText}</p>
         </section>
 
@@ -202,6 +204,24 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
             <ul className="gaps">
               {topic.gaps.map((g) => (
                 <li key={g}>{g}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {connectedTopics.length > 0 && (
+          <section>
+            <h2>Connected disciplines across the tree</h2>
+            <p className="section-note">
+              Cross-branch and cross-trunk intersections linking this field to related scientific domains.
+            </p>
+            <ul className="cross-links">
+              {connectedTopics.map((l) => (
+                <li key={l.id}>
+                  <span className="relation-badge">{l.relation}</span>{" "}
+                  <Link href={`/topic/${l.slug}`}>{normaliseTopicTitle(l.title)}</Link>
+                  {(l.note ?? l.brief) && <span className="muted"> — {l.note ?? l.brief}</span>}
+                </li>
               ))}
             </ul>
           </section>
