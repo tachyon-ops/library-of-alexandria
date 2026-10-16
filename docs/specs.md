@@ -74,7 +74,7 @@ Interface (`packages/crawlers/src/types.ts`): `search(query, { limit }) → Sour
 | `openalex`         | `api.openalex.org/works?search=`, `filter=has_abstract:true`                  | relevance        | `review` → systematic review                 |
 | `clinicaltrials`   | `clinicaltrials.gov/api/v2/studies`                                           | last update      | interventional → RCT, observational → cohort |
 
-All requests go through `getJson`: 20 s timeout, two retries on 429, 5xx or timeout, User-Agent carrying `CONTACT_EMAIL`.
+All requests go through `getJson`: 20 s timeout, two retries on 429, 5xx or timeout, User-Agent carrying `CONTACT_EMAIL`; OpenAlex attaches `OPENALEX_API_KEY` (via query param and `api-key` header) when configured.
 
 ## 6. Agent roles
 
