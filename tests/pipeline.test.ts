@@ -1,6 +1,17 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { EntitiesSchema, PlanSchema, ReadingSchema, ReviewSchema, reviewTopic, type Llm } from "@lib/agents";
+import {
+  EntitiesSchema,
+  GeminiLlm,
+  modelsFromEnv,
+  PlanSchema,
+  providerFromEnv,
+  ReadingSchema,
+  ReviewSchema,
+  reviewTopic,
+  type Llm,
+  type Usage,
+} from "@lib/agents";
 import { parseClinicalTrials, parseEuropePmc, parseOpenAlex, type SourceAdapter } from "@lib/crawlers";
 import * as repo from "@lib/db";
 import { runJob, type Deps } from "../apps/worker/src/handlers";
@@ -85,6 +96,66 @@ describe("agent validation", () => {
     });
     expect(review.merges).toEqual([{ keep: 0, drop: [1] }]);
     expect(review.controversies[0]!.claimIndexes).toEqual([2]);
+  });
+
+  it("auto-selects provider and models from environment and runs GeminiLlm", async () => {
+    expect(providerFromEnv({ GEMINI_API_KEY: "g-key" } as never)).toBe("gemini");
+    expect(providerFromEnv({ ANTHROPIC_API_KEY: "a-key" } as never)).toBe("anthropic");
+    expect(modelsFromEnv({ GEMINI_API_KEY: "g-key" } as never).reader).toBe("gemini-2.5-flash");
+
+    const usage: Usage[] = [];
+    const fakeFetch: typeof fetch = async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      if (body.tools) {
+        return new Response(
+          JSON.stringify({
+            candidates: [
+              {
+                finishReason: "STOP",
+                content: { parts: [{ text: "Found Clinic Madrid." }] },
+                groundingMetadata: {
+                  webSearchQueries: ["fertility clinic madrid"],
+                  groundingChunks: [{ web: { uri: "https://madrid.example", title: "Clinic Madrid" } }],
+                },
+              },
+            ],
+            usageMetadata: { promptTokenCount: 12, candidatesTokenCount: 8 },
+          }),
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              finishReason: "STOP",
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      subtopics: [],
+                      literatureQueries: ["oocyte vitrification"],
+                      trialQueries: [],
+                      webQueries: [],
+                      frontierAngles: [],
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+          usageMetadata: { promptTokenCount: 20, candidatesTokenCount: 15 },
+        }),
+      );
+    };
+    const gemini = new GeminiLlm(modelsFromEnv({ LLM_PROVIDER: "gemini" } as never), (u) => {
+      usage.push(u);
+    }, "test-key", fakeFetch);
+    const plan = await gemini.structured({ role: "scout", system: "s", prompt: "p", schema: PlanSchema });
+    expect(plan.literatureQueries).toEqual(["oocyte vitrification"]);
+    const web = await gemini.webResearch({ role: "web", system: "s", prompt: "p", maxSearches: 4 });
+    expect(web.citations).toEqual([{ url: "https://madrid.example", title: "Clinic Madrid", citedText: null }]);
+    expect(usage).toHaveLength(2);
+    expect(usage[1]!.webSearches).toBe(1);
   });
 });
 

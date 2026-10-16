@@ -1,4 +1,4 @@
-import { ClaudeLlm, modelsFromEnv } from "@lib/agents";
+import { createLlm } from "@lib/agents";
 import { LITERATURE_ADAPTERS, TRIAL_ADAPTERS } from "@lib/crawlers";
 import * as repo from "@lib/db";
 import { configFromEnv, runJob, type Deps } from "./handlers";
@@ -14,7 +14,7 @@ async function main() {
   const pollMs = Number(process.env.WORKER_POLL_MS ?? 3000);
   let currentJob: string | null = null;
 
-  const llm = new ClaudeLlm(modelsFromEnv(), (u) =>
+  const llm = createLlm((u) =>
     repo.logUsage(sql, { jobId: currentJob, role: u.role, model: u.model, inputTokens: u.inputTokens, outputTokens: u.outputTokens, webSearches: u.webSearches }),
   );
   const deps: Deps = {

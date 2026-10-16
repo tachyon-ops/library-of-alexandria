@@ -1,8 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import type { z } from "zod";
+import { z } from "zod";
 
 export type Role = "scout" | "reader" | "web" | "skeptic";
+export type LlmProvider = "anthropic" | "gemini";
 
 export interface Usage {
   role: Role;
@@ -20,7 +21,7 @@ export interface Citation {
 
 /**
  * The only door to a language model. Agents depend on this interface, not on
- * the SDK, so the pipeline can be tested with a scripted stand-in.
+ * an SDK, so the pipeline can run on Anthropic, Gemini, or a scripted test double.
  */
 export interface Llm {
   structured<T>(args: { role: Role; system: string; prompt: string; schema: z.ZodType<T>; maxTokens?: number }): Promise<T>;
@@ -34,13 +35,40 @@ export const DEFAULT_MODELS: Record<Role, string> = {
   skeptic: "claude-opus-5-5",
 };
 
-export function modelsFromEnv(env = process.env): Record<Role, string> {
+export const DEFAULT_GEMINI_MODELS: Record<Role, string> = {
+  scout: "gemini-2.5-pro",
+  reader: "gemini-2.5-flash",
+  web: "gemini-2.5-flash",
+  skeptic: "gemini-2.5-pro",
+};
+
+export function providerFromEnv(env = process.env): LlmProvider {
+  const explicit = env.LLM_PROVIDER?.trim().toLowerCase();
+  if (explicit === "gemini") return "gemini";
+  if (explicit === "anthropic") return "anthropic";
+  if (env.GEMINI_API_KEY && !env.ANTHROPIC_API_KEY) return "gemini";
+  return "anthropic";
+}
+
+export function modelsFromEnv(env = process.env, provider = providerFromEnv(env)): Record<Role, string> {
+  const defaults = provider === "gemini" ? DEFAULT_GEMINI_MODELS : DEFAULT_MODELS;
   return {
-    scout: env.MODEL_SCOUT || DEFAULT_MODELS.scout,
-    reader: env.MODEL_READER || DEFAULT_MODELS.reader,
-    web: env.MODEL_WEB || DEFAULT_MODELS.web,
-    skeptic: env.MODEL_SKEPTIC || DEFAULT_MODELS.skeptic,
+    scout: env.MODEL_SCOUT || defaults.scout,
+    reader: env.MODEL_READER || defaults.reader,
+    web: env.MODEL_WEB || defaults.web,
+    skeptic: env.MODEL_SKEPTIC || defaults.skeptic,
   };
+}
+
+export function createLlm(onUsage: (u: Usage) => Promise<void> | void = () => {}, env = process.env): Llm {
+  const provider = providerFromEnv(env);
+  const models = modelsFromEnv(env, provider);
+  if (provider === "gemini") {
+    const apiKey = env.GEMINI_API_KEY || env.AI_API_KEY || "";
+    return new GeminiLlm(models, onUsage, apiKey);
+  }
+  const apiKey = env.ANTHROPIC_API_KEY || env.AI_API_KEY;
+  return new ClaudeLlm(models, onUsage, apiKey ? new Anthropic({ apiKey }) : undefined);
 }
 
 /** Claude API implementation: structured outputs for JSON, the server-side web search tool for the web. */
@@ -48,7 +76,7 @@ export class ClaudeLlm implements Llm {
   private client: Anthropic;
 
   constructor(
-    private models: Record<Role, string> = modelsFromEnv(),
+    private models: Record<Role, string> = modelsFromEnv(process.env, "anthropic"),
     private onUsage: (u: Usage) => Promise<void> | void = () => {},
     client?: Anthropic,
   ) {
@@ -105,5 +133,97 @@ export class ClaudeLlm implements Llm {
       messages.push({ role: "assistant", content: res.content });
     }
     return { text: texts.join(""), citations: [...citations.values()] };
+  }
+}
+
+interface GeminiResponse {
+  candidates?: {
+    finishReason?: string;
+    content?: { parts?: { text?: string }[] };
+    groundingMetadata?: {
+      webSearchQueries?: string[];
+      groundingChunks?: { web?: { uri?: string; title?: string } }[];
+    };
+  }[];
+  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+}
+
+/** Gemini API implementation: JSON Schema structured output and Google Search grounding. */
+export class GeminiLlm implements Llm {
+  constructor(
+    private models: Record<Role, string> = modelsFromEnv(process.env, "gemini"),
+    private onUsage: (u: Usage) => Promise<void> | void = () => {},
+    private apiKey: string = process.env.GEMINI_API_KEY || process.env.AI_API_KEY || "",
+    private fetchImpl: typeof fetch = fetch,
+  ) {}
+
+  async structured<T>(args: { role: Role; system: string; prompt: string; schema: z.ZodType<T>; maxTokens?: number }): Promise<T> {
+    const model = this.models[args.role];
+    const jsonSchema = { ...(z.toJSONSchema(args.schema) as Record<string, unknown>) };
+    delete jsonSchema.$schema;
+    const data = await this.call(model, {
+      systemInstruction: { parts: [{ text: args.system }] },
+      contents: [{ role: "user", parts: [{ text: args.prompt }] }],
+      generationConfig: {
+        maxOutputTokens: args.maxTokens ?? 8000,
+        responseMimeType: "application/json",
+        responseJsonSchema: jsonSchema,
+      },
+    });
+    const cand = data.candidates?.[0];
+    await this.onUsage({
+      role: args.role,
+      model,
+      inputTokens: data.usageMetadata?.promptTokenCount ?? 0,
+      outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+      webSearches: 0,
+    });
+    if (cand?.finishReason === "SAFETY" || cand?.finishReason === "PROHIBITED_CONTENT" || cand?.finishReason === "BLOCKLIST") {
+      throw new Error(`${args.role}: model declined the request`);
+    }
+    if (cand?.finishReason === "MAX_TOKENS") throw new Error(`${args.role}: output cut off at max_tokens`);
+    const raw = (cand?.content?.parts ?? []).map((p) => p.text ?? "").join("").trim();
+    if (!raw) throw new Error(`${args.role}: no structured output returned`);
+    return args.schema.parse(JSON.parse(raw));
+  }
+
+  async webResearch(args: { role: Role; system: string; prompt: string; maxSearches: number }) {
+    const model = this.models[args.role];
+    const data = await this.call(model, {
+      systemInstruction: { parts: [{ text: args.system }] },
+      contents: [{ role: "user", parts: [{ text: args.prompt }] }],
+      tools: [{ google_search: {} }],
+      generationConfig: { maxOutputTokens: 8000 },
+    });
+    const cand = data.candidates?.[0];
+    const gm = cand?.groundingMetadata;
+    await this.onUsage({
+      role: args.role,
+      model,
+      inputTokens: data.usageMetadata?.promptTokenCount ?? 0,
+      outputTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+      webSearches: Math.min(args.maxSearches, gm?.webSearchQueries?.length ?? 0),
+    });
+    const text = (cand?.content?.parts ?? []).map((p) => p.text ?? "").join("");
+    const citations = new Map<string, Citation>();
+    for (const chunk of gm?.groundingChunks ?? []) {
+      const url = chunk.web?.uri;
+      if (url && !citations.has(url)) {
+        citations.set(url, { url, title: chunk.web?.title ?? null, citedText: null });
+      }
+    }
+    return { text, citations: [...citations.values()] };
+  }
+
+  private async call(model: string, body: Record<string, unknown>): Promise<GeminiResponse> {
+    if (!this.apiKey) throw new Error("GEMINI_API_KEY (or AI_API_KEY) is not set");
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const res = await this.fetchImpl(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 400)}`);
+    return (await res.json()) as GeminiResponse;
   }
 }

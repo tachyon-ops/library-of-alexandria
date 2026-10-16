@@ -77,7 +77,7 @@ All requests go through `getJson`: 20 s timeout, two retries on 429, 5xx or time
 
 ## 6. Agent roles
 
-All roles use the `Llm` interface; JSON outputs use Claude structured outputs with the zod schemas exported by each file.
+All roles use the `Llm` interface (`ClaudeLlm` for Anthropic, `GeminiLlm` for Gemini); JSON outputs use structured outputs with the zod schemas exported by each file.
 
 | Role    | Input limit                                                                         | Output contract                                                                                                        |
 | ------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -86,7 +86,7 @@ All roles use the `Llm` interface; JSON outputs use Claude structured outputs wi
 | web     | one task, ≤ `MAX_WEB_SEARCHES_PER_JOB` searches, notes clipped to 20,000 characters | entities with key/value attributes and cited URLs                                                                      |
 | skeptic | all claims as `[index] (tier, label, source count, years) statement`, entity names  | summary, gaps, merges, relabels, controversies                                                                         |
 
-Default models: scout and web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; each overridable by environment variable.
+Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses scout/skeptic `gemini-2.5-pro`, reader/web `gemini-2.5-flash`; each overridable by environment variable.
 
 ## 7. Front
 
@@ -99,12 +99,13 @@ The page refreshes every 5 s while the topic has open jobs or is `queued` or `re
 
 ## 8. Configuration
 
-| Variable                                                    | Default | Effect                                      |
-| ----------------------------------------------------------- | ------- | ------------------------------------------- |
-| `DATABASE_URL`                                              | none    | Postgres connection                         |
-| `ANTHROPIC_API_KEY`                                         | none    | Claude API                                  |
-| `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC` | see §6  | model per role                              |
-| `CONTACT_EMAIL`                                             | none    | polite-pool contact for sources             |
+| Variable                                                    | Default     | Effect                                      |
+| ----------------------------------------------------------- | ----------- | ------------------------------------------- |
+| `DATABASE_URL`                                              | none        | Postgres connection                         |
+| `LLM_PROVIDER`                                              | auto-detect | `anthropic` or `gemini`                     |
+| `AI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`         | none        | API key for the chosen provider             |
+| `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC` | see §6      | model per role                              |
+| `CONTACT_EMAIL`                                             | none        | polite-pool contact for sources             |
 | `MAX_LLM_CALLS_PER_DAY`                                     | 400     | worker pauses when reached                  |
 | `MAX_WEB_SEARCHES_PER_JOB`                                  | 8       | per web task                                |
 | `SOURCES_PER_QUERY`                                         | 10      | results per adapter per query               |
