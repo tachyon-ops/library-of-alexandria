@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { usageSummary } from "@lib/db";
 import { Tree } from "@/components/Tree";
+import { TopicGraph3D } from "@/components/TopicGraph3D";
 import { NewTopicForm } from "@/components/NewTopicForm";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import {
@@ -24,11 +26,15 @@ export default async function Home() {
     <main className="home">
       <AutoRefresh active={busy} />
       <section className="home-tree">
-        <h1>The tree of knowledge</h1>
+        <h1>The Tree of Knowledge</h1>
         <p className="lede">
-          Each branch is read by research workers: they search the literature, trial registries and the web, extract findings,
-          grade them by study design, and flag what is disputed.
+          We ask, and it is gathered from humanity&rsquo;s scientific archive. Autonomous research workers search the
+          open literature, clinical trial registries, and the web; organise fields by canonical scientific taxonomy;
+          grade every finding by study design; and keep frontier and disputed ideas visible.{" "}
+          <Link href="/about">Read the chronicle of the quest →</Link>
         </p>
+        {roots.length > 0 && <TopicGraph3D roots={roots} />}
+        <h2 className="index-heading">Catalogue of scientific disciplines</h2>
         <Tree roots={roots} />
       </section>
       <aside className="home-side">

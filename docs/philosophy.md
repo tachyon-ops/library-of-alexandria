@@ -1,8 +1,8 @@
 # Philosophy
 
-Alexander's Library exists to answer one question well, and then any question: what does the record actually say, and how strongly?
+Alexander's Library exists to answer one question well, and then every question across human inquiry: what does the record actually say, and how strongly?
 
-It began with a private question, how a couple in their forties can maximise their chance of a child, and the discovery that the answer is scattered across meta-analyses, trial registries, clinic websites, regulators and fringe papers, each speaking with a different degree of authority. The library gathers that material into one tree and labels every finding with the strength of what supports it.
+From the oldest surviving poem in human history—the Sumerian and Babylonian *Epic of Gilgamesh*, where the king of Uruk dives into the abyss to retrieve the thorny plant of youth and vows to test its efficacy before claiming its truth—to the Ptolemaic *Pinakes* of the Library of Alexandria, the House of Wisdom in Baghdad, monastic scriptoria, the Enlightenment, and the Scientific Revolution, humanity has searched for a durable, verifiable archive of knowledge. Today, in the Information and Autonomous Intelligence Revolution, millions of papers, trials, and findings are published each year—scattered across meta-analyses, trial registries, clinical centres, regulators, and frontier preprints, each speaking with a different degree of authority. The library gathers that record into one living Tree of Knowledge and labels every finding with the strength of what supports it.
 
 ## What the library believes
 
@@ -16,7 +16,7 @@ It began with a private question, how a couple in their forties can maximise the
 
 **5. Marketing is not evidence.** Treatments sold ahead of their trials are named as such. Commercial claims are collected because people meet them, and labelled because people act on them.
 
-**6. Questions start personal and become general.** Each branch begins with a real question from a real reader (the brief). The tree grows wherever curiosity leads: fertility first, then any field.
+**6. Scientific taxonomy for all of humanity.** The library is built for humanity, not for a single individual case. Fields and sub-branches are aggregated using canonical scientific and academic nomenclature (MeSH and discipline taxonomy) across the general population, stratifying by age, sex, geography, or clinical subgroup where the evidence warrants rather than siloing branches into narrow personal cutoffs.
 
 **7. The human decides.** The library informs decisions; it does not make them. It is not medical, legal or financial advice, and it says so. Research runs when a person asks for it, and grows only as deep as a person allows.
 

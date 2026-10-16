@@ -44,8 +44,13 @@ export const DEFAULT_GEMINI_MODELS: Record<Role, string> = {
 
 const GEMINI_FALLBACKS = [
   "gemini-3.6-flash",
-  "gemini-3.5-flash",
+  "gemini-3.7-flash",
   "gemini-3-flash-preview",
+  "gemini-flash-latest",
+  "gemini-3.1-flash-lite",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-flash-lite-latest",
+  "gemini-3.5-flash",
   "gemini-3.5-flash-lite",
   "gemini-3.8-flash",
 ];
@@ -249,7 +254,7 @@ export class GeminiLlm implements Llm {
       if (res.ok) return { data: (await res.json()) as GeminiResponse, usedModel: model };
       const text = (await res.text()).slice(0, 400);
       lastError = new Error(`Gemini ${res.status}: ${text}`);
-      if (res.status !== 503 && res.status !== 404) throw lastError;
+      if (res.status !== 503 && res.status !== 404 && res.status !== 429) throw lastError;
     }
     throw lastError;
   }

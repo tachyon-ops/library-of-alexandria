@@ -1,10 +1,14 @@
 # Library of Alexandria (*Alexander's Library*)
 
-> *What the record actually says, and how strongly.*
+> *The search for the elixir of youth — what the record actually says, and how strongly.*
 
-**Library of Alexandria** (*Alexander's Library*) is an open-source tree of knowledge filled by autonomous AI research workers.
+![Ex Libris Bibliotheca Alexandrina](apps/web/public/archival-library.jpg)
 
-You add a topic—*"Human fertility"*, *"Ocean acidification"*, or any question you want answered from primary evidence. Research workers search the open scientific literature, clinical trial registries, and the live web; extract concrete claims; compute an evidence grade (`T1`–`T6`) in code from the study design behind each claim; and label what is disputed, fringe, or marketed ahead of evidence.
+**Library of Alexandria** (*Alexander's Library*) is an open-source **Tree of Knowledge** for all of humanity, filled by autonomous AI research workers.
+
+From the oldest surviving literary poem in human history—the Sumerian *Epic of Gilgamesh*, where the king of Uruk dives into the abyss to recover the thorny plant of youth and vows to test it empirically—through the scrolls of the Royal Library of Alexandria, the House of Wisdom, the Enlightenment, and the Scientific Revolution, humanity has sought a single verifiable archive of what is known. Now, in the Information and Autonomous Intelligence Revolution, we ask in plain English and autonomous workers gather, verify, and grade the answer from humanity's scientific record.
+
+You add a scientific discipline—*"Reproductive Medicine & Human Fertility"*, *"Cellular Senescence & Longevity Biology"*, *"Ocean Acidification"*, or any field of inquiry. Research workers search the open scientific literature, clinical trial registries, and the live web; aggregate sub-fields using **canonical scientific taxonomy (MeSH / discipline nomenclature)** across the general population; compute a deterministic evidence grade (`T1`–`T6`) in code from the study design behind each claim; and render the growing knowledge graph in an **interactive 3D Node Map**.
 
 Frontier and minority ideas are kept and labelled, never silently filtered out. The grade tells you how much weight a claim can bear.
 
