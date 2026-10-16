@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { z } from "zod";
 import {
   EntitiesSchema,
+  FallbackLlm,
   GeminiLlm,
   modelsFromEnv,
   PlanSchema,
@@ -162,6 +163,46 @@ describe("agent validation", () => {
     expect(web.citations).toEqual([{ url: "https://madrid.example", title: "Clinic Madrid", citedText: null }]);
     expect(usage).toHaveLength(2);
     expect(usage[1]!.webSearches).toBe(1);
+  });
+
+  it("transparently fails over from primary to secondary provider on 429 rate limit", async () => {
+    let primaryCalled = false;
+    let secondaryCalled = false;
+    const failingPrimary: Llm = {
+      async structured() {
+        primaryCalled = true;
+        throw new Error("Gemini 429: ResourceExhausted: rate limit exceeded");
+      },
+      async webResearch() {
+        primaryCalled = true;
+        throw new Error("Gemini 429: rate limit exceeded");
+      },
+    };
+    const workingSecondary: Llm = {
+      async structured<T>(args: { schema: z.ZodType<T> }): Promise<T> {
+        secondaryCalled = true;
+        return args.schema.parse({
+          subtopics: [],
+          literatureQueries: ["dual-provider query"],
+          trialQueries: [],
+          webQueries: [],
+          frontierAngles: [],
+        });
+      },
+      async webResearch() {
+        secondaryCalled = true;
+        return { text: "Secondary search result", citations: [] };
+      },
+    };
+
+    const fallbackLlm = new FallbackLlm(failingPrimary, workingSecondary);
+    const plan = await fallbackLlm.structured({ role: "scout", system: "s", prompt: "p", schema: PlanSchema });
+    expect(primaryCalled).toBe(true);
+    expect(secondaryCalled).toBe(true);
+    expect(plan.literatureQueries).toEqual(["dual-provider query"]);
+
+    const web = await fallbackLlm.webResearch({ role: "web", system: "s", prompt: "p", maxSearches: 2 });
+    expect(web.text).toBe("Secondary search result");
   });
 });
 

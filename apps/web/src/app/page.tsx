@@ -25,7 +25,7 @@ export default async function Home() {
   return (
     <main className="home">
       <AutoRefresh active={busy} />
-      <section className="home-tree">
+      <header className="home-header">
         <h1 className="home-tree-heading">The Tree of Knowledge</h1>
         <p className="lede">
           We ask, and it is gathered from humanity&rsquo;s scientific archive. Autonomous research workers search the
@@ -33,11 +33,16 @@ export default async function Home() {
           grade every finding by study design; and keep frontier and disputed ideas visible.{" "}
           <Link href="/about">Read the chronicle of the quest →</Link>
         </p>
-        {roots.length > 0 && <TopicGraph3D roots={roots} crossLinks={crossLinks} />}
-        <h2 className="index-heading">Catalogue of scientific disciplines</h2>
-        <Tree roots={roots} />
-      </section>
-      <aside className="home-side">
+      </header>
+
+      {roots.length > 0 && <TopicGraph3D roots={roots} crossLinks={crossLinks} />}
+
+      <div className="home-grid">
+        <section className="home-tree">
+          <h2 className="index-heading">Catalogue of scientific disciplines</h2>
+          <Tree roots={roots} />
+        </section>
+        <aside className="home-side">
         <NewTopicForm />
         <section className="legend">
           <h2>How claims are graded</h2>
@@ -90,6 +95,7 @@ export default async function Home() {
           Last 30 days: {calls} model calls, {searches} web searches.
         </p>
       </aside>
+      </div>
     </main>
   );
 }

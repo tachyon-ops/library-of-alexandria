@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 25
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || 'gemini' }}
+      LLM_PROVIDER: ${{ secrets.LLM_PROVIDER || (secrets.ANTHROPIC_API_KEY && 'anthropic') || 'gemini' }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       AI_API_KEY: ${{ secrets.AI_API_KEY }}
