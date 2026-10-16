@@ -250,7 +250,8 @@ export function TopicGraph3D({
   const [focusRootId, setFocusRootId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [maxDepth, setMaxDepth] = useState<number>(6);
-  const [autoRotate, setAutoRotate] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // When searching, temporarily unfold all branches so matches at depth 4–5 are visible
   const effectiveCollapsed = useMemo(
@@ -274,6 +275,13 @@ export function TopicGraph3D({
     yaw: 0.42,
     pitch: 0.24,
     zoom: 1.0,
+    targetZoom: 1.0,
+    camX: 0,
+    camY: 0,
+    camZ: 0,
+    targetCamX: 0,
+    targetCamY: 0,
+    targetCamZ: 0,
     dragging: false,
     dragMoved: false,
     lastX: 0,
@@ -345,6 +353,31 @@ export function TopicGraph3D({
     });
   }
 
+  function zoomToNode(node: GraphNode) {
+    setSelectedId(node.id);
+    if (node.childCount > 0 && effectiveCollapsed.has(node.id)) {
+      setCollapsedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(node.id);
+        return next;
+      });
+    }
+    viewRef.current.targetCamX = node.x;
+    viewRef.current.targetCamY = node.y;
+    viewRef.current.targetCamZ = node.z;
+    viewRef.current.targetZoom = 1.75;
+  }
+
+  function resetView() {
+    setFocusRootId(null);
+    viewRef.current.targetCamX = 0;
+    viewRef.current.targetCamY = 0;
+    viewRef.current.targetCamZ = 0;
+    viewRef.current.targetZoom = 1.0;
+    viewRef.current.yaw = 0.42;
+    viewRef.current.pitch = 0.24;
+  }
+
   function focusOnBranch(id: string | null) {
     setFocusRootId(id);
     if (id) {
@@ -361,10 +394,16 @@ export function TopicGraph3D({
           return next;
         });
       }
+      const matched = nodes.find((n) => n.id === id);
+      if (matched) {
+        viewRef.current.targetCamX = matched.x;
+        viewRef.current.targetCamY = matched.y;
+        viewRef.current.targetCamZ = matched.z;
+      }
+      viewRef.current.targetZoom = 1.45;
+    } else {
+      resetView();
     }
-    viewRef.current.yaw = 0.42;
-    viewRef.current.pitch = 0.24;
-    viewRef.current.zoom = 1.05;
   }
 
   // Respect prefers-reduced-motion on initial mount
@@ -417,8 +456,13 @@ export function TopicGraph3D({
       const colErr = style.getPropertyValue("--hype-ink").trim() || "#8c2618";
 
       const v = viewRef.current;
+      v.camX += (v.targetCamX - v.camX) * 0.08;
+      v.camY += (v.targetCamY - v.camY) * 0.08;
+      v.camZ += (v.targetCamZ - v.camZ) * 0.08;
+      v.zoom += (v.targetZoom - v.zoom) * 0.08;
+
       if (autoRotate && !v.dragging && !hoveredId) {
-        v.yaw += 0.002;
+        v.yaw += 0.0003;
       }
 
       const w = canvas.width;
@@ -454,22 +498,36 @@ export function TopicGraph3D({
       const sinP = Math.sin(v.pitch);
       const fov = 560;
 
+      const activeId = hoveredId ?? selectedId;
+
       const proj = nodes.map((n) => {
-        const x1 = n.x * cosY - n.z * sinY;
-        const z1 = n.x * sinY + n.z * cosY;
-        const y2 = n.y * cosP - z1 * sinP;
-        const z2 = n.y * sinP + z1 * cosP;
+        const rx = n.x - v.camX;
+        const ry = n.y - v.camY;
+        const rz = n.z - v.camZ;
+
+        const x1 = rx * cosY - rz * sinY;
+        const z1 = rx * sinY + rz * cosY;
+        const y2 = ry * cosP - z1 * sinP;
+        const z2 = ry * sinP + z1 * cosP;
 
         const scale = (fov / Math.max(160, fov + z2)) * v.zoom * dpr;
         const sx = cx + x1 * scale;
         const sy = cy + y2 * scale;
-        const baseR =
-          n.relativeDepth === 0 ? 11.2 : n.relativeDepth === 1 ? 8.2 : n.relativeDepth === 2 ? 6.2 : 4.8;
+        const isActive = n.id === activeId;
+        const baseR = isActive
+          ? 16.5
+          : n.relativeDepth === 0
+            ? 11.2
+            : n.relativeDepth === 1
+              ? 8.2
+              : n.relativeDepth === 2
+                ? 6.2
+                : 4.8;
         const claimBoost = Math.min(4.8, Math.sqrt(n.subtreeClaims) * 0.9);
-        const r = Math.max(3.2 * dpr, (baseR + claimBoost) * scale);
+        const r = Math.max(3.5 * dpr, (baseR + claimBoost) * scale);
         const visible = n.relativeDepth <= maxDepth;
         const matched = visibleNodeIds.has(n.id);
-        return { node: n, sx, sy, r, zCam: z2, scale, visible, matched };
+        return { node: n, sx, sy, r, zCam: z2, scale, visible, matched, isActive };
       });
 
       projectedRef.current = proj.map((p) => ({
@@ -482,22 +540,29 @@ export function TopicGraph3D({
         visible: p.visible,
       }));
 
-      // Active lineage set (ancestors + direct children of active node)
-      const activeId = hoveredId ?? selectedId;
-      const relatedIds = new Set<string>();
-      if (activeId) {
-        relatedIds.add(activeId);
-        let curr = nodes.find((n) => n.id === activeId);
-        while (curr?.parentId) {
-          relatedIds.add(curr.parentId);
-          curr = nodes.find((n) => n.id === curr!.parentId);
-        }
-        for (const n of nodes) {
-          if (n.parentId === activeId) relatedIds.add(n.id);
+      // Active lineage sets: active node, parent, ancestors, and direct children
+      const activeProj = activeId ? proj.find((p) => p.node.id === activeId) : null;
+      const parentId = activeProj?.node.parentId ?? null;
+      const parentProj = parentId ? proj.find((p) => p.node.id === parentId) : null;
+
+      const ancestorIds = new Set<string>();
+      if (activeProj) {
+        let currPId = activeProj.node.parentId;
+        while (currPId) {
+          ancestorIds.add(currPId);
+          const pNode = nodes.find((n) => n.id === currPId);
+          currPId = pNode ? pNode.parentId : null;
         }
       }
 
-      // Draw edges sorted back-to-front
+      const childIds = new Set<string>();
+      if (activeId) {
+        for (const n of nodes) {
+          if (n.parentId === activeId) childIds.add(n.id);
+        }
+      }
+
+      // 1. Draw background / normal edges (excluding active child tubes and parent conduit)
       const sortedEdges = [...edges].sort((a, b) => {
         const za = (proj[a.source]!.zCam + proj[a.target]!.zCam) / 2;
         const zb = (proj[b.source]!.zCam + proj[b.target]!.zCam) / 2;
@@ -508,21 +573,27 @@ export function TopicGraph3D({
         const a = proj[edge.source]!;
         const b = proj[edge.target]!;
         if (!a.visible || !b.visible) continue;
-        const highlighted = relatedIds.has(a.node.id) && relatedIds.has(b.node.id);
-        const dimmed = normalizedQuery.length > 0 && !a.matched && !b.matched;
+        const isChildEdge =
+          (a.node.id === activeId && childIds.has(b.node.id)) ||
+          (b.node.id === activeId && childIds.has(a.node.id));
+        const isParentEdge =
+          (a.node.id === activeId && b.node.id === parentId) ||
+          (b.node.id === activeId && a.node.id === parentId);
+        if (isChildEdge || isParentEdge) continue;
 
+        const dimmed = normalizedQuery.length > 0 && !a.matched && !b.matched;
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(a.sx, a.sy);
         ctx.lineTo(b.sx, b.sy);
-        ctx.strokeStyle = highlighted ? colT1 : colRule;
-        ctx.lineWidth = (highlighted ? 2.1 : 1.1) * dpr;
-        ctx.globalAlpha = dimmed ? 0.14 : highlighted ? 0.92 : 0.58;
+        ctx.strokeStyle = colRule;
+        ctx.lineWidth = 1.0 * dpr;
+        ctx.globalAlpha = dimmed ? 0.08 : 0.22;
         ctx.stroke();
         ctx.restore();
       }
 
-      // Draw cross-branch / cross-trunk bridge arcs when both endpoints are visible
+      // 2. Draw cross-branch bridge arcs
       if (crossLinks.length > 0) {
         const projById = new Map(proj.map((p) => [p.node.id, p]));
         for (const cl of crossLinks) {
@@ -539,90 +610,335 @@ export function TopicGraph3D({
           ctx.quadraticCurveTo(mx, my, b.sx, b.sy);
           ctx.strokeStyle = activeBridge ? colT1 : colT2;
           ctx.lineWidth = (activeBridge ? 1.8 : 1.0) * dpr;
-          ctx.globalAlpha = activeBridge ? 0.85 : 0.32;
+          ctx.globalAlpha = activeBridge ? 0.85 : 0.25;
           ctx.stroke();
           ctx.restore();
         }
       }
 
-      // Draw nodes back-to-front
+      // 3. Ancestral Conduit: connection from Parent to Active Ball ("parents in another form")
+      if (parentProj && activeProj && parentProj.visible && activeProj.visible) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([6 * dpr, 4 * dpr]);
+        ctx.moveTo(parentProj.sx, parentProj.sy);
+        ctx.lineTo(activeProj.sx, activeProj.sy);
+        ctx.strokeStyle = colT2;
+        ctx.lineWidth = 2.4 * dpr;
+        ctx.globalAlpha = 0.85;
+        ctx.stroke();
+
+        // Directional chevron along the ancestral line flowing into active ball
+        const acDx = activeProj.sx - parentProj.sx;
+        const acDy = activeProj.sy - parentProj.sy;
+        const acDist = Math.hypot(acDx, acDy) || 1;
+        const acUx = acDx / acDist;
+        const acUy = acDy / acDist;
+        const acNx = -acUy;
+        const acNy = acUx;
+        const midX = (parentProj.sx + activeProj.sx) / 2;
+        const midY = (parentProj.sy + activeProj.sy) / 2;
+
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(midX - acUx * 7 * dpr + acNx * 6 * dpr, midY - acUy * 7 * dpr + acNy * 6 * dpr);
+        ctx.lineTo(midX + acUx * 4 * dpr, midY + acUy * 4 * dpr);
+        ctx.lineTo(midX - acUx * 7 * dpr - acNx * 6 * dpr, midY - acUy * 7 * dpr - acNy * 6 * dpr);
+        ctx.strokeStyle = colT1;
+        ctx.lineWidth = 2.2 * dpr;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 4. Children as 3D Extruded Volumetric Tubes from the active ball
+      if (activeProj && activeProj.visible) {
+        const nowTime = performance.now();
+        for (const childId of childIds) {
+          const cp = proj.find((p) => p.node.id === childId);
+          if (!cp || !cp.visible) continue;
+
+          const tDx = cp.sx - activeProj.sx;
+          const tDy = cp.sy - activeProj.sy;
+          const tDist = Math.hypot(tDx, tDy);
+          if (tDist <= 8) continue;
+
+          const ux = tDx / tDist;
+          const uy = tDy / tDist;
+          const nx = -uy;
+          const ny = ux;
+
+          const wA = Math.max(7 * dpr, Math.min(activeProj.r * 0.65, 22 * dpr));
+          const wC = Math.max(4.5 * dpr, Math.min(cp.r * 0.65, 14 * dpr));
+
+          const startX = activeProj.sx + ux * (activeProj.r * 0.82);
+          const startY = activeProj.sy + uy * (activeProj.r * 0.82);
+          const endX = cp.sx - ux * (cp.r * 0.82);
+          const endY = cp.sy - uy * (cp.r * 0.82);
+
+          ctx.save();
+          // Extruded tube 3D polygon
+          ctx.beginPath();
+          ctx.moveTo(startX + nx * (wA * 0.5), startY + ny * (wA * 0.5));
+          ctx.lineTo(endX + nx * (wC * 0.5), endY + ny * (wC * 0.5));
+          ctx.lineTo(endX - nx * (wC * 0.5), endY - ny * (wC * 0.5));
+          ctx.lineTo(startX - nx * (wA * 0.5), startY - ny * (wA * 0.5));
+          ctx.closePath();
+
+          // 3D cylindrical lighting gradient across tube width
+          const tubeGrad = ctx.createLinearGradient(
+            startX + nx * (wA * 0.5),
+            startY + ny * (wA * 0.5),
+            startX - nx * (wA * 0.5),
+            startY - ny * (wA * 0.5),
+          );
+          tubeGrad.addColorStop(0.0, "#0b173c");
+          tubeGrad.addColorStop(0.2, colT1);
+          tubeGrad.addColorStop(0.48, "#b3ceff"); // Specular gleam highlight
+          tubeGrad.addColorStop(0.72, colT2);
+          tubeGrad.addColorStop(1.0, "#08102b");
+          ctx.fillStyle = tubeGrad;
+          ctx.fill();
+
+          // Crisp cylindrical edge contour
+          ctx.strokeStyle = "rgba(11, 23, 60, 0.4)";
+          ctx.lineWidth = 1 * dpr;
+          ctx.stroke();
+
+          // Extrusion socket collar on the active ball's surface
+          ctx.save();
+          ctx.translate(startX, startY);
+          ctx.rotate(Math.atan2(uy, ux));
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 3.5 * dpr, wA * 0.56, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "#091230";
+          ctx.fill();
+          ctx.strokeStyle = colT1;
+          ctx.lineWidth = 1.2 * dpr;
+          ctx.stroke();
+          ctx.restore();
+
+          // Knowledge flow pulse sliding along the tube
+          const pulseT = ((nowTime * 0.0012 + Math.abs(startX * 0.05)) % 1);
+          const px = startX + (endX - startX) * pulseT;
+          const py = startY + (endY - startY) * pulseT;
+          const pw = wA + (wC - wA) * pulseT;
+          ctx.beginPath();
+          ctx.arc(px, py, pw * 0.45, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(220, 236, 255, 0.85)";
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // 5. Draw nodes back-to-front
       const sortedNodes = [...proj].sort((a, b) => b.zCam - a.zCam);
 
       for (const item of sortedNodes) {
         if (!item.visible) continue;
-        const { node, sx, sy, r, matched } = item;
+        const { node, sx, sy, r, matched, isActive } = item;
+        const isAncestor = ancestorIds.has(node.id);
+        const isDirectParent = node.id === parentId;
+        const isChild = childIds.has(node.id);
         const isSelected = node.id === selectedId;
         const isHovered = node.id === hoveredId;
-        const isRelated = relatedIds.has(node.id);
         const dimmed = normalizedQuery.length > 0 && !matched;
 
-        let fill = colT3;
-        if (node.status === "error") fill = colErr;
-        else if (node.status === "ready" || node.claimCount > 0) fill = colT1;
-        else if (node.status === "researching" || node.status === "queued" || node.subtreeClaims > 0) fill = colT2;
-        else if (node.relativeDepth === 0) fill = colT1;
-        else if (node.relativeDepth === 1) fill = colT2;
-        else if (node.relativeDepth === 2) fill = colT3;
-        else fill = colT4;
+        // --- FORM A: Ancestors / Parents ("seen in another form") ---
+        if (isAncestor || isDirectParent) {
+          const beaconR = Math.max(13 * dpr, r * (isDirectParent ? 1.4 : 1.15));
 
-        ctx.save();
-        ctx.globalAlpha = dimmed ? 0.2 : 1;
-
-        // Dashed outer cluster ring when a node has folded sub-branches (3 & 4+ hops)
-        if (node.isCollapsed && node.hiddenDescendantCount > 0) {
           ctx.save();
-          ctx.beginPath();
-          ctx.setLineDash([3 * dpr, 2.5 * dpr]);
-          ctx.arc(sx, sy, r + 4.5 * dpr, 0, Math.PI * 2);
-          ctx.strokeStyle = colT1;
-          ctx.lineWidth = 1.4 * dpr;
-          ctx.globalAlpha = dimmed ? 0.15 : 0.75;
-          ctx.stroke();
-          ctx.restore();
-        } else if (isSelected || isHovered || node.claimCount > 0) {
-          ctx.beginPath();
-          ctx.arc(sx, sy, r + (isSelected || isHovered ? 5.5 : 3) * dpr, 0, Math.PI * 2);
-          ctx.strokeStyle = isSelected || isHovered ? colT1 : fill;
-          ctx.lineWidth = (isSelected || isHovered ? 2 : 1.2) * dpr;
-          ctx.globalAlpha = dimmed ? 0.15 : isSelected || isHovered ? 0.9 : 0.4;
-          ctx.stroke();
           ctx.globalAlpha = dimmed ? 0.2 : 1;
+
+          // Outer celestial orbital ring
+          ctx.beginPath();
+          ctx.setLineDash([3.5 * dpr, 3 * dpr]);
+          ctx.arc(sx, sy, beaconR + (isDirectParent ? 8 : 5) * dpr, 0, Math.PI * 2);
+          ctx.strokeStyle = colT2;
+          ctx.lineWidth = 1.5 * dpr;
+          ctx.globalAlpha = 0.75;
+          ctx.stroke();
+
+          // Radial ambient aura
+          const aura = ctx.createRadialGradient(sx, sy, beaconR * 0.2, sx, sy, beaconR + 10 * dpr);
+          aura.addColorStop(0, "rgba(55, 87, 192, 0.35)");
+          aura.addColorStop(1, "rgba(55, 87, 192, 0)");
+          ctx.fillStyle = aura;
+          ctx.beginPath();
+          ctx.arc(sx, sy, beaconR + 10 * dpr, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Faceted ancestral diamond anchor portal
+          ctx.beginPath();
+          ctx.moveTo(sx, sy - beaconR);
+          ctx.lineTo(sx + beaconR, sy);
+          ctx.lineTo(sx, sy + beaconR);
+          ctx.lineTo(sx - beaconR, sy);
+          ctx.closePath();
+
+          const diamondGrad = ctx.createLinearGradient(
+            sx - beaconR,
+            sy - beaconR,
+            sx + beaconR,
+            sy + beaconR,
+          );
+          diamondGrad.addColorStop(0, "#2a3d6d");
+          diamondGrad.addColorStop(0.5, "#172445");
+          diamondGrad.addColorStop(1, "#0a1226");
+          ctx.fillStyle = diamondGrad;
+          ctx.fill();
+          ctx.strokeStyle = "#8daef4";
+          ctx.lineWidth = 2 * dpr;
+          ctx.setLineDash([]);
+          ctx.stroke();
+
+          // Core radiant star glyph
+          ctx.beginPath();
+          ctx.arc(sx, sy, 3.5 * dpr, 0, Math.PI * 2);
+          ctx.fillStyle = "#ffffff";
+          ctx.fill();
+
+          // Stately ancestral badge label
+          const prefix = isDirectParent ? "⌂ Parent: " : "Ancestral trunk: ";
+          const label = `${prefix}${node.title}`;
+          ctx.font = `600 ${Math.round(11 * dpr)}px "Public Sans", system-ui, sans-serif`;
+          const tx = sx + beaconR + 7 * dpr;
+          const ty = sy + 3.5 * dpr;
+          ctx.lineWidth = 3.5 * dpr;
+          ctx.strokeStyle = colSheet;
+          ctx.strokeText(label, tx, ty);
+          ctx.fillStyle = colInk;
+          ctx.fillText(label, tx, ty);
+          ctx.restore();
+          continue;
         }
+
+        // --- FORM B: The Active Hero Ball ---
+        if (isActive) {
+          ctx.save();
+          ctx.globalAlpha = dimmed ? 0.2 : 1;
+
+          // Outer glowing corona halo
+          ctx.beginPath();
+          ctx.arc(sx, sy, r + 7 * dpr, 0, Math.PI * 2);
+          ctx.strokeStyle = colT1;
+          ctx.lineWidth = 2.2 * dpr;
+          ctx.globalAlpha = 0.85;
+          ctx.stroke();
+
+          // 3D Spherical radial gradient
+          const sphereGrad = ctx.createRadialGradient(
+            sx - r * 0.35,
+            sy - r * 0.35,
+            r * 0.08,
+            sx,
+            sy,
+            r,
+          );
+          sphereGrad.addColorStop(0.0, "#ffffff");
+          sphereGrad.addColorStop(0.2, "#587ee8");
+          sphereGrad.addColorStop(0.7, colT1);
+          sphereGrad.addColorStop(1.0, "#0a1538");
+          ctx.beginPath();
+          ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fillStyle = sphereGrad;
+          ctx.fill();
+          ctx.strokeStyle = colSheet;
+          ctx.lineWidth = 2 * dpr;
+          ctx.stroke();
+
+          // Bold hero title label
+          const fontSize = Math.round(12.5 * dpr);
+          ctx.font = `600 ${fontSize}px "Public Sans", system-ui, sans-serif`;
+          const text = `${node.title}${node.claimCount > 0 ? ` (${node.claimCount})` : ""}`;
+          const tx = sx + r + 8 * dpr;
+          const ty = sy + 4 * dpr;
+          ctx.lineWidth = 3.5 * dpr;
+          ctx.strokeStyle = colSheet;
+          ctx.strokeText(text, tx, ty);
+          ctx.fillStyle = colInk;
+          ctx.fillText(text, tx, ty);
+          ctx.restore();
+          continue;
+        }
+
+        // --- FORM C: Child Balls at the ends of extruded tubes ---
+        if (isChild) {
+          ctx.save();
+          ctx.globalAlpha = dimmed ? 0.2 : 1;
+
+          const childGrad = ctx.createRadialGradient(
+            sx - r * 0.32,
+            sy - r * 0.32,
+            r * 0.08,
+            sx,
+            sy,
+            r,
+          );
+          childGrad.addColorStop(0.0, "#e8efff");
+          childGrad.addColorStop(0.25, "#688ee8");
+          childGrad.addColorStop(0.75, colT2);
+          childGrad.addColorStop(1.0, "#0d1b46");
+          ctx.beginPath();
+          ctx.arc(sx, sy, r, 0, Math.PI * 2);
+          ctx.fillStyle = childGrad;
+          ctx.fill();
+          ctx.strokeStyle = colSheet;
+          ctx.lineWidth = 1.5 * dpr;
+          ctx.stroke();
+
+          // Child label
+          const childFont = Math.round(11 * dpr);
+          ctx.font = `500 ${childFont}px "Public Sans", system-ui, sans-serif`;
+          const foldTag =
+            node.isCollapsed && node.hiddenDescendantCount > 0
+              ? ` [+${node.hiddenDescendantCount}]`
+              : "";
+          const claimTag = node.claimCount > 0 ? ` (${node.claimCount})` : "";
+          const text = `${node.title}${claimTag}${foldTag}`;
+          const tx = sx + r + 6 * dpr;
+          const ty = sy + 3.5 * dpr;
+          ctx.lineWidth = 3.2 * dpr;
+          ctx.strokeStyle = colSheet;
+          ctx.strokeText(text, tx, ty);
+          ctx.fillStyle = colInk;
+          ctx.fillText(text, tx, ty);
+          ctx.restore();
+          continue;
+        }
+
+        // --- FORM D: Distant / Other Nodes (Quiet Celestial Background) ---
+        ctx.save();
+        ctx.globalAlpha = dimmed ? 0.08 : 0.22;
+
+        let fill = colT4;
+        if (node.relativeDepth === 0) fill = colT2;
+        else if (node.relativeDepth === 1) fill = colT3;
 
         ctx.beginPath();
         ctx.arc(sx, sy, r, 0, Math.PI * 2);
         ctx.fillStyle = fill;
         ctx.fill();
-        ctx.lineWidth = 1.5 * dpr;
+        ctx.lineWidth = 1 * dpr;
         ctx.strokeStyle = colSheet;
         ctx.stroke();
 
-        // Show labels for roots, relativeDepth 1, folded clusters, hovered/selected, or search matches
         const showLabel =
-          node.relativeDepth <= 1 ||
-          node.isCollapsed ||
-          isSelected ||
           isHovered ||
-          (normalizedQuery.length > 0 && matched) ||
-          (isRelated && node.relativeDepth <= 2);
+          isSelected ||
+          (normalizedQuery.length > 0 && matched);
 
         if (showLabel) {
-          const fontSize = Math.round(
-            (node.relativeDepth === 0 ? 12.5 : node.relativeDepth === 1 ? 11.2 : 10.2) * dpr,
-          );
-          ctx.font = `${isSelected || isHovered || node.relativeDepth === 0 ? 600 : 500} ${fontSize}px "Public Sans", system-ui, sans-serif`;
-          const label =
-            node.title.length > 36 && !isSelected && !isHovered ? `${node.title.slice(0, 34)}…` : node.title;
-          const foldedTag = node.isCollapsed && node.hiddenDescendantCount > 0 ? ` [+${node.hiddenDescendantCount}]` : "";
-          const claimTag = node.claimCount > 0 ? ` (${node.claimCount})` : "";
-          const text = `${label}${claimTag}${foldedTag}`;
-          const tx = sx + r + 6 * dpr;
-          const ty = sy + 3.5 * dpr;
-
-          ctx.lineWidth = 3.2 * dpr;
+          ctx.globalAlpha = 0.9;
+          const fontSize = Math.round(10.5 * dpr);
+          ctx.font = `500 ${fontSize}px "Public Sans", system-ui, sans-serif`;
+          const text = node.title;
+          const tx = sx + r + 5 * dpr;
+          const ty = sy + 3 * dpr;
+          ctx.lineWidth = 3 * dpr;
           ctx.strokeStyle = colSheet;
           ctx.strokeText(text, tx, ty);
-          ctx.fillStyle = isSelected || isHovered || node.relativeDepth === 0 ? colInk : colMuted;
+          ctx.fillStyle = colInk;
           ctx.fillText(text, tx, ty);
         }
 
