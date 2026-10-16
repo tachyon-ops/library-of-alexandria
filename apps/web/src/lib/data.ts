@@ -13,6 +13,23 @@ export interface TreeBranch extends TreeNode {
   children: TreeBranch[];
 }
 
+const LEGACY_TITLE_MAP: Record<string, string> = {
+  "Human fertility": "Reproductive Medicine & Human Fertility",
+  "Using eggs vitrified at a younger age": "Ovarian Reserve & Oocyte Cryopreservation",
+  "Uterine receptivity and implantation failure": "Endometrial Receptivity & Implantation Biology",
+  "Male factor after 40": "Andrology & Male Factor Infertility",
+  "Donor eggs in Europe": "Assisted Reproductive Technology & Gamete Donation",
+  "Frontier fertility treatments": "Translational & Geroprotective Reproductive Biology",
+  "Pregnancy after 44": "Advanced Maternal Age & Pregnancy After 40",
+  "Maternal-Fetal Medicine & Obstetric Perinatology": "Advanced Maternal Age & Pregnancy After 40",
+};
+
+export function normaliseTopicTitle(title: string): string {
+  const mapped = LEGACY_TITLE_MAP[title];
+  if (mapped) return mapped;
+  return title.replace(/after 44/gi, "after 40");
+}
+
 export function anyBusy(nodes: TreeBranch[]): boolean {
   return nodes.some((n) => n.status === "queued" || n.status === "researching" || anyBusy(n.children));
 }
@@ -20,7 +37,17 @@ export function anyBusy(nodes: TreeBranch[]): boolean {
 /** Builds the nested tree from the flat topic list. */
 export async function loadTree(): Promise<TreeBranch[]> {
   const rows = await listTree(sql());
-  const byId = new Map<string, TreeBranch>(rows.map((r) => [r.id, { ...r, children: [] }]));
+  const byId = new Map<string, TreeBranch>(
+    rows.map((r) => [
+      r.id,
+      {
+        ...r,
+        title: normaliseTopicTitle(r.title),
+        brief: r.brief ? r.brief.replace(/after 44/gi, "after 40") : null,
+        children: [],
+      },
+    ]),
+  );
   const roots: TreeBranch[] = [];
   for (const node of byId.values()) {
     const parent = node.parentId ? byId.get(node.parentId) : undefined;
