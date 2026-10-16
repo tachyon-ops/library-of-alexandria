@@ -242,12 +242,19 @@ describe.skipIf(!url)("research pipeline", () => {
     expect(sources).toHaveLength(4);
     expect(sources.every((s) => Boolean(s.url))).toBe(true);
 
-    // A parent discipline with no direct sources yet inherits sources and milestones from its subtree.
-    const superRoot = await repo.createTopic(sql, { title: "Reproductive Medicine", brief: "Umbrella discipline" });
-    await sql`UPDATE topics SET parent_id = ${superRoot.id} WHERE id = ${root.id}`;
+    // A parent discipline can be reparented under a new umbrella trunk via moveTopic,
+    // recalculating depth across its descendants and inheriting subtree sources/milestones.
+    const superRoot = await repo.createTopic(sql, { title: "Natural & Life Sciences", brief: "Umbrella trunk" });
+    const movedRoot = await repo.moveTopic(sql, root.id, superRoot.id);
+    expect(movedRoot.parentId).toBe(superRoot.id);
+    expect(movedRoot.depth).toBe(1);
+    const movedChildren = await repo.getChildren(sql, root.id);
+    expect(movedChildren[0]!.depth).toBe(2);
+    await expect(repo.moveTopic(sql, superRoot.id, movedChildren[0]!.id)).rejects.toThrow(/descendants/);
     expect(await repo.topicSources(sql, superRoot.id)).toHaveLength(4);
     expect(await repo.topicMilestones(sql, superRoot.id)).toHaveLength(1);
-    await sql`UPDATE topics SET parent_id = NULL WHERE id = ${root.id}`;
+    const restoredRoot = await repo.moveTopic(sql, root.id, null);
+    expect(restoredRoot.depth).toBe(0);
 
     const controversies = await repo.topicControversies(sql, root.id);
     expect(controversies).toHaveLength(1);
