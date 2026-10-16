@@ -30,9 +30,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="wordmark">
               Alexander&rsquo;s Library
             </Link>
-            <p className="masthead-note">What the record says, and how strongly.</p>
+            <Link href="/about" className="masthead-note">
+              The search for the elixir of youth — what the record says, and how strongly.
+            </Link>
           </div>
           <nav aria-label="Support and author" className="masthead-actions">
+            <Link href="/about" className="masthead-link">
+              The Chronicle
+            </Link>
             <a
               href={AUTHOR_SITE_URL}
               target="_blank"

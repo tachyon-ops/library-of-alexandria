@@ -86,16 +86,17 @@ All roles use the `Llm` interface (`ClaudeLlm` for Anthropic, `GeminiLlm` for Ge
 | web     | one task, ≤ `MAX_WEB_SEARCHES_PER_JOB` searches, notes clipped to 20,000 characters | entities with key/value attributes and cited URLs                                                                      |
 | skeptic | all claims as `[index] (tier, label, source count, years) statement`, entity names  | summary, gaps, merges, relabels, controversies                                                                         |
 
-Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic fallback across `gemini-3.5-flash`, `gemini-3-flash-preview`, `gemini-3.5-flash-lite` and `gemini-3.8-flash` on 503/404); each overridable by environment variable.
+Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic fallback across `gemini-3.7-flash`, `gemini-3-flash-preview`, `gemini-flash-latest`, `gemini-3.1-flash-lite`, `gemini-3.1-flash-lite-preview`, `gemini-flash-lite-latest`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, and `gemini-3.8-flash` on 429/503/404); each overridable by environment variable.
 
 ## 7. Front
 
-| Route           | Shows                                                                                                                                                       | Actions                                                                   |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `/`             | tree with status and finding counts; grading legend; support and author links; 30-day usage                                                                 | add a root branch, optionally starting research with `AUTO_EXPAND_DEPTH`  |
-| `/topic/[slug]` | path, brief, research bar with job status, summary, findings grouped by tier, debates, entities by kind, milestones, open questions, branches, sources read | research (optionally with the next level of branches); add a child branch |
+| Route           | Shows                                                                                                                                                       | Actions                                                                                                 |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `/`             | interactive 3D knowledge constellation map; collapsible discipline tree with status and finding counts; grading legend; support & author links; 30-day usage | filter/orbit 3D map, inspect nodes, add a root scientific discipline, optionally starting research      |
+| `/about`        | archival chronicle from the Sumerian *Epic of Gilgamesh* and the Library of Alexandria to the Scientific and Information Revolutions                        | navigate to the Tree of Knowledge or support the library                                                |
+| `/topic/[slug]` | path, brief, research bar with job status and source jump link, overview description, collapsible historical timeline (`<details>`), findings grouped by tier, debates, entities by kind, open questions, branches, and all indexed sources (`topic_sources`, `claim_sources`, and subtree fallback) | research (optionally with the next level of branches); add a child scientific sub-discipline            |
 
-Every page shares a masthead and footer with links to the author (`nuuno.art`, `@tachyon-ops`) and donation options (PayPal Donate and GitHub Sponsors). The page refreshes every 5 s while the topic has open jobs or is `queued` or `researching`. Rendering is server-side; writes are server actions.
+Every page shares a masthead (`The search for the elixir of youth — what the record says, and how strongly.`) and footer with links to `/about`, the author (`nuuno.art`, `@tachyon-ops`), and donation options (PayPal Donate and GitHub Sponsors). The page refreshes every 5 s while the topic has open jobs or is `queued` or `researching`. Rendering is server-side; writes are server actions.
 
 ## 8. Configuration
 
