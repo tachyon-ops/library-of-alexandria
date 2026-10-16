@@ -182,6 +182,63 @@ export async function saveTopicReview(sql: Sql, id: string, summary: string, gap
     WHERE id = ${id}`;
 }
 
+export interface TopicLinkView {
+  id: string;
+  slug: string;
+  title: string;
+  brief: string | null;
+  relation: string;
+  note: string | null;
+}
+
+export interface TopicGraphLink {
+  sourceId: string;
+  targetId: string;
+  relation: string;
+  note: string | null;
+}
+
+/** Connects two topics across branches or trunks (symmetric lookup). */
+export async function linkTopics(
+  sql: Sql,
+  topicId: string,
+  linkedTopicId: string,
+  relation = "intersects",
+  note: string | null = null,
+): Promise<void> {
+  if (topicId === linkedTopicId) return;
+  const [a, b] = topicId < linkedTopicId ? [topicId, linkedTopicId] : [linkedTopicId, topicId];
+  await sql`
+    INSERT INTO topic_links (topic_id, linked_topic_id, relation, note)
+    VALUES (${a}, ${b}, ${relation}, ${note})
+    ON CONFLICT (topic_id, linked_topic_id) DO UPDATE SET
+      relation = EXCLUDED.relation,
+      note = COALESCE(EXCLUDED.note, topic_links.note)`;
+}
+
+export async function topicLinks(sql: Sql, topicId: string): Promise<TopicLinkView[]> {
+  try {
+    return await sql<TopicLinkView[]>`
+      SELECT t.id, t.slug, t.title, t.brief, tl.relation, tl.note
+      FROM topic_links tl
+      JOIN topics t ON t.id = CASE WHEN tl.topic_id = ${topicId} THEN tl.linked_topic_id ELSE tl.topic_id END
+      WHERE tl.topic_id = ${topicId} OR tl.linked_topic_id = ${topicId}
+      ORDER BY t.title`;
+  } catch {
+    return [];
+  }
+}
+
+export async function listTopicLinks(sql: Sql): Promise<TopicGraphLink[]> {
+  try {
+    return await sql<TopicGraphLink[]>`
+      SELECT topic_id AS source_id, linked_topic_id AS target_id, relation, note
+      FROM topic_links`;
+  } catch {
+    return [];
+  }
+}
+
 /* --------------------------------------------------------------- sources */
 
 export interface StoredSource {

@@ -235,7 +235,13 @@ function buildGraph3D(
   return { nodes, edges, focusTrail: baseTrail };
 }
 
-export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
+export function TopicGraph3D({
+  roots,
+  crossLinks = [],
+}: {
+  roots: TreeBranch[];
+  crossLinks?: { sourceId: string; targetId: string; relation: string; note: string | null }[];
+}) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -305,6 +311,22 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
     if (!activeNode) return null;
     return findBranchWithTrail(roots, activeNode.id)?.branch ?? null;
   }, [roots, activeNode]);
+
+  const activeCrossBranches = useMemo(() => {
+    if (!activeNode || crossLinks.length === 0) return [];
+    const results: { branch: TreeBranch; relation: string; note: string | null }[] = [];
+    const seen = new Set<string>();
+    for (const l of crossLinks) {
+      const otherId = l.sourceId === activeNode.id ? l.targetId : l.targetId === activeNode.id ? l.sourceId : null;
+      if (!otherId || seen.has(otherId)) continue;
+      const found = findBranchWithTrail(roots, otherId);
+      if (found) {
+        seen.add(otherId);
+        results.push({ branch: found.branch, relation: l.relation, note: l.note });
+      }
+    }
+    return results;
+  }, [roots, activeNode, crossLinks]);
 
   function toggleCollapse(id: string) {
     setCollapsedIds((prev) => {
@@ -500,6 +522,29 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
         ctx.restore();
       }
 
+      // Draw cross-branch / cross-trunk bridge arcs when both endpoints are visible
+      if (crossLinks.length > 0) {
+        const projById = new Map(proj.map((p) => [p.node.id, p]));
+        for (const cl of crossLinks) {
+          const a = projById.get(cl.sourceId);
+          const b = projById.get(cl.targetId);
+          if (!a || !b || !a.visible || !b.visible) continue;
+          const activeBridge = activeId === a.node.id || activeId === b.node.id;
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([4 * dpr, 4 * dpr]);
+          const mx = (a.sx + b.sx) / 2;
+          const my = (a.sy + b.sy) / 2 - 18 * dpr;
+          ctx.moveTo(a.sx, a.sy);
+          ctx.quadraticCurveTo(mx, my, b.sx, b.sy);
+          ctx.strokeStyle = activeBridge ? colT1 : colT2;
+          ctx.lineWidth = (activeBridge ? 1.8 : 1.0) * dpr;
+          ctx.globalAlpha = activeBridge ? 0.85 : 0.32;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
       // Draw nodes back-to-front
       const sortedNodes = [...proj].sort((a, b) => b.zCam - a.zCam);
 
@@ -589,7 +634,7 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
 
     rafId = window.requestAnimationFrame(render);
     return () => window.cancelAnimationFrame(rafId);
-  }, [nodes, edges, autoRotate, hoveredId, selectedId, maxDepth, normalizedQuery, visibleNodeIds]);
+  }, [nodes, edges, crossLinks, autoRotate, hoveredId, selectedId, maxDepth, normalizedQuery, visibleNodeIds]);
 
   function findHitNode(clientX: number, clientY: number) {
     const canvas = canvasRef.current;
@@ -865,6 +910,37 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {activeCrossBranches.length > 0 && (
+            <div className="graph3d-children">
+              <span className="muted small">Connected disciplines across the tree:</span>
+              <div className="graph3d-child-pills">
+                {activeCrossBranches.map(({ branch: linked, relation, note }) => (
+                  <button
+                    key={linked.id}
+                    type="button"
+                    className="crumb-pill"
+                    title={note ?? linked.brief ?? relation}
+                    onClick={() => {
+                      const trailFound = findBranchWithTrail(roots, linked.id);
+                      if (trailFound) {
+                        setCollapsedIds((prev) => {
+                          const next = new Set(prev);
+                          for (const seg of trailFound.trail) next.delete(seg.id);
+                          next.delete(linked.id);
+                          return next;
+                        });
+                      }
+                      setFocusRootId(null);
+                      setSelectedId(linked.id);
+                    }}
+                  >
+                    ↔ {linked.title}
+                  </button>
+                ))}
               </div>
             </div>
           )}

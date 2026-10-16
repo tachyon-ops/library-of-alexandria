@@ -256,6 +256,14 @@ describe.skipIf(!url)("research pipeline", () => {
     const restoredRoot = await repo.moveTopic(sql, root.id, null);
     expect(restoredRoot.depth).toBe(0);
 
+    // Cross-branch / cross-trunk links connect nodes across separate branches.
+    await repo.linkTopics(sql, root.id, superRoot.id, "bridges", "Shared mechanistic foundations");
+    const rootLinks = await repo.topicLinks(sql, root.id);
+    expect(rootLinks).toHaveLength(1);
+    expect(rootLinks[0]!.id).toBe(superRoot.id);
+    expect(rootLinks[0]!.relation).toBe("bridges");
+    expect((await repo.listTopicLinks(sql)).length).toBeGreaterThanOrEqual(1);
+
     const controversies = await repo.topicControversies(sql, root.id);
     expect(controversies).toHaveLength(1);
     expect(controversies[0]!.claimIds).toHaveLength(1);
