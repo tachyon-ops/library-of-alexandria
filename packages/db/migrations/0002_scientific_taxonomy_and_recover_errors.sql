@@ -222,8 +222,7 @@ WHERE nls.slug = 'natural-and-life-sciences'
 
 -- Reparent "Reproductive Medicine & Human Fertility" under "Medicine, Health & Longevity":
 UPDATE topics rf
-SET parent_id = mhl.id,
-    updated_at = now()
+SET parent_id = mhl.id
 FROM topics mhl
 WHERE rf.slug IN ('reproductive-medicine-human-fertility', 'human-fertility')
   AND mhl.slug = 'medicine-health-and-longevity'
