@@ -9,6 +9,7 @@ import {
   type Tier,
   type Topic,
   type TopicStatus,
+  type TopicSynthesis,
 } from "@lib/core";
 import type { Sql } from "./client";
 
@@ -176,10 +177,31 @@ export async function setTopicSummaryIfEmpty(sql: Sql, id: string, summary: stri
   await sql`UPDATE topics SET summary = COALESCE(summary, ${summary}) WHERE id = ${id}`;
 }
 
-export async function saveTopicReview(sql: Sql, id: string, summary: string, gaps: string[]): Promise<void> {
-  await sql`
-    UPDATE topics SET summary = ${summary}, gaps = ${gaps}, status = 'ready', last_researched_at = now()
-    WHERE id = ${id}`;
+export async function saveTopicReview(
+  sql: Sql,
+  id: string,
+  summary: string,
+  gaps: string[],
+  synthesis?: TopicSynthesis | null,
+): Promise<void> {
+  if (synthesis && Object.keys(synthesis).length > 0) {
+    await sql`
+      UPDATE topics
+      SET summary = ${summary},
+          gaps = ${gaps},
+          synthesis = ${sql.json(synthesis as never)},
+          status = 'ready',
+          last_researched_at = now()
+      WHERE id = ${id}`;
+  } else {
+    await sql`
+      UPDATE topics
+      SET summary = ${summary},
+          gaps = ${gaps},
+          status = 'ready',
+          last_researched_at = now()
+      WHERE id = ${id}`;
+  }
 }
 
 export interface TopicLinkView {

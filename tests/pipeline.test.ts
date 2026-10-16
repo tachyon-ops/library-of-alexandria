@@ -281,4 +281,45 @@ describe.skipIf(!url)("research pipeline", () => {
     await repo.completeJob(sql, delayedId);
     expect(await repo.nextQueuedDelayMs(sql)).toBeNull();
   });
+
+  it("parses review output with benchmarks, levers, questions, and sweepQueue", () => {
+    const parsed = ReviewSchema.parse({
+      summary: "Summary text",
+      gaps: ["Gap 1"],
+      merges: [],
+      labels: [],
+      controversies: [],
+      synthesis: {
+        benchmarks: [{ metric: "31.1%", label: "Live births per BB transfer", source: "PMC8244281" }],
+        levers: [
+          {
+            name: "Natural-cycle FET",
+            category: "Transfer & Preparation",
+            description: "Transfer in ovulatory cycle",
+            bestEvidence: "COMPETE RCT, 902 ovulatory women",
+            effect: "Live birth 54% vs 43%, RR 1.26",
+            reading: "Strongest lever if ovulating regularly",
+            verdict: "Supported",
+          },
+        ],
+        clinicalQuestions: ["Does she still ovulate regularly?"],
+        sweepQueue: ["Spindle transfer outcomes over 40"],
+      },
+    });
+    expect(parsed.synthesis?.benchmarks[0]!.metric).toBe("31.1%");
+    expect(parsed.synthesis?.levers[0]!.verdict).toBe("Supported");
+    expect(parsed.synthesis?.clinicalQuestions).toHaveLength(1);
+    expect(parsed.synthesis?.sweepQueue).toHaveLength(1);
+  });
+
+  it("remains backwards compatible when synthesis is omitted", () => {
+    const parsed = ReviewSchema.parse({
+      summary: "Legacy summary",
+      gaps: [],
+      merges: [],
+      labels: [],
+      controversies: [],
+    });
+    expect(parsed.synthesis).toBeUndefined();
+  });
 });
