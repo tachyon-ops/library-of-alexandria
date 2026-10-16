@@ -322,4 +322,17 @@ describe.skipIf(!url)("research pipeline", () => {
     });
     expect(parsed.synthesis).toBeUndefined();
   });
+
+  it("safely handles JSON string synthesis representations", () => {
+    const rawJson = JSON.stringify({
+      benchmarks: [{ metric: "8.6%", label: "Cumulative live birth at 44", source: "Seifer 2023" }],
+      levers: [],
+      clinicalQuestions: [],
+      sweepQueue: [],
+    });
+    const parsed = typeof rawJson === "string" ? JSON.parse(rawJson) : rawJson;
+    expect(parsed.benchmarks).toHaveLength(1);
+    expect(parsed.benchmarks[0].metric).toBe("8.6%");
+  });
 });
+
