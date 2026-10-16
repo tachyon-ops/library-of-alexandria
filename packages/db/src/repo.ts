@@ -1,0 +1,429 @@
+import {
+  slugify,
+  type Controversy,
+  type Direction,
+  type EntityKind,
+  type JobKind,
+  type SourceRecord,
+  type StudyDesign,
+  type Tier,
+  type Topic,
+  type TopicStatus,
+} from "@lib/core";
+import type { Sql } from "./client";
+
+/* ---------------------------------------------------------------- topics */
+
+export interface TreeNode {
+  id: string;
+  parentId: string | null;
+  slug: string;
+  title: string;
+  status: TopicStatus;
+  depth: number;
+  claimCount: number;
+}
+
+export async function createTopic(
+  sql: Sql,
+  input: { title: string; brief?: string | null; parentId?: string | null },
+): Promise<Topic> {
+  const parent = input.parentId ? await getTopic(sql, input.parentId) : null;
+  const base = slugify(parent ? `${parent.slug}-${input.title}` : input.title);
+  let slug = base;
+  for (let n = 2; (await sql`SELECT 1 FROM topics WHERE slug = ${slug}`).length > 0; n++) slug = `${base}-${n}`;
+  const [row] = await sql<Topic[]>`
+    INSERT INTO topics (parent_id, slug, title, brief, depth)
+    VALUES (${parent?.id ?? null}, ${slug}, ${input.title.trim()}, ${input.brief ?? null}, ${parent ? parent.depth + 1 : 0})
+    RETURNING *`;
+  return row!;
+}
+
+export async function getTopic(sql: Sql, id: string): Promise<Topic | null> {
+  const [row] = await sql<Topic[]>`SELECT * FROM topics WHERE id = ${id}`;
+  return row ?? null;
+}
+
+export async function getTopicBySlug(sql: Sql, slug: string): Promise<Topic | null> {
+  const [row] = await sql<Topic[]>`SELECT * FROM topics WHERE slug = ${slug}`;
+  return row ?? null;
+}
+
+/** Root first. */
+export async function getAncestors(sql: Sql, id: string): Promise<Topic[]> {
+  return sql<Topic[]>`
+    WITH RECURSIVE up AS (
+      SELECT t.*, 0 AS hop FROM topics t WHERE t.id = (SELECT parent_id FROM topics WHERE id = ${id})
+      UNION ALL
+      SELECT t.*, up.hop + 1 FROM topics t JOIN up ON t.id = up.parent_id
+    )
+    SELECT * FROM up ORDER BY hop DESC`;
+}
+
+export async function getChildren(sql: Sql, id: string): Promise<Topic[]> {
+  return sql<Topic[]>`SELECT * FROM topics WHERE parent_id = ${id} ORDER BY title`;
+}
+
+export async function listTree(sql: Sql): Promise<TreeNode[]> {
+  return sql<TreeNode[]>`
+    SELECT t.id, t.parent_id, t.slug, t.title, t.status, t.depth,
+           (SELECT count(*)::int FROM claims c WHERE c.topic_id = t.id AND NOT c.superseded) AS claim_count
+    FROM topics t ORDER BY t.depth, t.title`;
+}
+
+export async function setTopicStatus(sql: Sql, id: string, status: TopicStatus): Promise<void> {
+  await sql`UPDATE topics SET status = ${status} WHERE id = ${id}`;
+}
+
+export async function saveTopicReview(sql: Sql, id: string, summary: string, gaps: string[]): Promise<void> {
+  await sql`
+    UPDATE topics SET summary = ${summary}, gaps = ${gaps}, status = 'ready', last_researched_at = now()
+    WHERE id = ${id}`;
+}
+
+/* --------------------------------------------------------------- sources */
+
+export interface StoredSource {
+  id: string;
+  kind: string;
+  title: string;
+  url: string | null;
+  doi: string | null;
+  venue: string | null;
+  year: number | null;
+  authors: string[];
+  abstract: string | null;
+  citedBy: number | null;
+  declaredDesign: string | null;
+  design: StudyDesign | null;
+  sampleSize: number | null;
+}
+
+/** Stores sources once (matched by origin id or DOI) and links them to the topic. Returns stored ids. */
+export async function upsertSources(sql: Sql, topicId: string, records: SourceRecord[], query: string): Promise<string[]> {
+  const ids: string[] = [];
+  for (const r of records) {
+    const [existing] = await sql<{ id: string }[]>`
+      SELECT id FROM sources WHERE external_id = ${r.externalId} OR (${r.doi}::text IS NOT NULL AND doi = ${r.doi}) LIMIT 1`;
+    let id: string;
+    if (existing) {
+      id = existing.id;
+      await sql`
+        UPDATE sources SET
+          abstract = COALESCE(abstract, ${r.abstract}),
+          cited_by = GREATEST(COALESCE(cited_by, 0), COALESCE(${r.citedBy}::int, 0)),
+          url = COALESCE(url, ${r.url}),
+          declared_design = COALESCE(declared_design, ${r.declaredDesign}),
+          sample_size = COALESCE(sample_size, ${r.sampleSize}::int)
+        WHERE id = ${id}`;
+    } else {
+      const [row] = await sql<{ id: string }[]>`
+        INSERT INTO sources (kind, external_id, origin, title, url, doi, venue, year, authors, abstract, cited_by,
+                             declared_design, sample_size, extra)
+        VALUES (${r.kind}, ${r.externalId}, ${r.origin}, ${r.title}, ${r.url}, ${r.doi}, ${r.venue}, ${r.year},
+                ${r.authors}, ${r.abstract}, ${r.citedBy}, ${r.declaredDesign}, ${r.sampleSize}, ${sql.json(r.extra as never)})
+        RETURNING id`;
+      id = row!.id;
+    }
+    await sql`INSERT INTO topic_sources (topic_id, source_id, query) VALUES (${topicId}, ${id}, ${query}) ON CONFLICT DO NOTHING`;
+    ids.push(id);
+  }
+  return ids;
+}
+
+export async function unreadSources(sql: Sql, topicId: string, limit: number): Promise<StoredSource[]> {
+  return sql<StoredSource[]>`
+    SELECT s.* FROM sources s JOIN topic_sources ts ON ts.source_id = s.id
+    WHERE ts.topic_id = ${topicId} AND NOT ts.extracted
+    -- Citations per year since publication, plus a boost for the last two years,
+    -- so new results are read alongside the classics instead of after them.
+    ORDER BY COALESCE(s.cited_by, 0)::float / GREATEST(1, extract(year FROM now())::int - COALESCE(s.year, 2000) + 1)
+             + CASE WHEN s.year >= extract(year FROM now())::int - 1 THEN 5 ELSE 0 END DESC,
+             s.id
+    LIMIT ${limit}`;
+}
+
+export async function countExtractedSources(sql: Sql, topicId: string): Promise<number> {
+  const [row] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM topic_sources WHERE topic_id = ${topicId} AND extracted`;
+  return row?.n ?? 0;
+}
+
+export async function countUnreadSources(sql: Sql, topicId: string): Promise<number> {
+  const [row] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM topic_sources WHERE topic_id = ${topicId} AND NOT extracted`;
+  return row?.n ?? 0;
+}
+
+export async function markExtracted(sql: Sql, topicId: string, sourceIds: string[]): Promise<void> {
+  if (sourceIds.length === 0) return;
+  await sql`UPDATE topic_sources SET extracted = true WHERE topic_id = ${topicId} AND source_id = ANY(${sourceIds}::uuid[])`;
+}
+
+export async function setSourceDesign(sql: Sql, id: string, design: StudyDesign, sampleSize: number | null): Promise<void> {
+  await sql`UPDATE sources SET design = ${design}, sample_size = COALESCE(${sampleSize}::int, sample_size) WHERE id = ${id}`;
+}
+
+/* ---------------------------------------------------------------- claims */
+
+export interface ClaimView {
+  id: string;
+  statement: string;
+  tier: Tier;
+  controversy: Controversy;
+  direction: Direction;
+  confidence: number;
+  rationale: string | null;
+  sources: { id: string; title: string; url: string | null; year: number | null; design: string | null; venue: string | null }[];
+}
+
+export async function insertClaim(
+  sql: Sql,
+  c: {
+    topicId: string;
+    statement: string;
+    tier: Tier;
+    controversy: Controversy;
+    direction: Direction;
+    confidence: number;
+    rationale: string | null;
+    sourceIds: string[];
+  },
+): Promise<string> {
+  return sql.begin(async (tx) => {
+    const [row] = await tx<{ id: string }[]>`
+      INSERT INTO claims (topic_id, statement, tier, controversy, direction, confidence, rationale)
+      VALUES (${c.topicId}, ${c.statement}, ${c.tier}, ${c.controversy}, ${c.direction}, ${c.confidence}, ${c.rationale})
+      RETURNING id`;
+    for (const sid of c.sourceIds) {
+      await tx`INSERT INTO claim_sources (claim_id, source_id) VALUES (${row!.id}, ${sid}) ON CONFLICT DO NOTHING`;
+    }
+    return row!.id;
+  });
+}
+
+export async function topicClaims(sql: Sql, topicId: string): Promise<ClaimView[]> {
+  return sql<ClaimView[]>`
+    SELECT c.id, c.statement, c.tier, c.controversy, c.direction, c.confidence, c.rationale,
+           COALESCE(json_agg(json_build_object(
+             'id', s.id, 'title', s.title, 'url', s.url, 'year', s.year, 'design', s.design, 'venue', s.venue
+           ) ORDER BY s.year DESC NULLS LAST) FILTER (WHERE s.id IS NOT NULL), '[]') AS sources
+    FROM claims c
+    LEFT JOIN claim_sources cs ON cs.claim_id = c.id
+    LEFT JOIN sources s ON s.id = cs.source_id
+    WHERE c.topic_id = ${topicId} AND NOT c.superseded
+    GROUP BY c.id
+    ORDER BY c.tier, c.confidence DESC`;
+}
+
+/** Merges duplicates into one claim: the kept claim inherits the dropped claims' sources. */
+export async function mergeClaims(sql: Sql, keepId: string, dropIds: string[]): Promise<void> {
+  if (dropIds.length === 0) return;
+  await sql.begin(async (tx) => {
+    await tx`
+      INSERT INTO claim_sources (claim_id, source_id)
+      SELECT ${keepId}, source_id FROM claim_sources WHERE claim_id = ANY(${dropIds}::uuid[])
+      ON CONFLICT DO NOTHING`;
+    await tx`UPDATE claims SET superseded = true WHERE id = ANY(${dropIds}::uuid[]) AND id <> ${keepId}`;
+  });
+}
+
+export async function setClaimControversy(sql: Sql, id: string, controversy: Controversy): Promise<void> {
+  await sql`UPDATE claims SET controversy = ${controversy} WHERE id = ${id}`;
+}
+
+export async function setClaimTier(sql: Sql, id: string, tier: Tier): Promise<void> {
+  await sql`UPDATE claims SET tier = ${tier} WHERE id = ${id}`;
+}
+
+export async function claimSourceDesigns(sql: Sql, claimId: string): Promise<{ design: StudyDesign; sampleSize: number | null }[]> {
+  return sql<{ design: StudyDesign; sampleSize: number | null }[]>`
+    SELECT COALESCE(s.design, 'unknown') AS design, s.sample_size
+    FROM claim_sources cs JOIN sources s ON s.id = cs.source_id WHERE cs.claim_id = ${claimId}`;
+}
+
+/* ------------------------------------------- entities, milestones, debates */
+
+export interface EntityView {
+  id: string;
+  kind: EntityKind;
+  name: string;
+  country: string | null;
+  url: string | null;
+  summary: string | null;
+  attributes: Record<string, string>;
+  sourceUrls: string[];
+}
+
+export async function upsertEntity(
+  sql: Sql,
+  topicId: string,
+  e: { kind: EntityKind; name: string; country: string | null; url: string | null; summary: string | null; attributes: Record<string, string>; sourceUrls: string[] },
+): Promise<void> {
+  await sql`
+    INSERT INTO entities (topic_id, kind, name, country, url, summary, attributes, source_urls)
+    VALUES (${topicId}, ${e.kind}, ${e.name}, ${e.country}, ${e.url}, ${e.summary}, ${sql.json(e.attributes)}, ${e.sourceUrls})
+    ON CONFLICT (topic_id, kind, name) DO UPDATE SET
+      country = COALESCE(EXCLUDED.country, entities.country),
+      url = COALESCE(EXCLUDED.url, entities.url),
+      summary = COALESCE(EXCLUDED.summary, entities.summary),
+      attributes = entities.attributes || EXCLUDED.attributes,
+      source_urls = ARRAY(SELECT DISTINCT unnest(entities.source_urls || EXCLUDED.source_urls)),
+      updated_at = now()`;
+}
+
+export async function topicEntities(sql: Sql, topicId: string): Promise<EntityView[]> {
+  return sql<EntityView[]>`SELECT * FROM entities WHERE topic_id = ${topicId} ORDER BY kind, name`;
+}
+
+export interface MilestoneView {
+  id: string;
+  year: number;
+  title: string;
+  description: string | null;
+  sourceUrl: string | null;
+}
+
+export async function insertMilestone(
+  sql: Sql,
+  m: { topicId: string; year: number; title: string; description: string | null; sourceId: string | null },
+): Promise<void> {
+  await sql`
+    INSERT INTO milestones (topic_id, year, title, description, source_id)
+    VALUES (${m.topicId}, ${m.year}, ${m.title}, ${m.description}, ${m.sourceId})
+    ON CONFLICT (topic_id, year, title) DO NOTHING`;
+}
+
+export async function topicMilestones(sql: Sql, topicId: string): Promise<MilestoneView[]> {
+  return sql<MilestoneView[]>`
+    SELECT m.id, m.year, m.title, m.description, s.url AS source_url
+    FROM milestones m LEFT JOIN sources s ON s.id = m.source_id
+    WHERE m.topic_id = ${topicId} ORDER BY m.year`;
+}
+
+export interface ControversyView {
+  id: string;
+  kind: string;
+  note: string;
+  claimIds: string[];
+}
+
+export async function replaceControversies(
+  sql: Sql,
+  topicId: string,
+  items: { kind: string; note: string; claimIds: string[] }[],
+): Promise<void> {
+  await sql.begin(async (tx) => {
+    await tx`DELETE FROM controversies WHERE topic_id = ${topicId}`;
+    for (const it of items) {
+      await tx`INSERT INTO controversies (topic_id, kind, note, claim_ids) VALUES (${topicId}, ${it.kind}, ${it.note}, ${it.claimIds}::uuid[])`;
+    }
+  });
+}
+
+export async function topicControversies(sql: Sql, topicId: string): Promise<ControversyView[]> {
+  return sql<ControversyView[]>`SELECT id, kind, note, claim_ids FROM controversies WHERE topic_id = ${topicId} ORDER BY created_at`;
+}
+
+/* ------------------------------------------------------------------ jobs */
+
+export interface Job {
+  id: string;
+  kind: JobKind;
+  topicId: string | null;
+  payload: Record<string, unknown>;
+  attempts: number;
+}
+
+export async function enqueueJob(
+  sql: Sql,
+  kind: JobKind,
+  topicId: string | null,
+  payload: Record<string, unknown> = {},
+  delaySeconds = 0,
+): Promise<string> {
+  const [row] = await sql<{ id: string }[]>`
+    INSERT INTO jobs (kind, topic_id, payload, run_after)
+    VALUES (${kind}, ${topicId}, ${sql.json(payload as never)}, now() + make_interval(secs => ${delaySeconds}))
+    RETURNING id`;
+  return row!.id;
+}
+
+/** Takes the next due job; SKIP LOCKED lets several workers run side by side. */
+export async function claimNextJob(sql: Sql): Promise<Job | null> {
+  const [row] = await sql<Job[]>`
+    UPDATE jobs SET status = 'running', locked_at = now(), attempts = attempts + 1
+    WHERE id = (
+      SELECT id FROM jobs WHERE status = 'queued' AND run_after <= now()
+      ORDER BY run_after, id FOR UPDATE SKIP LOCKED LIMIT 1
+    )
+    RETURNING id, kind, topic_id, payload, attempts`;
+  return row ?? null;
+}
+
+export async function completeJob(sql: Sql, id: string): Promise<void> {
+  await sql`UPDATE jobs SET status = 'done', finished_at = now(), error = NULL WHERE id = ${id}`;
+}
+
+/** Retries with exponential backoff; gives up after maxAttempts. Returns true when the job is dead. */
+export async function failJob(sql: Sql, job: Job, error: string, maxAttempts = 3): Promise<boolean> {
+  const dead = job.attempts >= maxAttempts;
+  await sql`
+    UPDATE jobs SET
+      status = ${dead ? "failed" : "queued"},
+      error = ${error.slice(0, 2000)},
+      run_after = now() + make_interval(secs => ${30 * 2 ** job.attempts}),
+      finished_at = ${dead ? sql`now()` : null}
+    WHERE id = ${job.id}`;
+  return dead;
+}
+
+/** Jobs left in flight after a crash go back to the queue. */
+export async function requeueStaleJobs(sql: Sql, olderThanMinutes = 15): Promise<number> {
+  const rows = await sql`
+    UPDATE jobs SET status = 'queued' WHERE status = 'running' AND locked_at < now() - make_interval(mins => ${olderThanMinutes})
+    RETURNING id`;
+  return rows.length;
+}
+
+export async function openJobCount(sql: Sql, topicId: string): Promise<number> {
+  const [row] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM jobs WHERE topic_id = ${topicId} AND status IN ('queued', 'running')`;
+  return row?.n ?? 0;
+}
+
+export async function recentJobs(sql: Sql, topicId: string, limit = 12) {
+  return sql<{ id: string; kind: JobKind; status: string; attempts: number; error: string | null; createdAt: Date }[]>`
+    SELECT id, kind, status, attempts, error, created_at FROM jobs WHERE topic_id = ${topicId}
+    ORDER BY id DESC LIMIT ${limit}`;
+}
+
+/** Starts (or restarts) research on a topic: the web app's "Research" button and the scout both call this. */
+export async function requestResearch(sql: Sql, topicId: string, autoDepth: number): Promise<void> {
+  await setTopicStatus(sql, topicId, "queued");
+  await enqueueJob(sql, "plan", topicId, { autoDepth });
+}
+
+/* ----------------------------------------------------------------- usage */
+
+export async function logUsage(
+  sql: Sql,
+  u: { jobId: string | null; role: string; model: string; inputTokens: number; outputTokens: number; webSearches: number },
+): Promise<void> {
+  await sql`
+    INSERT INTO llm_usage (job_id, role, model, input_tokens, output_tokens, web_searches)
+    VALUES (${u.jobId}, ${u.role}, ${u.model}, ${u.inputTokens}, ${u.outputTokens}, ${u.webSearches})`;
+}
+
+export async function llmCallsToday(sql: Sql): Promise<number> {
+  const [row] = await sql<{ n: number }[]>`SELECT count(*)::int AS n FROM llm_usage WHERE created_at > now() - interval '1 day'`;
+  return row?.n ?? 0;
+}
+
+export async function usageSummary(sql: Sql) {
+  return sql<{ role: string; model: string; calls: number; inputTokens: number; outputTokens: number; webSearches: number }[]>`
+    SELECT role, model, count(*)::int AS calls, sum(input_tokens)::int AS input_tokens,
+           sum(output_tokens)::int AS output_tokens, sum(web_searches)::int AS web_searches
+    FROM llm_usage WHERE created_at > now() - interval '30 days'
+    GROUP BY role, model ORDER BY role`;
+}
