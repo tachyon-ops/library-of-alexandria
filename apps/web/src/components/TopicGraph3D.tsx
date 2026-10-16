@@ -12,10 +12,15 @@ interface GraphNode {
   brief: string | null;
   status: string;
   depth: number;
+  relativeDepth: number;
   claimCount: number;
+  subtreeClaims: number;
   parentId: string | null;
-  path: string[];
+  path: { id: string; title: string; slug: string }[];
   childCount: number;
+  descendantCount: number;
+  hiddenDescendantCount: number;
+  isCollapsed: boolean;
   x: number;
   y: number;
   z: number;
@@ -34,26 +39,80 @@ const STATUS_LABEL: Record<string, string> = {
   error: "Stopped on an error",
 };
 
+function countDescendants(branch: TreeBranch): number {
+  return branch.children.reduce((acc, c) => acc + 1 + countDescendants(c), 0);
+}
+
+function sumSubtreeClaims(branch: TreeBranch): number {
+  return branch.claimCount + branch.children.reduce((acc, c) => acc + sumSubtreeClaims(c), 0);
+}
+
+function findBranchWithTrail(
+  roots: TreeBranch[],
+  targetId: string,
+  trail: { id: string; title: string; slug: string }[] = [],
+): { branch: TreeBranch; trail: { id: string; title: string; slug: string }[] } | null {
+  for (const r of roots) {
+    if (r.id === targetId) return { branch: r, trail };
+    const found = findBranchWithTrail(r.children, targetId, [
+      ...trail,
+      { id: r.id, title: r.title, slug: r.slug },
+    ]);
+    if (found) return found;
+  }
+  return null;
+}
+
 /**
- * Deterministic 3D spherical layout with force relaxation so every branch of the
- * knowledge tree sits on an orbital shell around its parent discipline.
+ * Collects IDs of branches at global depth >= minDepth that have children,
+ * so nodes 3 and 4+ hops away can be folded cleanly by default.
  */
-function buildGraph3D(roots: TreeBranch[]): { nodes: GraphNode[]; edges: GraphEdge[] } {
+function collectDeepBranchIds(roots: TreeBranch[], minDepth: number): Set<string> {
+  const out = new Set<string>();
+  function visit(b: TreeBranch) {
+    if (b.children.length > 0 && b.depth >= minDepth) {
+      out.add(b.id);
+    }
+    for (const c of b.children) visit(c);
+  }
+  for (const r of roots) visit(r);
+  return out;
+}
+
+/**
+ * Deterministic 3D spherical layout with force relaxation around the active roots,
+ * respecting per-branch expand/collapse state.
+ */
+function buildGraph3D(
+  allRoots: TreeBranch[],
+  focusRootId: string | null,
+  collapsedIds: Set<string>,
+): {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  focusTrail: { id: string; title: string; slug: string }[];
+} {
+  const focused = focusRootId ? findBranchWithTrail(allRoots, focusRootId) : null;
+  const activeRoots = focused ? [focused.branch] : allRoots;
+  const baseTrail = focused ? focused.trail : [];
+
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
-  const indexById = new Map<string, number>();
 
   function walk(
     branch: TreeBranch,
-    path: string[],
+    path: { id: string; title: string; slug: string }[],
     parentIdx: number | null,
+    relativeDepth: number,
     siblingIdx: number,
     siblingCount: number,
     parentPos: [number, number, number],
     parentDir: [number, number, number],
   ) {
     const idx = nodes.length;
-    indexById.set(branch.id, idx);
+    const descCount = countDescendants(branch);
+    const totalClaims = sumSubtreeClaims(branch);
+    const isCollapsed = branch.children.length > 0 && collapsedIds.has(branch.id);
 
     let x = 0;
     let y = 0;
@@ -61,16 +120,25 @@ function buildGraph3D(roots: TreeBranch[]): { nodes: GraphNode[]; edges: GraphEd
     let dir: [number, number, number] = [0, 1, 0];
 
     if (parentIdx === null) {
-      const offset = siblingCount > 1 ? (siblingIdx - (siblingCount - 1) / 2) * 180 : 0;
-      x = offset;
-      y = 0;
-      z = 0;
+      if (siblingCount <= 1) {
+        x = 0;
+        y = 0;
+        z = 0;
+      } else {
+        // Place multiple top-level trunks on a balanced 3D orbital ring
+        const angle = (siblingIdx / siblingCount) * Math.PI * 2;
+        const ringR = Math.min(210, 85 + siblingCount * 14);
+        x = Math.cos(angle) * ringR;
+        z = Math.sin(angle) * ringR;
+        y = ((siblingIdx % 3) - 1) * 26;
+        const len = Math.hypot(x, y, z) || 1;
+        dir = [x / len, y / len, z / len];
+      }
     } else {
-      // Fibonacci sphere / golden-angle cone distribution around parent direction
       const goldenAngle = Math.PI * (3 - Math.sqrt(5));
       const theta = goldenAngle * (siblingIdx + 1) + idx * 0.41;
-      const radius = branch.depth === 1 ? 155 : branch.depth === 2 ? 115 : 85;
-      const spread = branch.depth === 1 ? 1.0 : 0.68;
+      const radius = relativeDepth === 1 ? 148 : relativeDepth === 2 ? 112 : 84;
+      const spread = relativeDepth === 1 ? 0.92 : 0.68;
 
       const u = siblingCount > 1 ? (siblingIdx / (siblingCount - 1)) * 2 - 1 : 0;
       const rProj = Math.sqrt(Math.max(0.05, 1 - u * u * 0.75));
@@ -97,41 +165,51 @@ function buildGraph3D(roots: TreeBranch[]): { nodes: GraphNode[]; edges: GraphEd
       brief: branch.brief,
       status: branch.status,
       depth: branch.depth,
+      relativeDepth,
       claimCount: branch.claimCount,
+      subtreeClaims: totalClaims,
       parentId: branch.parentId,
       path,
       childCount: branch.children.length,
+      descendantCount: descCount,
+      hiddenDescendantCount: isCollapsed ? descCount : 0,
+      isCollapsed,
       x,
       y,
       z,
     });
 
-    branch.children.forEach((child, i) => {
-      walk(child, [...path, branch.title], idx, i, branch.children.length, [x, y, z], dir);
-    });
+    if (!isCollapsed) {
+      const nextPath = [...path, { id: branch.id, title: branch.title, slug: branch.slug }];
+      branch.children.forEach((child, i) => {
+        walk(child, nextPath, idx, relativeDepth + 1, i, branch.children.length, [x, y, z], dir);
+      });
+    }
   }
 
-  roots.forEach((r, i) => walk(r, [], null, i, roots.length, [0, 0, 0], [0, 1, 0]));
+  activeRoots.forEach((r, i) => walk(r, baseTrail, null, 0, i, activeRoots.length, [0, 0, 0], [0, 1, 0]));
 
   // 3D repulsion + parent spring relaxation for clean separation
   for (let iter = 0; iter < 48; iter++) {
     for (let i = 0; i < nodes.length; i++) {
       const a = nodes[i]!;
-      if (a.depth === 0) continue;
+      if (a.relativeDepth === 0 && activeRoots.length === 1) continue;
       for (let j = i + 1; j < nodes.length; j++) {
         const b = nodes[j]!;
         const dx = a.x - b.x;
         const dy = a.y - b.y;
         const dz = a.z - b.z;
         const distSq = dx * dx + dy * dy + dz * dz + 1;
-        const minDist = a.depth === 1 && b.depth === 1 ? 130 : 72;
+        const minDist = a.relativeDepth <= 1 && b.relativeDepth <= 1 ? 125 : 72;
         if (distSq < minDist * minDist) {
           const dist = Math.sqrt(distSq);
-          const push = ((minDist - dist) / dist) * 0.28;
-          a.x += dx * push;
-          a.y += dy * push;
-          a.z += dz * push;
-          if (b.depth > 0) {
+          const push = ((minDist - dist) / dist) * 0.26;
+          if (!(a.relativeDepth === 0 && activeRoots.length === 1)) {
+            a.x += dx * push;
+            a.y += dy * push;
+            a.z += dz * push;
+          }
+          if (!(b.relativeDepth === 0 && activeRoots.length === 1)) {
             b.x -= dx * push;
             b.y -= dy * push;
             b.z -= dz * push;
@@ -142,7 +220,7 @@ function buildGraph3D(roots: TreeBranch[]): { nodes: GraphNode[]; edges: GraphEd
     for (const edge of edges) {
       const p = nodes[edge.source]!;
       const c = nodes[edge.target]!;
-      const targetLen = c.depth === 1 ? 150 : c.depth === 2 ? 105 : 78;
+      const targetLen = c.relativeDepth === 1 ? 142 : c.relativeDepth === 2 ? 104 : 78;
       const dx = c.x - p.x;
       const dy = c.y - p.y;
       const dz = c.z - p.z;
@@ -154,18 +232,36 @@ function buildGraph3D(roots: TreeBranch[]): { nodes: GraphNode[]; edges: GraphEd
     }
   }
 
-  return { nodes, edges };
+  return { nodes, edges, focusTrail: baseTrail };
 }
 
 export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { nodes, edges } = useMemo(() => buildGraph3D(roots), [roots]);
 
+  // Fold branches at depth >= 3 by default so 3- and 4-hop nodes are expandable on demand
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => collectDeepBranchIds(roots, 3));
+  const [focusRootId, setFocusRootId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [maxDepth, setMaxDepth] = useState<number>(6);
   const [autoRotate, setAutoRotate] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(nodes[0]?.id ?? null);
+
+  // When searching, temporarily unfold all branches so matches at depth 4–5 are visible
+  const effectiveCollapsed = useMemo(
+    () => (query.trim().length > 0 ? new Set<string>() : collapsedIds),
+    [collapsedIds, query],
+  );
+
+  const { nodes, edges, focusTrail } = useMemo(
+    () => buildGraph3D(roots, focusRootId, effectiveCollapsed),
+    [roots, focusRootId, effectiveCollapsed],
+  );
+
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    // Default selection to the first trunk with research or the first trunk
+    const researched = nodes.find((n) => n.subtreeClaims > 0);
+    return researched?.id ?? nodes[0]?.id ?? null;
+  });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const viewRef = useRef({
@@ -187,12 +283,12 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
   const visibleNodeIds = useMemo(() => {
     const set = new Set<string>();
     for (const n of nodes) {
-      if (n.depth > maxDepth) continue;
+      if (n.relativeDepth > maxDepth) continue;
       if (
         !normalizedQuery ||
         n.title.toLowerCase().includes(normalizedQuery) ||
         (n.brief?.toLowerCase().includes(normalizedQuery) ?? false) ||
-        n.path.some((p) => p.toLowerCase().includes(normalizedQuery))
+        n.path.some((p) => p.title.toLowerCase().includes(normalizedQuery))
       ) {
         set.add(n.id);
       }
@@ -204,6 +300,50 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
     () => nodes.find((n) => n.id === (hoveredId ?? selectedId)) ?? nodes[0] ?? null,
     [nodes, hoveredId, selectedId],
   );
+
+  const activeBranchTree = useMemo(() => {
+    if (!activeNode) return null;
+    return findBranchWithTrail(roots, activeNode.id)?.branch ?? null;
+  }, [roots, activeNode]);
+
+  function toggleCollapse(id: string) {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function expandSubtreeOneLevel(branch: TreeBranch) {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(branch.id);
+      return next;
+    });
+  }
+
+  function focusOnBranch(id: string | null) {
+    setFocusRootId(id);
+    if (id) {
+      setSelectedId(id);
+      const found = findBranchWithTrail(roots, id);
+      if (found) {
+        // Unfold the focused node and its direct children up to 2 relative hops
+        setCollapsedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(found.branch.id);
+          for (const child of found.branch.children) {
+            next.delete(child.id);
+          }
+          return next;
+        });
+      }
+    }
+    viewRef.current.yaw = 0.42;
+    viewRef.current.pitch = 0.24;
+    viewRef.current.zoom = 1.05;
+  }
 
   // Respect prefers-reduced-motion on initial mount
   useEffect(() => {
@@ -256,7 +396,7 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
 
       const v = viewRef.current;
       if (autoRotate && !v.dragging && !hoveredId) {
-        v.yaw += 0.0022;
+        v.yaw += 0.002;
       }
 
       const w = canvas.width;
@@ -301,10 +441,11 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
         const scale = (fov / Math.max(160, fov + z2)) * v.zoom * dpr;
         const sx = cx + x1 * scale;
         const sy = cy + y2 * scale;
-        const baseR = n.depth === 0 ? 11.5 : n.depth === 1 ? 8.2 : n.depth === 2 ? 6.0 : 4.6;
-        const claimBoost = Math.min(5, Math.sqrt(n.claimCount) * 1.15);
-        const r = Math.max(3 * dpr, (baseR + claimBoost) * scale);
-        const visible = n.depth <= maxDepth;
+        const baseR =
+          n.relativeDepth === 0 ? 11.2 : n.relativeDepth === 1 ? 8.2 : n.relativeDepth === 2 ? 6.2 : 4.8;
+        const claimBoost = Math.min(4.8, Math.sqrt(n.subtreeClaims) * 0.9);
+        const r = Math.max(3.2 * dpr, (baseR + claimBoost) * scale);
+        const visible = n.relativeDepth <= maxDepth;
         const matched = visibleNodeIds.has(n.id);
         return { node: n, sx, sy, r, zCam: z2, scale, visible, matched };
       });
@@ -359,7 +500,7 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
         ctx.restore();
       }
 
-      // Draw nodes back-to-front (largest zCam is farthest away)
+      // Draw nodes back-to-front
       const sortedNodes = [...proj].sort((a, b) => b.zCam - a.zCam);
 
       for (const item of sortedNodes) {
@@ -373,16 +514,27 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
         let fill = colT3;
         if (node.status === "error") fill = colErr;
         else if (node.status === "ready" || node.claimCount > 0) fill = colT1;
-        else if (node.status === "researching" || node.status === "queued") fill = colT2;
-        else if (node.depth === 0) fill = colT1;
-        else if (node.depth === 1) fill = colT2;
-        else if (node.depth === 2) fill = colT3;
+        else if (node.status === "researching" || node.status === "queued" || node.subtreeClaims > 0) fill = colT2;
+        else if (node.relativeDepth === 0) fill = colT1;
+        else if (node.relativeDepth === 1) fill = colT2;
+        else if (node.relativeDepth === 2) fill = colT3;
         else fill = colT4;
 
         ctx.save();
         ctx.globalAlpha = dimmed ? 0.2 : 1;
 
-        if (isSelected || isHovered || node.claimCount > 0) {
+        // Dashed outer cluster ring when a node has folded sub-branches (3 & 4+ hops)
+        if (node.isCollapsed && node.hiddenDescendantCount > 0) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([3 * dpr, 2.5 * dpr]);
+          ctx.arc(sx, sy, r + 4.5 * dpr, 0, Math.PI * 2);
+          ctx.strokeStyle = colT1;
+          ctx.lineWidth = 1.4 * dpr;
+          ctx.globalAlpha = dimmed ? 0.15 : 0.75;
+          ctx.stroke();
+          ctx.restore();
+        } else if (isSelected || isHovered || node.claimCount > 0) {
           ctx.beginPath();
           ctx.arc(sx, sy, r + (isSelected || isHovered ? 5.5 : 3) * dpr, 0, Math.PI * 2);
           ctx.strokeStyle = isSelected || isHovered ? colT1 : fill;
@@ -400,27 +552,32 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
         ctx.strokeStyle = colSheet;
         ctx.stroke();
 
-        // Show labels for root, depth 1, hovered/selected, or search matches
+        // Show labels for roots, relativeDepth 1, folded clusters, hovered/selected, or search matches
         const showLabel =
-          node.depth <= 1 ||
+          node.relativeDepth <= 1 ||
+          node.isCollapsed ||
           isSelected ||
           isHovered ||
           (normalizedQuery.length > 0 && matched) ||
-          (isRelated && node.depth <= 2);
+          (isRelated && node.relativeDepth <= 2);
 
         if (showLabel) {
-          const fontSize = Math.round((node.depth === 0 ? 13 : node.depth === 1 ? 11.5 : 10.5) * dpr);
-          ctx.font = `${isSelected || isHovered || node.depth === 0 ? 600 : 500} ${fontSize}px "Public Sans", system-ui, sans-serif`;
-          const label = node.title.length > 38 && !isSelected && !isHovered ? `${node.title.slice(0, 36)}…` : node.title;
-          const badge = node.claimCount > 0 ? ` (${node.claimCount})` : "";
-          const text = `${label}${badge}`;
+          const fontSize = Math.round(
+            (node.relativeDepth === 0 ? 12.5 : node.relativeDepth === 1 ? 11.2 : 10.2) * dpr,
+          );
+          ctx.font = `${isSelected || isHovered || node.relativeDepth === 0 ? 600 : 500} ${fontSize}px "Public Sans", system-ui, sans-serif`;
+          const label =
+            node.title.length > 36 && !isSelected && !isHovered ? `${node.title.slice(0, 34)}…` : node.title;
+          const foldedTag = node.isCollapsed && node.hiddenDescendantCount > 0 ? ` [+${node.hiddenDescendantCount}]` : "";
+          const claimTag = node.claimCount > 0 ? ` (${node.claimCount})` : "";
+          const text = `${label}${claimTag}${foldedTag}`;
           const tx = sx + r + 6 * dpr;
           const ty = sy + 3.5 * dpr;
 
           ctx.lineWidth = 3.2 * dpr;
           ctx.strokeStyle = colSheet;
           ctx.strokeText(text, tx, ty);
-          ctx.fillStyle = isSelected || isHovered || node.depth === 0 ? colInk : colMuted;
+          ctx.fillStyle = isSelected || isHovered || node.relativeDepth === 0 ? colInk : colMuted;
           ctx.fillText(text, tx, ty);
         }
 
@@ -443,7 +600,6 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
     const x = (clientX - rect.left) * dprX;
     const y = (clientY - rect.top) * dprY;
 
-    // Pick closest front-most node within hit radius
     const candidates = projectedRef.current
       .filter((p) => p.visible)
       .sort((a, b) => a.zCam - b.zCam);
@@ -464,18 +620,35 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter scientific fields (e.g. Andrology, Pre-eclampsia, mTOR)…"
+            placeholder="Filter disciplines & sub-branches (e.g. Pregnancy after 40, Pre-eclampsia, Law)…"
           />
         </label>
         <div className="graph3d-controls">
           <label className="graph3d-depth">
-            <span>Depth</span>
+            <span>Hops</span>
             <select value={maxDepth} onChange={(e) => setMaxDepth(Number(e.target.value))}>
-              <option value={1}>Disciplines (≤ 1)</option>
-              <option value={2}>Sub-fields (≤ 2)</option>
-              <option value={6}>All branches ({nodes.length})</option>
+              <option value={1}>≤ 1 hop</option>
+              <option value={2}>≤ 2 hops</option>
+              <option value={3}>≤ 3 hops</option>
+              <option value={6}>All visible ({nodes.length})</option>
             </select>
           </label>
+          <button
+            type="button"
+            className="quiet-button"
+            onClick={() => setCollapsedIds(new Set())}
+            title="Unfold all 3rd, 4th, and 5th-order sub-branches"
+          >
+            Expand all
+          </button>
+          <button
+            type="button"
+            className="quiet-button"
+            onClick={() => setCollapsedIds(collectDeepBranchIds(roots, 3))}
+            title="Fold sub-branches 3 and 4+ hops away into [+N] clusters"
+          >
+            Collapse deep (≥ 3)
+          </button>
           <button
             type="button"
             className="quiet-button"
@@ -488,6 +661,7 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
             type="button"
             className="quiet-button"
             onClick={() => {
+              setFocusRootId(null);
               viewRef.current.yaw = 0.42;
               viewRef.current.pitch = 0.24;
               viewRef.current.zoom = 1.0;
@@ -496,6 +670,46 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
             Reset view
           </button>
         </div>
+      </div>
+
+      {/* Constellation Breadcrumb Bar for stepping across trunks & deep branches */}
+      <div className="graph3d-breadcrumbs" aria-label="Constellation branch path">
+        <button
+          type="button"
+          className="crumb-pill"
+          data-active={focusRootId === null ? "true" : undefined}
+          onClick={() => focusOnBranch(null)}
+        >
+          All Trunks ({roots.length})
+        </button>
+        {(activeNode ? activeNode.path : focusTrail).map((seg) => (
+          <span key={seg.id} className="crumb-segment">
+            <span className="muted" aria-hidden="true">
+              ›
+            </span>
+            <button
+              type="button"
+              className="crumb-pill"
+              data-active={focusRootId === seg.id ? "true" : undefined}
+              onClick={() => {
+                setSelectedId(seg.id);
+                focusOnBranch(seg.id);
+              }}
+            >
+              {seg.title}
+            </button>
+          </span>
+        ))}
+        {activeNode && (
+          <span className="crumb-segment">
+            <span className="muted" aria-hidden="true">
+              ›
+            </span>
+            <span className="crumb-current">
+              {activeNode.title} <span className="muted">(depth {activeNode.depth})</span>
+            </span>
+          </span>
+        )}
       </div>
 
       <div className="graph3d-stage">
@@ -530,12 +744,26 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
             viewRef.current.dragging = false;
             if (!wasDrag) {
               const hit = findHitNode(e.clientX, e.clientY);
-              if (hit) setSelectedId(hit.id);
+              if (hit) {
+                // If clicking an already-selected node that has children, toggle its fold state!
+                const targetNode = nodes.find((n) => n.id === hit.id);
+                if (hit.id === selectedId && targetNode && targetNode.childCount > 0) {
+                  toggleCollapse(hit.id);
+                } else {
+                  setSelectedId(hit.id);
+                }
+              }
             }
           }}
           onDoubleClick={(e) => {
             const hit = findHitNode(e.clientX, e.clientY);
-            if (hit) router.push(`/topic/${hit.slug}`);
+            if (!hit) return;
+            const targetNode = nodes.find((n) => n.id === hit.id);
+            if (targetNode && targetNode.childCount > 0) {
+              focusOnBranch(targetNode.id);
+            } else {
+              router.push(`/topic/${hit.slug}`);
+            }
           }}
           onWheel={(e) => {
             e.preventDefault();
@@ -552,7 +780,8 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
           }}
         />
         <p className="graph3d-hint muted small">
-          Drag to orbit in 3D · Scroll to zoom · Click a node to inspect · Double-click to open branch
+          Drag to orbit · Scroll to zoom · Click a node to inspect (click again to unfold <code>[+N]</code> children) ·
+          Double-click a parent to focus its subtree
         </p>
       </div>
 
@@ -561,20 +790,84 @@ export function TopicGraph3D({ roots }: { roots: TreeBranch[] }) {
           <div className="graph3d-inspector-head">
             <div>
               {activeNode.path.length > 0 && (
-                <p className="graph3d-path muted small">{activeNode.path.join(" › ")}</p>
+                <p className="graph3d-path muted small">
+                  {activeNode.path.map((p) => p.title).join(" › ")} · Depth {activeNode.depth}
+                </p>
               )}
               <h3 className="graph3d-title">{activeNode.title}</h3>
             </div>
-            <Link href={`/topic/${activeNode.slug}`} className="donate-button">
-              Open branch →
-            </Link>
+            <div className="graph3d-inspector-actions">
+              {activeNode.childCount > 0 && (
+                <button
+                  type="button"
+                  className="quiet-button"
+                  onClick={() => toggleCollapse(activeNode.id)}
+                >
+                  {activeNode.isCollapsed
+                    ? `Expand sub-branches (+${activeNode.hiddenDescendantCount})`
+                    : `Collapse sub-branches (${activeNode.childCount})`}
+                </button>
+              )}
+              {activeNode.childCount > 0 && (
+                <button
+                  type="button"
+                  className="quiet-button"
+                  aria-pressed={focusRootId === activeNode.id}
+                  onClick={() =>
+                    focusOnBranch(focusRootId === activeNode.id ? activeNode.parentId : activeNode.id)
+                  }
+                >
+                  {focusRootId === activeNode.id ? "↑ Exit subtree focus" : "Focus subtree"}
+                </button>
+              )}
+              <Link href={`/topic/${activeNode.slug}`} className="donate-button">
+                Open dossier →
+              </Link>
+            </div>
           </div>
+
           {activeNode.brief && <p className="graph3d-brief">{activeNode.brief}</p>}
+
           <p className="muted small">
             {STATUS_LABEL[activeNode.status] ?? activeNode.status} · {activeNode.claimCount}{" "}
-            {activeNode.claimCount === 1 ? "graded finding" : "graded findings"} · {activeNode.childCount}{" "}
-            {activeNode.childCount === 1 ? "sub-branch" : "sub-branches"}
+            {activeNode.claimCount === 1 ? "direct finding" : "direct findings"}
+            {activeNode.subtreeClaims > activeNode.claimCount
+              ? ` (${activeNode.subtreeClaims} across subtree)`
+              : ""}{" "}
+            · {activeNode.childCount} {activeNode.childCount === 1 ? "direct sub-branch" : "direct sub-branches"}
+            {activeNode.descendantCount > activeNode.childCount
+              ? ` (${activeNode.descendantCount} total descendants)`
+              : ""}
           </p>
+
+          {activeBranchTree && activeBranchTree.children.length > 0 && (
+            <div className="graph3d-children">
+              <span className="muted small">Step into sub-branch:</span>
+              <div className="graph3d-child-pills">
+                {activeBranchTree.children.map((child) => {
+                  const childDesc = countDescendants(child);
+                  return (
+                    <button
+                      key={child.id}
+                      type="button"
+                      className="crumb-pill"
+                      onClick={() => {
+                        expandSubtreeOneLevel(activeBranchTree);
+                        setSelectedId(child.id);
+                        if (child.depth >= 3 && child.children.length > 0) {
+                          expandSubtreeOneLevel(child);
+                        }
+                      }}
+                    >
+                      {child.title}
+                      {child.claimCount > 0 ? ` (${child.claimCount})` : ""}
+                      {childDesc > 0 ? ` · +${childDesc}` : ""}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
