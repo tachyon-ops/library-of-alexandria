@@ -54,7 +54,7 @@ describe("helpers", () => {
   it("normalises DOIs", () => {
     expect(normaliseDoi("https://doi.org/10.1093/HUMREP/deac249")).toBe("10.1093/humrep/deac249");
   });
-  it("looks up scientific glossary terms and morphological roots", () => {
+  it("looks up scientific glossary terms, general dictionary words, and morphological roots", () => {
     const auto = lookupGlossaryTerm("Autologous");
     expect(auto?.term).toBe("Autologous");
     expect(auto?.synopsis).toContain("own body");
@@ -67,6 +67,18 @@ describe("helpers", () => {
 
     const morph = lookupGlossaryTerm("folliculogenesis");
     expect(morph?.synopsis).toContain("small sac / follicle");
+
+    const frontier = lookupGlossaryTerm("frontier");
+    expect(frontier?.term).toBe("Frontier");
+    expect(frontier?.synopsis).toContain("leading edge");
+
+    const studies = lookupGlossaryTerm("studies");
+    expect(studies).not.toBeNull();
+    expect(studies?.synopsis.length).toBeGreaterThan(15);
+
+    const anyWord = lookupGlossaryTerm("uncharacteristically");
+    expect(anyWord).not.toBeNull();
+    expect(anyWord?.synopsis.length).toBeGreaterThan(10);
   });
   it("extracts search terms, suggests branch placement, and synthesises grounded briefings", () => {
     expect(extractSearchTerms("What is the evidence on rapamycin for ovarian reserve after 40?")).toEqual([

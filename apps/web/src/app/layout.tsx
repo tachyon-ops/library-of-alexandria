@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <p className="masthead-note">
               The search for the elixir of youth — what the record says, and how strongly.{" "}
-              <span className="synopsis-hint">Double-click any scientific word for a plain-English synopsis.</span>
+              <span className="synopsis-hint">Double-click any word for an instant dictionary or scientific synopsis.</span>
             </p>
           </div>
           <nav aria-label="Primary and support" className="masthead-actions">
