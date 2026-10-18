@@ -6,8 +6,10 @@ import { candidateLookupForms, lookupGlossaryTerm, type GlossaryEntry } from "@l
 interface PopoverState {
   word: string;
   entry: GlossaryEntry;
-  x: number;
-  y: number;
+  left: number;
+  top: number;
+  width: number;
+  placeAbove: boolean;
 }
 
 const REMOTE_CACHE = new Map<string, GlossaryEntry>();
@@ -103,23 +105,36 @@ export function WordSynopsis() {
       const raw = sel ? sel.toString().trim() : "";
       if (!raw || raw.length < 2 || raw.length > 48) return;
 
-      let x = e.clientX;
-      let y = e.clientY + 14;
+      const scrollX = window.scrollX || document.documentElement.scrollLeft || 0;
+      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      const vw = document.documentElement.clientWidth || window.innerWidth || 1024;
+      const vh = window.innerHeight || 768;
+      const cardWidth = Math.min(360, vw - 24);
+
+      let clientCenterX = e.clientX;
+      let clientTop = e.clientY - 10;
+      let clientBottom = e.clientY + 14;
+
       if (sel && sel.rangeCount > 0) {
         const rect = sel.getRangeAt(0).getBoundingClientRect();
         if (rect.width > 0 || rect.height > 0) {
-          x = rect.left + rect.width / 2;
-          y = rect.bottom + 10;
+          clientCenterX = rect.left + rect.width / 2;
+          clientTop = rect.top;
+          clientBottom = rect.bottom;
         }
       }
+
+      const placeAbove = clientBottom + 220 > vh && clientTop > 180;
+      const left = scrollX + Math.max(12, Math.min(clientCenterX - cardWidth / 2, vw - cardWidth - 12));
+      const top = placeAbove ? scrollY + clientTop - 8 : scrollY + clientBottom + 8;
 
       abortRef.current?.abort();
 
       const localMatch = lookupGlossaryTerm(raw);
       if (!localMatch) return;
 
-      // Render local scientific or dictionary entry immediately (zero wait time)
-      setState({ word: raw, entry: localMatch, x, y });
+      // Render local scientific or dictionary entry immediately (zero wait time), anchored to document coordinates
+      setState({ word: raw, entry: localMatch, left, top, width: cardWidth, placeAbove });
 
       const isCuratedScientific =
         !localMatch.domain.startsWith("Lexicon") && localMatch.domain !== "Scientific Terminology";
@@ -194,12 +209,6 @@ export function WordSynopsis() {
 
   if (!state) return null;
 
-  const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
-  const vh = typeof window !== "undefined" ? window.innerHeight : 768;
-  const cardWidth = Math.min(360, vw - 24);
-  const left = Math.max(12, Math.min(state.x - cardWidth / 2, vw - cardWidth - 12));
-  const top = state.y + 220 > vh ? Math.max(12, state.y - 210) : Math.max(12, state.y);
-
   return (
     <div
       ref={cardRef}
@@ -207,7 +216,12 @@ export function WordSynopsis() {
       role="dialog"
       aria-label={`Synopsis for ${state.entry.term}`}
       aria-live="polite"
-      style={{ left: `${left}px`, top: `${top}px`, width: `${cardWidth}px` }}
+      style={{
+        left: `${state.left}px`,
+        top: `${state.top}px`,
+        width: `${state.width}px`,
+        transform: state.placeAbove ? "translateY(-100%)" : undefined,
+      }}
     >
       <div className="synopsis-header">
         <div>
