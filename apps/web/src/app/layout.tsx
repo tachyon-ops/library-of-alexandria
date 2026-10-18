@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { WordSynopsis } from "@/components/WordSynopsis";
 import {
   AUTHOR_SITE_URL,
   GITHUB_PROFILE_URL,
@@ -31,7 +32,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Alexander&rsquo;s Library
             </Link>
             <p className="masthead-note">
-              The search for the elixir of youth — what the record says, and how strongly.
+              The search for the elixir of youth — what the record says, and how strongly.{" "}
+              <span className="synopsis-hint">Double-click any scientific word for a plain-English synopsis.</span>
             </p>
           </div>
           <nav aria-label="Primary and support" className="masthead-actions">
@@ -57,9 +59,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </nav>
         </header>
         {children}
+        <WordSynopsis />
         <footer className="site-footer">
           <p className="muted small">
-            Organises published research; not medical advice. Built by{" "}
+            Organises published research; not medical advice. Double-click any word for its plain-language definition. Built by{" "}
             <a href={AUTHOR_SITE_URL} target="_blank" rel="noopener noreferrer">
               nuuno.art
             </a>{" "}

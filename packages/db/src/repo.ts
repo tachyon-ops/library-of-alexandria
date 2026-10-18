@@ -730,3 +730,117 @@ export async function usageSummary(sql: Sql) {
     FROM llm_usage WHERE created_at > now() - interval '30 days'
     GROUP BY role, model ORDER BY role`;
 }
+
+/* ----------------------------------------------------------- seed dossiers */
+
+export interface SeedDossier {
+  summary: string;
+  gaps: string[];
+  synthesis: TopicSynthesis;
+  sources: (SourceRecord & { design: StudyDesign })[];
+  claims: {
+    statement: string;
+    tier: Tier;
+    controversy: Controversy;
+    direction: Direction;
+    confidence: number;
+    rationale: string;
+    sourceIndexes: number[];
+  }[];
+  milestones: {
+    year: number;
+    title: string;
+    description: string;
+    sourceIndex?: number;
+  }[];
+  entities: {
+    kind: EntityKind;
+    name: string;
+    country: string | null;
+    url: string | null;
+    summary: string;
+    attributes: Record<string, string>;
+    sourceUrls: string[];
+  }[];
+  controversies: {
+    kind: string;
+    note: string;
+    claimIndexes: number[];
+  }[];
+}
+
+/** Idempotently populates a topic with curated peer-reviewed sources, graded claims, synthesis ledger, milestones, and entities. */
+export async function seedTopicDossier(sql: Sql, topicId: string, dossier: SeedDossier): Promise<void> {
+  const sourceIds = await upsertSources(sql, topicId, dossier.sources, "curated-seed");
+  for (let i = 0; i < dossier.sources.length; i++) {
+    const src = dossier.sources[i]!;
+    const sid = sourceIds[i]!;
+    await setSourceDesign(sql, sid, src.design, src.sampleSize);
+  }
+  await markExtracted(sql, topicId, sourceIds);
+
+  const claimIds: string[] = [];
+  for (const c of dossier.claims) {
+    const linkedSourceIds = c.sourceIndexes.map((idx) => sourceIds[idx]).filter((id): id is string => Boolean(id));
+    if (linkedSourceIds.length === 0 && sourceIds.length > 0) {
+      linkedSourceIds.push(sourceIds[0]!);
+    }
+    const [existing] = await sql<{ id: string }[]>`
+      SELECT id FROM claims WHERE topic_id = ${topicId} AND statement = ${c.statement} LIMIT 1`;
+    if (existing) {
+      for (const sid of linkedSourceIds) {
+        await sql`INSERT INTO claim_sources (claim_id, source_id) VALUES (${existing.id}, ${sid}) ON CONFLICT DO NOTHING`;
+      }
+      claimIds.push(existing.id);
+    } else {
+      const cid = await insertClaim(sql, {
+        topicId,
+        statement: c.statement,
+        tier: c.tier,
+        controversy: c.controversy,
+        direction: c.direction,
+        confidence: c.confidence,
+        rationale: c.rationale,
+        sourceIds: linkedSourceIds,
+      });
+      claimIds.push(cid);
+    }
+  }
+
+  for (const m of dossier.milestones) {
+    const sid = m.sourceIndex !== undefined ? (sourceIds[m.sourceIndex] ?? null) : null;
+    await insertMilestone(sql, {
+      topicId,
+      year: m.year,
+      title: m.title,
+      description: m.description,
+      sourceId: sid,
+    });
+  }
+
+  for (const e of dossier.entities) {
+    await upsertEntity(sql, topicId, e);
+  }
+
+  const existingDebates = await topicControversies(sql, topicId);
+  if (existingDebates.length === 0 && dossier.controversies.length > 0) {
+    await replaceControversies(
+      sql,
+      topicId,
+      dossier.controversies.map((d) => ({
+        kind: d.kind,
+        note: d.note,
+        claimIds: d.claimIndexes.map((idx) => claimIds[idx]).filter((id): id is string => Boolean(id)),
+      })),
+    );
+  }
+
+  await sql`
+    UPDATE topics
+    SET summary = ${dossier.summary},
+        gaps = CASE WHEN cardinality(gaps) = 0 THEN ${dossier.gaps} ELSE gaps END,
+        synthesis = CASE WHEN synthesis IS NULL OR synthesis = '{}'::jsonb THEN ${sql.json(dossier.synthesis as never)} ELSE synthesis END,
+        status = CASE WHEN status IN ('idle', 'error') THEN 'ready' ELSE status END,
+        last_researched_at = COALESCE(last_researched_at, now())
+    WHERE id = ${topicId}`;
+}
