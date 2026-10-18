@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LibrarySearchForm } from "@/components/LibrarySearchForm";
 import { WordSynopsis } from "@/components/WordSynopsis";
 import {
   AUTHOR_SITE_URL,
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </p>
           </div>
           <nav aria-label="Primary and support" className="masthead-actions">
+            <LibrarySearchForm variant="masthead" />
             <Link href="/about" className="masthead-link">
               The Chronicle
             </Link>

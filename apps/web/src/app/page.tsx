@@ -4,6 +4,7 @@ import { Tree } from "@/components/Tree";
 import { TopicGraph3D } from "@/components/TopicGraph3D";
 import { NewTopicForm } from "@/components/NewTopicForm";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { LibrarySearchForm } from "@/components/LibrarySearchForm";
 import {
   AUTHOR_SITE_URL,
   GITHUB_PROFILE_URL,
@@ -34,6 +35,8 @@ export default async function Home() {
           <Link href="/about">Read the chronicle of the quest →</Link>
         </p>
       </header>
+
+      <LibrarySearchForm variant="hero" />
 
       {roots.length > 0 && <TopicGraph3D roots={roots} crossLinks={crossLinks} />}
 

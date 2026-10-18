@@ -1,9 +1,15 @@
 import {
+  extractSearchTerms,
   slugify,
   type Controversy,
   type Direction,
   type EntityKind,
   type JobKind,
+  type LibrarySearchResults,
+  type SearchClaimMatch,
+  type SearchEntityMatch,
+  type SearchSourceMatch,
+  type SearchTopicMatch,
   type SourceRecord,
   type StudyDesign,
   type Tier,
@@ -729,6 +735,143 @@ export async function usageSummary(sql: Sql) {
            sum(output_tokens)::int AS output_tokens, sum(web_searches)::int AS web_searches
     FROM llm_usage WHERE created_at > now() - interval '30 days'
     GROUP BY role, model ORDER BY role`;
+}
+
+/* ---------------------------------------------------------------- search */
+
+/**
+ * Searches across topics (including synthesis JSONB), non-superseded graded claims,
+ * peer-reviewed sources/trials, and web entities using extracted query tokens.
+ */
+export async function searchLibrary(sql: Sql, rawQuery: string, limit = 20): Promise<LibrarySearchResults> {
+  const query = rawQuery.trim();
+  const terms = extractSearchTerms(query);
+  if (!query || terms.length === 0) {
+    return { query, terms: [], topics: [], claims: [], sources: [], entities: [] };
+  }
+
+  const patterns = terms.map((t) => `%${t.replace(/[%_\\]/g, "\\$&")}%`);
+
+  const [topics, claims, sources, entities] = await Promise.all([
+    sql<SearchTopicMatch[]>`
+      WITH scored AS (
+        SELECT
+          t.id, t.parent_id, t.slug, t.title, t.brief, t.summary, t.status, t.depth, t.synthesis,
+          (SELECT count(*)::int FROM claims c WHERE c.topic_id = t.id AND NOT c.superseded) AS claim_count,
+          (
+            SELECT count(*)::int * 3
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(t.title) LIKE pat
+          ) + (
+            SELECT count(*)::int
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(concat_ws(' ', t.title, t.brief, t.summary, array_to_string(t.gaps, ' '), t.synthesis::text)) LIKE pat
+          ) AS match_score
+        FROM topics t
+      )
+      SELECT id, parent_id, slug, title, brief, summary, status, depth, claim_count, synthesis
+      FROM scored
+      WHERE match_score > 0
+      ORDER BY match_score DESC, claim_count DESC, depth ASC, title ASC
+      LIMIT ${limit}`,
+
+    sql<SearchClaimMatch[]>`
+      WITH scored AS (
+        SELECT
+          c.id, c.topic_id, t.slug AS topic_slug, t.title AS topic_title,
+          c.statement, c.tier, c.controversy, c.direction, c.confidence, c.rationale,
+          (
+            SELECT count(*)::int * 2
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(c.statement) LIKE pat
+          ) + (
+            SELECT count(*)::int
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(concat_ws(' ', c.rationale, t.title)) LIKE pat
+          ) AS match_score
+        FROM claims c
+        JOIN topics t ON t.id = c.topic_id
+        WHERE NOT c.superseded
+      )
+      SELECT
+        sc.id, sc.topic_id, sc.topic_slug, sc.topic_title,
+        sc.statement, sc.tier, sc.controversy, sc.direction, sc.confidence, sc.rationale,
+        COALESCE(json_agg(json_build_object(
+          'id', s.id,
+          'title', s.title,
+          'url', COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END),
+          'year', s.year,
+          'design', COALESCE(s.design, s.declared_design),
+          'venue', s.venue
+        ) ORDER BY s.year DESC NULLS LAST) FILTER (WHERE s.id IS NOT NULL), '[]') AS sources
+      FROM scored sc
+      LEFT JOIN claim_sources cs ON cs.claim_id = sc.id
+      LEFT JOIN sources s ON s.id = cs.source_id
+      WHERE sc.match_score > 0
+      GROUP BY sc.id, sc.topic_id, sc.topic_slug, sc.topic_title,
+               sc.statement, sc.tier, sc.controversy, sc.direction, sc.confidence, sc.rationale, sc.match_score
+      ORDER BY sc.match_score DESC, sc.tier ASC, sc.confidence DESC
+      LIMIT ${limit}`,
+
+    sql<SearchSourceMatch[]>`
+      WITH scored AS (
+        SELECT
+          s.id, s.kind, s.origin, s.title,
+          COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END) AS url,
+          s.doi, s.venue, s.year, s.authors, s.abstract, s.cited_by,
+          COALESCE(s.design, s.declared_design) AS design,
+          (
+            SELECT count(*)::int * 3
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(concat_ws(' ', s.title, s.doi, s.external_id)) LIKE pat
+          ) + (
+            SELECT count(*)::int
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(concat_ws(' ', s.abstract, s.venue, array_to_string(s.authors, ' '))) LIKE pat
+          ) AS match_score
+        FROM sources s
+      )
+      SELECT
+        sc.id, sc.kind, sc.origin, sc.title, sc.url, sc.doi, sc.venue, sc.year,
+        sc.authors, sc.abstract, sc.cited_by, sc.design,
+        COALESCE(json_agg(DISTINCT jsonb_build_object(
+          'slug', t.slug,
+          'title', t.title
+        )) FILTER (WHERE t.id IS NOT NULL), '[]') AS topics
+      FROM scored sc
+      LEFT JOIN topic_sources ts ON ts.source_id = sc.id
+      LEFT JOIN topics t ON t.id = ts.topic_id
+      WHERE sc.match_score > 0
+      GROUP BY sc.id, sc.kind, sc.origin, sc.title, sc.url, sc.doi, sc.venue, sc.year,
+               sc.authors, sc.abstract, sc.cited_by, sc.design, sc.match_score
+      ORDER BY sc.match_score DESC, sc.year DESC NULLS LAST, sc.cited_by DESC NULLS LAST
+      LIMIT ${limit}`,
+
+    sql<SearchEntityMatch[]>`
+      WITH scored AS (
+        SELECT
+          e.id, e.topic_id, t.slug AS topic_slug, t.title AS topic_title,
+          e.kind, e.name, e.country, e.url, e.summary,
+          (
+            SELECT count(*)::int * 2
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(concat_ws(' ', e.name, e.country, e.kind)) LIKE pat
+          ) + (
+            SELECT count(*)::int
+            FROM unnest(${patterns}::text[]) AS pat
+            WHERE lower(concat_ws(' ', e.summary, e.attributes::text)) LIKE pat
+          ) AS match_score
+        FROM entities e
+        JOIN topics t ON t.id = e.topic_id
+      )
+      SELECT id, topic_id, topic_slug, topic_title, kind, name, country, url, summary
+      FROM scored
+      WHERE match_score > 0
+      ORDER BY match_score DESC, name ASC
+      LIMIT ${limit}`,
+  ]);
+
+  return { query, terms, topics, claims, sources, entities };
 }
 
 /* ----------------------------------------------------------- seed dossiers */
