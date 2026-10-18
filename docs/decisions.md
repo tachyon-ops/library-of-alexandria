@@ -114,4 +114,10 @@ Date: 2026-10-16 · Status: accepted
 **Decision.** Add a dedicated `ResearchProgressCard` with a 5-stage pipeline stepper (`Plan` → `Harvest` → `Read & Grade` → `Scan Web` → `Synthesize`), live pulse beacon, open task counter, and recent pipeline activity log. Implement Next.js `error.tsx` error boundary for graceful degradation. Defensively guard all date serialization, entity attributes, claim sources, and synthesis fields against null or string-encoded database values.
 **Consequences.** Users have full real-time visibility into the autonomous research workflow. Topic pages remain resilient and self-healing across serverless environments.
 
+## D-015: Grounded library search, deterministic briefing synthesis, and taxonomy branch launcher
 
+Date: 2026-10-18 · Status: accepted
+
+**Context.** As the tree of disciplines, graded claims, peer-reviewed papers, and clinical trials grows, navigating solely by expanding branches makes it difficult to locate specific articles, clinical trials, or ideas, or to ask a question and immediately see what the record says. At the same time, `apps/web` must not call LLM providers directly (`core <- db <- web`) so searches remain instant, zero-cost, and grounded in stored records.
+**Decision.** Add `searchLibrary` in `@lib/db` to score and retrieve matching topics (including `synthesis` JSONB levers and benchmarks), graded claims, sources/trials, and entities via parameterized token queries. Add pure `extractSearchTerms`, `inferBranchProposal`, and `synthesizeSearchBriefing` in `@lib/core` to assemble a cited, tier-graded briefing from the matched records and recommend the optimal parent discipline in the Tree of Knowledge. Expose the search field in the global masthead, at the top of the home page, and on `/search`, with a one-click form (`startTopic`) to create and queue a new research sub-branch when an idea is unexplored or needs deeper investigation.
+**Consequences.** Any natural-language question, DOI, trial, or concept is searchable from every page with zero per-query LLM cost and strict citation provenance, while unexplored questions seamlessly feed into the autonomous worker queue.
