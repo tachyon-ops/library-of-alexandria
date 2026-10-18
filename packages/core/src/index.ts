@@ -1,4 +1,5 @@
 export * from "./evidence";
+export * from "./glossary";
 export * from "./types";
 
 export function slugify(input: string): string {

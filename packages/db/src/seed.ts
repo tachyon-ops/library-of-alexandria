@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { getSql, type Sql } from "./client";
-import { createTopic, getTopicBySlug, linkTopics, moveTopic, setTopicSummaryIfEmpty } from "./repo";
+import { FERTILITY_SEED_DOSSIERS } from "./fertility-dossiers";
+import { createTopic, getTopicBySlug, linkTopics, moveTopic, seedTopicDossier, setTopicSummaryIfEmpty } from "./repo";
 
 export interface SeedNode {
   slug: string;
@@ -173,19 +174,33 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 slug: "ovarian-reserve-oocyte-cryopreservation",
                 title: "Ovarian Reserve & Oocyte Cryopreservation",
                 brief:
-                  "Follicular dynamics, ovarian aging across the reproductive lifespan, oocyte vitrification, warming survival, and cumulative live birth outcomes.",
+                  "Follicular dynamics, ovarian aging across the reproductive lifespan, double stimulation (DuoStim), oocyte vitrification, warming survival, and cumulative live birth outcomes.",
               },
               {
                 slug: "endometrial-receptivity-implantation-biology",
                 title: "Endometrial Receptivity & Implantation Biology",
                 brief:
-                  "Endometrial physiology, recurrent implantation failure, reproductive immunology, and the reproductive tract microbiome.",
+                  "Endometrial physiology, natural-cycle versus programmed embryo transfer, recurrent implantation failure, reproductive immunology, and maternal-fetal microRNA exchange.",
               },
               {
                 slug: "andrology-male-factor-infertility",
                 title: "Andrology & Male Factor Infertility",
                 brief:
-                  "Spermatogenesis, sperm chromatin and DNA integrity, paternal age effects after 40 across the population, varicocele, and clinical interventions.",
+                  "Spermatogenesis, sperm chromatin and DNA integrity, microfluidic sperm selection (ZyMōt), testicular sperm aspiration (TESA), paternal age effects after 40, and clinical interventions.",
+                children: [
+                  {
+                    slug: "sperm-chromatin-integrity-dna-fragmentation-diagnostics",
+                    title: "Sperm Chromatin Integrity & DNA Fragmentation Diagnostics",
+                    brief:
+                      "Oxidative and apoptotic mechanisms of sperm DNA damage, microfluidic chip sorting, testicular sperm bypass, and comparative diagnostic accuracy of TUNEL, SCSA, SCD, and Comet assays.",
+                  },
+                  {
+                    slug: "paternal-age-effects-on-gamete-embryo-offspring-health",
+                    title: "Paternal Age Effects on Gamete, Embryo & Offspring Health",
+                    brief:
+                      "Epidemiological and molecular effects of paternal age across the lifespan on blastocyst development, de novo germline mutations, and offspring health.",
+                  },
+                ],
               },
               {
                 slug: "assisted-reproductive-technology-gamete-donation",
@@ -197,13 +212,39 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 slug: "translational-geroprotective-reproductive-biology",
                 title: "Translational & Geroprotective Reproductive Biology",
                 brief:
-                  "In vitro gametogenesis, mitochondrial replacement therapy, ovarian tissue cryopreservation and transplantation, mTOR modulation, and intraovarian biologics.",
+                  "In vitro gametogenesis, mitochondrial replacement therapy (maternal spindle and pronuclear transfer), engineered ovarian support cell IVM, Hippo-pathway in vitro activation, mTOR/rapamycin modulation, NAD+/NMN and spermidine mitophagy, and intraovarian biologics.",
+                children: [
+                  {
+                    slug: "mitochondrial-replacement-therapy-ooplasmic-transfer",
+                    title: "Mitochondrial Replacement Therapy & Ooplasmic Transfer",
+                    brief:
+                      "Maternal spindle transfer (MST), pronuclear transfer (PNT), germinal vesicle transfer, autologous mitochondrial injection, heteroplasmy drift, and clinical trials preserving 100% parental nuclear DNA.",
+                  },
+                  {
+                    slug: "in-vitro-gametogenesis-pluripotent-stem-cell-reprogramming",
+                    title: "In Vitro Gametogenesis & Pluripotent Stem Cell Reprogramming",
+                    brief:
+                      "Reconstitution of human oogenesis from induced pluripotent stem cells (iPSCs), primordial germ cell specification, meiotic checkpoints, and iPSC-derived ovarian support cells (engineered IVM).",
+                  },
+                  {
+                    slug: "mtor-pathway-modulation-follicular-longevity",
+                    title: "mTOR Pathway Modulation & Follicular Longevity",
+                    brief:
+                      "Mechanistic and clinical studies of mTORC1 inhibition (rapamycin VIBRANT trial), NAD+/NMN sirtuin spindle stabilization, and spermidine mitophagy activation in ovarian aging.",
+                  },
+                  {
+                    slug: "intraovarian-platelet-rich-plasma-stem-cell-biologics",
+                    title: "Intraovarian Platelet-Rich Plasma & Stem Cell Biologics",
+                    brief:
+                      "Hippo pathway in vitro activation (IVA), paracrine angiogenic signaling, autologous PRP, extracellular vesicles, and clinical evaluation of intraovarian biologics.",
+                  },
+                ],
               },
               {
                 slug: "advanced-maternal-age-pregnancy-after-40",
                 title: "Advanced Maternal Age & Pregnancy After 40",
                 brief:
-                  "Maternal cardiovascular and metabolic adaptation, hypertensive disorders of pregnancy, gestational diabetes, placental biology, and perinatal outcomes in pregnancy after age 40.",
+                  "Maternal cardiovascular and metabolic adaptation, low-dose aspirin pre-eclampsia prophylaxis, sFlt-1/PlGF biomarkers, gestational diabetes, placental biology, and perinatal outcomes after age 40.",
               },
             ],
           },
@@ -554,6 +595,12 @@ export async function seed(sql: Sql): Promise<void> {
     const b = await getTopicBySlug(sql, link.slugB);
     if (a && b) {
       await linkTopics(sql, a.id, b.id, link.relation, link.note);
+    }
+  }
+  for (const [slug, dossier] of Object.entries(FERTILITY_SEED_DOSSIERS)) {
+    const topic = await getTopicBySlug(sql, slug);
+    if (topic) {
+      await seedTopicDossier(sql, topic.id, dossier);
     }
   }
 }

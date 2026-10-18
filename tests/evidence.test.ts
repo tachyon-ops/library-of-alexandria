@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { invertedIndexToText, normaliseDesign, normaliseDoi, slugify, tierForClaim, tierForSource } from "@lib/core";
+import { invertedIndexToText, lookupGlossaryTerm, normaliseDesign, normaliseDoi, slugify, tierForClaim, tierForSource } from "@lib/core";
 
 describe("evidence tiers", () => {
   it("maps designs to tiers", () => {
@@ -41,5 +41,19 @@ describe("helpers", () => {
   });
   it("normalises DOIs", () => {
     expect(normaliseDoi("https://doi.org/10.1093/HUMREP/deac249")).toBe("10.1093/humrep/deac249");
+  });
+  it("looks up scientific glossary terms and morphological roots", () => {
+    const auto = lookupGlossaryTerm("Autologous");
+    expect(auto?.term).toBe("Autologous");
+    expect(auto?.synopsis).toContain("own body");
+
+    const oocytes = lookupGlossaryTerm("oocytes,");
+    expect(oocytes?.term).toBe("Oocyte (Egg Cell)");
+
+    const zymot = lookupGlossaryTerm("ZyMōt");
+    expect(zymot?.term).toContain("ZyMōt");
+
+    const morph = lookupGlossaryTerm("folliculogenesis");
+    expect(morph?.synopsis).toContain("small sac / follicle");
   });
 });
