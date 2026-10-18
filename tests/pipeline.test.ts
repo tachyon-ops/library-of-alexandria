@@ -321,6 +321,17 @@ describe.skipIf(!url)("research pipeline", () => {
     expect(delayMs!).toBeGreaterThan(1000);
     await repo.completeJob(sql, delayedId);
     expect(await repo.nextQueuedDelayMs(sql)).toBeNull();
+
+    // Curated fertility dossier seeding is idempotent and populates synthesis, sources, claims, and milestones.
+    const fertilityNode = await repo.createTopic(sql, { title: "Reproductive Medicine & Human Fertility", brief: "Fertility root" });
+    const dossier = repo.FERTILITY_SEED_DOSSIERS["reproductive-medicine-human-fertility"]!;
+    await repo.seedTopicDossier(sql, fertilityNode.id, dossier);
+    await repo.seedTopicDossier(sql, fertilityNode.id, dossier);
+    const seededTopic = await repo.getTopic(sql, fertilityNode.id);
+    expect(seededTopic?.status).toBe("ready");
+    expect(seededTopic?.synthesis?.levers?.length).toBeGreaterThanOrEqual(10);
+    const seededClaims = await repo.topicClaims(sql, fertilityNode.id);
+    expect(seededClaims.length).toBe(dossier.claims.length);
   });
 
   it("parses review output with benchmarks, levers, questions, and sweepQueue", () => {
