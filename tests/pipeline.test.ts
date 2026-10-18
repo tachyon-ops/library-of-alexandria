@@ -332,6 +332,14 @@ describe.skipIf(!url)("research pipeline", () => {
     expect(seededTopic?.synthesis?.levers?.length).toBeGreaterThanOrEqual(10);
     const seededClaims = await repo.topicClaims(sql, fertilityNode.id);
     expect(seededClaims.length).toBe(dossier.claims.length);
+
+    // Library search finds topics, graded claims, peer-reviewed sources, and web entities across the archive.
+    const searchRes = await repo.searchLibrary(sql, "What is the evidence on rapamycin and vitrified eggs?");
+    expect(searchRes.topics.length).toBeGreaterThanOrEqual(1);
+    expect(searchRes.claims.length).toBeGreaterThanOrEqual(2);
+    expect(searchRes.sources.length).toBeGreaterThanOrEqual(1);
+    const clinicSearch = await repo.searchLibrary(sql, "Clinic Real Spain");
+    expect(clinicSearch.entities.map((e) => e.name)).toContain("Clinic Real");
   });
 
   it("parses review output with benchmarks, levers, questions, and sweepQueue", () => {
