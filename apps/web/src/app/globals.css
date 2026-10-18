@@ -1787,7 +1787,7 @@ td {
 }
 
 .word-synopsis-popover {
-  position: fixed;
+  position: absolute;
   z-index: 1200;
   background: var(--sheet);
   color: var(--ink);
