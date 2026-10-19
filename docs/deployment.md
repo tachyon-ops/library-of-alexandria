@@ -67,10 +67,13 @@ Every pull request and push to `develop` or `master`, as well as every `v*` tag,
 1. `npm ci`
 2. `npm run typecheck` (packages, worker, tests)
 3. `(cd apps/web && npx tsc --noEmit)` (Next.js front)
-4. `TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm test` (core grading, source parsers, and full end-to-end pipeline on Postgres)
-5. `npm run build:web` (production Next.js build)
+4. `npm run db:verify-safe` (Gate 1 static DDL & seed audit, Gate 2 `origin/master -> HEAD` Git state-transition diff & SHA-256 checksum immutability, Gate 4 3-tier rollback planner check, Gate 5 CI backup gate check)
+5. `TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm run test:non-destructive` (Gate 3 live full-DB snapshot preservation across `migrate()` and `seed()`, Gate 4 live `Migrate UP -> Rollback DOWN -> Re-Migrate UP` round-trip test, and Gate 5 `.sql.gz` logical dump verification)
+6. `TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm run db:backup` (pre-migration compressed logical dump)
+7. `TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm test` (core grading, source parsers, 5-gate non-destructive suite, and full end-to-end pipeline on Postgres)
+8. `npm run build:web` (production Next.js build)
 
-All five steps must pass before a pull request is merged.
+All steps must pass before a pull request is merged. In `.github/workflows/worker.yml`, `npm run db:verify-safe` and `npm run db:backup` (with artifact upload) always execute immediately before `npm run db:migrate`.
 
 ## Running locally
 

@@ -220,7 +220,7 @@ describe.skipIf(!url)("research pipeline", () => {
 
   beforeAll(async () => {
     sql = repo.getSql(url);
-    await sql.unsafe("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
+    await repo.resetLocalTestSchema(sql, url);
     await repo.migrate(sql);
   });
   afterAll(async () => {

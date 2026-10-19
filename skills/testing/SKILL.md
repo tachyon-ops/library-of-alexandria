@@ -11,6 +11,7 @@ description: Test strategy for Alexander's Library — what to test at which lay
 | --- | --- | --- | --- |
 | Core | `tests/evidence.test.ts` | nothing | grading rules, helpers |
 | Parsers | `tests/crawlers.test.ts` | fixtures in `tests/fixtures/responses.ts` | each source's response shape |
+| Non-Destructive DB | `tests/non-destructive.test.ts` | `TEST_DATABASE_URL` (`localhost` + `ALLOW_DESTRUCTIVE_SEED=true`) for live gates | 5-gate DDL/seed audit, `origin/master -> HEAD` diff, full-DB snapshot preservation, `UP -> DOWN -> RE-UP` rollback round-trip, `.sql.gz` backup |
 | Pipeline | `tests/pipeline.test.ts` | Postgres at `TEST_DATABASE_URL` | the full job chain with fixture adapters and `ScriptedLlm` |
 
 Test at the lowest layer that can hold the behaviour. A grading rule belongs in the core test, not the pipeline test.
@@ -30,7 +31,9 @@ Tests never call the research APIs or the Claude API. Live behaviour is checked 
 
 ```bash
 npm run typecheck
+npm run db:verify-safe
+TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm run test:non-destructive
 TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm test
 ```
 
-Without `TEST_DATABASE_URL` the pipeline test is skipped; say so when reporting.
+Without `TEST_DATABASE_URL` the live Postgres pipeline and snapshot tests are skipped; say so when reporting.

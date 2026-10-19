@@ -1,12 +1,13 @@
 import Link from "next/link";
 
 const EXAMPLE_QUERIES = [
+  "MOND vs dark matter & wide binaries",
+  "Quantised inertia & Unruh horizons",
+  "Standard Model & String Theory",
+  "Stochastic calculus & Black-Scholes",
+  "Market microstructure & stat-arb",
   "Rapamycin & mTOR ovarian reserve",
-  "Natural-cycle vs programmed FET",
-  "Vitrified oocyte thaw survival",
-  "ZyMōt sperm DNA fragmentation",
-  "In vitro gametogenesis (IVG)",
-  "Pre-eclampsia aspirin prophylaxis",
+  "Maternal spindle transfer (MST)",
 ];
 
 export function LibrarySearchForm({

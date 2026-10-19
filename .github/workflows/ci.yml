@@ -27,6 +27,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -42,10 +44,26 @@ jobs:
       - name: Typecheck web front
         run: (cd apps/web && npx tsc --noEmit)
 
+      - name: Verify non-destructive DDL, seed, Git state-transition & 3-tier rollback gates
+        run: npm run db:verify-safe
+
+      - name: Run 5-gate non-destructive snapshot preservation & UP/DOWN/RE-UP tests
+        env:
+          TEST_DATABASE_URL: postgres://library:library@localhost:5432/library_test
+          ALLOW_DESTRUCTIVE_SEED: "true"
+        run: npm run test:non-destructive
+
+      - name: Verify pre-migration compressed logical database backup
+        env:
+          TEST_DATABASE_URL: postgres://library:library@localhost:5432/library_test
+        run: npm run db:backup
+
       - name: Run unit, parser and Postgres pipeline tests
         env:
           TEST_DATABASE_URL: postgres://library:library@localhost:5432/library_test
+          ALLOW_DESTRUCTIVE_SEED: "true"
         run: npm test
 
       - name: Build web front
         run: npm run build:web
+

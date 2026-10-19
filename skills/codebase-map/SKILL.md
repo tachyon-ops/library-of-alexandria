@@ -45,7 +45,10 @@ Arrows point from dependency to dependent. Anything against these arrows is a de
 ```bash
 npm run typecheck                         # backend + tests
 (cd apps/web && npx tsc --noEmit)         # front
-TEST_DATABASE_URL=postgres://…/library_test npm test   # wipes that database
+npm run db:verify-safe                    # static DDL, seed, Git diff & rollback planner gates
+TEST_DATABASE_URL=postgres://…/library_test npm run test:non-destructive
+TEST_DATABASE_URL=postgres://…/library_test npm test   # wipes local test database
+npm run db:backup                         # compressed pre-migration logical dump (.sql.gz)
 npm run probe -- "query words"            # live check of every source
 npm run dev:worker / npm run dev:web
 ```
