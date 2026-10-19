@@ -9,7 +9,11 @@
   ],
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "ALLOW_DESTRUCTIVE_SEED=true vitest run --no-file-parallelism",
+    "test:non-destructive": "npm run db:verify-safe && ALLOW_DESTRUCTIVE_SEED=true vitest run --no-file-parallelism tests/non-destructive.test.ts",
+    "db:verify-safe": "tsx packages/db/src/verify-safe.ts",
+    "db:backup": "tsx --env-file-if-exists=.env packages/db/src/backup.ts",
+    "db:rollback": "tsx --env-file-if-exists=.env packages/db/src/rollback.ts",
     "db:migrate": "tsx --env-file-if-exists=.env packages/db/src/migrate.ts",
     "db:seed": "tsx --env-file-if-exists=.env packages/db/src/seed.ts",
     "dev:web": "npm -w @lib/web run dev",

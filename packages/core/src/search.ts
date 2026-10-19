@@ -312,6 +312,45 @@ const ACRONYM_CASE: Record<string, string> = {
   zymot: "ZyMōt",
   crispr: "CRISPR",
   ai: "AI",
+  mond: "MOND",
+  mihsc: "MiHsC",
+  qcd: "QCD",
+  qed: "QED",
+  qft: "QFT",
+  gr: "GR",
+  lqg: "LQG",
+  "ads/cft": "AdS/CFT",
+  lcdm: "ΛCDM",
+  wimp: "WIMP",
+  susy: "SUSY",
+  lhc: "LHC",
+  ligo: "LIGO",
+  cmb: "CMB",
+  btfr: "BTFR",
+  rar: "RAR",
+  pde: "PDE",
+  pdes: "PDEs",
+  sde: "SDE",
+  sdes: "SDEs",
+  ito: "Itô",
+  kam: "KAM",
+  bqp: "BQP",
+  rmt: "RMT",
+  evt: "EVT",
+  mcmc: "MCMC",
+  emh: "EMH",
+  capm: "CAPM",
+  garch: "GARCH",
+  arch: "ARCH",
+  arima: "ARIMA",
+  var: "VaR",
+  cvar: "CVaR",
+  lob: "LOB",
+  hft: "HFT",
+  lppl: "LPPL",
+  sabr: "SABR",
+  dsge: "DSGE",
+  vpin: "VPIN",
 };
 
 const TIER_ORDER: Record<Tier, number> = {
@@ -391,6 +430,94 @@ export function suggestTopicTitle(query: string): string {
 }
 
 const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
+  {
+    slugSubstring: "mond-modified-newtonian-dynamics-and-galactic-rotation",
+    keywords: ["mond", "milgrom", "tully-fisher", "btfr", "radial acceleration", "sparc", "mcgaugh", "teves", "aest", "external field effect", "rotation curve"],
+  },
+  {
+    slugSubstring: "quantised-inertia-horizon-mechanics-and-unruh-radiation",
+    keywords: ["quantised inertia", "quantized inertia", "mihsc", "mcculloch", "unruh", "rindler", "horizon mechanics", "anti-gravity", "antigravity", "propellantless", "podkletnov", "tajmar"],
+  },
+  {
+    slugSubstring: "dark-matter-adhoc-epistemology-and-gr-breakdown-limits",
+    keywords: ["dark matter", "ad-hoc", "adhoc", "wide binary", "wide binaries", "chae", "hernandez", "wimp", "xenonnt", "lux-zeplin", "halo", "breakdown", "galaxy rotation"],
+  },
+  {
+    slugSubstring: "string-theory-m-theory-and-holographic-duality",
+    keywords: ["string theory", "superstring", "m-theory", "calabi-yau", "ads/cft", "maldacena", "holographic", "swampland", "d-brane", "brane"],
+  },
+  {
+    slugSubstring: "loop-quantum-gravity-spin-foams-and-causal-sets",
+    keywords: ["loop quantum gravity", "lqg", "spin foam", "spin network", "ashtekar", "rovelli", "causal set", "asymptotic safety", "big bounce"],
+  },
+  {
+    slugSubstring: "standard-model-gauge-theories-and-particle-physics",
+    keywords: ["standard model", "higgs", "electroweak", "yang-mills", "qcd", "chromodynamics", "qed", "quark", "neutrino", "muon g-2", "fermilab", "lhc", "cern", "gauge"],
+  },
+  {
+    slugSubstring: "quantum-mechanics-hilbert-space-and-entanglement",
+    keywords: ["quantum mechanics", "schrodinger", "hilbert space", "entanglement", "bell", "chsh", "nonlocality", "decoherence", "wavefunction", "pilot-wave", "bohm", "many-worlds"],
+  },
+  {
+    slugSubstring: "quantum-information-computing-and-error-correction",
+    keywords: ["quantum computing", "qubit", "shor", "grover", "surface code", "error correction", "bqp", "quantum information", "teleportation"],
+  },
+  {
+    slugSubstring: "analytical-mechanics-lagrangian-hamiltonian-symplectic",
+    keywords: ["lagrangian", "hamiltonian", "symplectic", "least action", "euler-lagrange", "poisson bracket", "liouville", "kam theorem", "three-body", "classical mechanics"],
+  },
+  {
+    slugSubstring: "thermodynamics-statistical-mechanics-and-entropy",
+    keywords: ["thermodynamics", "statistical mechanics", "boltzmann", "gibbs", "partition function", "entropy", "ising", "renormalization", "jarzynski", "phase transition"],
+  },
+  {
+    slugSubstring: "electrodynamics-maxwell-equations-and-classical-fields",
+    keywords: ["electrodynamics", "maxwell", "electromagnetism", "poynting", "lorentz force", "magnetohydrodynamics", "mhd", "plasma", "navier-stokes"],
+  },
+  {
+    slugSubstring: "relativity-gravitation-spacetime-physics",
+    keywords: ["general relativity", "special relativity", "einstein", "spacetime", "gravitational wave", "ligo", "black hole", "kerr", "schwarzschild", "equivalence principle", "hubble tension"],
+  },
+  {
+    slugSubstring: "differential-geometry-manifolds-and-topology",
+    keywords: ["differential geometry", "manifold", "riemannian", "tensor", "fibre bundle", "fiber bundle", "topology", "homotopy", "chern-simons", "curvature"],
+  },
+  {
+    slugSubstring: "group-theory-lie-algebras-and-symmetry",
+    keywords: ["group theory", "lie group", "lie algebra", "noether", "representation theory", "symmetry", "poincare group", "su(3)", "su(2)"],
+  },
+  {
+    slugSubstring: "functional-analysis-pdes-and-dynamical-systems",
+    keywords: ["functional analysis", "banach", "operator algebra", "spectral theorem", "partial differential", "pde", "dynamical system", "lyapunov", "chaos", "ergodic"],
+  },
+  {
+    slugSubstring: "probability-theory-stochastic-calculus-and-statistics",
+    keywords: ["probability", "stochastic calculus", "ito", "brownian motion", "wiener", "martingale", "girsanov", "feynman-kac", "sde", "extreme value", "random matrix", "marchenko-pastur", "bayesian"],
+  },
+  {
+    slugSubstring: "quantitative-finance-stochastic-calculus-and-derivatives",
+    keywords: ["quantitative finance", "fin-quant", "finquant", "black-scholes", "bachelier", "derivatives", "option pricing", "heston", "sabr", "rough volatility", "risk-neutral", "greeks", "jump-diffusion"],
+  },
+  {
+    slugSubstring: "econometrics-financial-time-series-and-statistical-arbitrage",
+    keywords: ["econometrics", "time series", "garch", "arch", "arima", "cointegration", "ornstein-uhlenbeck", "statistical arbitrage", "stat-arb", "pairs trading", "kalman", "kelly criterion", "sharpe", "lopez de prado", "backtest", "alpha"],
+  },
+  {
+    slugSubstring: "financial-markets-asset-pricing-and-market-microstructure",
+    keywords: ["financial market", "asset pricing", "microstructure", "limit order book", "lob", "kyle", "glosten-milgrom", "bid-ask", "market impact", "fama-french", "capm", "efficient market", "liquidity", "order flow", "hft"],
+  },
+  {
+    slugSubstring: "econophysics-complex-systems-and-tail-risk",
+    keywords: ["econophysics", "mandelbrot", "fat tail", "power law", "tail risk", "sornette", "dragon-king", "lppl", "multifractal", "systemic risk", "contagion"],
+  },
+  {
+    slugSubstring: "macroeconomics-political-economy-and-economic-history",
+    keywords: ["macroeconomics", "monetary", "central bank", "inflation", "interest rate", "yield curve", "minsky", "dsge", "fiscal", "credit cycle"],
+  },
+  {
+    slugSubstring: "microeconomics-game-theory-and-market-design",
+    keywords: ["microeconomics", "game theory", "nash", "auction", "mechanism design", "adverse selection", "moral hazard", "prospect theory", "general equilibrium"],
+  },
   {
     slugSubstring: "ovarian-reserve-oocyte-cryopreservation",
     keywords: ["vitrified", "vitrification", "cryopreservation", "egg freezing", "oocyte", "thaw", "warming", "amh", "follicle", "euploid", "aneuploidy"],

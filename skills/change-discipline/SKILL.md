@@ -23,6 +23,8 @@ Every change is reviewed line by line by a human. Optimise for that reader.
    ```bash
    npm run typecheck
    (cd apps/web && npx tsc --noEmit)
+   npm run db:verify-safe
+   TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm run test:non-destructive
    TEST_DATABASE_URL=postgres://library:library@localhost:5432/library_test npm test
    ```
    For front changes also run `npm run build:web`.

@@ -250,19 +250,66 @@ export async function linkTopics(
   await sql`
     INSERT INTO topic_links (topic_id, linked_topic_id, relation, note)
     VALUES (${a}, ${b}, ${relation}, ${note})
-    ON CONFLICT (topic_id, linked_topic_id) DO UPDATE SET
-      relation = EXCLUDED.relation,
-      note = COALESCE(EXCLUDED.note, topic_links.note)`;
+    ON CONFLICT (topic_id, linked_topic_id) DO NOTHING`;
 }
 
 export async function topicLinks(sql: Sql, topicId: string): Promise<TopicLinkView[]> {
   try {
-    return await sql<TopicLinkView[]>`
+    const direct = await sql<TopicLinkView[]>`
       SELECT t.id, t.slug, t.title, t.brief, tl.relation, tl.note
       FROM topic_links tl
       JOIN topics t ON t.id = CASE WHEN tl.topic_id = ${topicId} THEN tl.linked_topic_id ELSE tl.topic_id END
       WHERE tl.topic_id = ${topicId} OR tl.linked_topic_id = ${topicId}
       ORDER BY t.title`;
+    if (direct.length > 0) return direct;
+
+    const fromSubtree = await sql<TopicLinkView[]>`
+      WITH RECURSIVE sub AS (
+        SELECT id FROM topics WHERE parent_id = ${topicId}
+        UNION ALL
+        SELECT c.id FROM topics c JOIN sub ON c.parent_id = sub.id
+      ),
+      up AS (
+        SELECT parent_id AS id FROM topics WHERE id = ${topicId} AND parent_id IS NOT NULL
+        UNION ALL
+        SELECT p.parent_id AS id FROM topics p JOIN up ON p.id = up.id WHERE p.parent_id IS NOT NULL
+      ),
+      lineage AS (
+        SELECT ${topicId}::uuid AS id
+        UNION SELECT id FROM sub
+        UNION SELECT id FROM up
+      )
+      SELECT DISTINCT ON (t.id) t.id, t.slug, t.title, t.brief, tl.relation, tl.note
+      FROM topic_links tl
+      JOIN sub s ON s.id = tl.topic_id OR s.id = tl.linked_topic_id
+      JOIN topics t ON t.id = CASE WHEN tl.topic_id = s.id THEN tl.linked_topic_id ELSE tl.topic_id END
+      WHERE t.id NOT IN (SELECT id FROM lineage)
+      ORDER BY t.id, t.title`;
+    if (fromSubtree.length > 0) return fromSubtree.sort((a, b) => a.title.localeCompare(b.title));
+
+    const fromAncestors = await sql<TopicLinkView[]>`
+      WITH RECURSIVE sub AS (
+        SELECT id FROM topics WHERE parent_id = ${topicId}
+        UNION ALL
+        SELECT c.id FROM topics c JOIN sub ON c.parent_id = sub.id
+      ),
+      up AS (
+        SELECT parent_id AS id, 1 AS hop FROM topics WHERE id = ${topicId} AND parent_id IS NOT NULL
+        UNION ALL
+        SELECT p.parent_id AS id, up.hop + 1 FROM topics p JOIN up ON p.id = up.id WHERE p.parent_id IS NOT NULL
+      ),
+      lineage AS (
+        SELECT ${topicId}::uuid AS id
+        UNION SELECT id FROM sub
+        UNION SELECT id FROM up
+      )
+      SELECT DISTINCT ON (t.id) t.id, t.slug, t.title, t.brief, tl.relation, tl.note
+      FROM topic_links tl
+      JOIN up u ON u.id = tl.topic_id OR u.id = tl.linked_topic_id
+      JOIN topics t ON t.id = CASE WHEN tl.topic_id = u.id THEN tl.linked_topic_id ELSE tl.topic_id END
+      WHERE t.id NOT IN (SELECT id FROM lineage)
+      ORDER BY t.id, u.hop ASC`;
+    return fromAncestors.sort((a, b) => a.title.localeCompare(b.title));
   } catch {
     return [];
   }
@@ -374,8 +421,9 @@ export async function topicSources(sql: Sql, topicId: string): Promise<SourceVie
 export async function upsertSources(sql: Sql, topicId: string, records: SourceRecord[], query: string): Promise<string[]> {
   const ids: string[] = [];
   for (const r of records) {
+    const normDoi = r.doi ? r.doi.toLowerCase().trim() : null;
     const [existing] = await sql<{ id: string }[]>`
-      SELECT id FROM sources WHERE external_id = ${r.externalId} OR (${r.doi}::text IS NOT NULL AND doi = ${r.doi}) LIMIT 1`;
+      SELECT id FROM sources WHERE external_id = ${r.externalId} OR (${normDoi}::text IS NOT NULL AND lower(doi) = ${normDoi}) LIMIT 1`;
     let id: string;
     if (existing) {
       id = existing.id;
@@ -391,7 +439,7 @@ export async function upsertSources(sql: Sql, topicId: string, records: SourceRe
       const [row] = await sql<{ id: string }[]>`
         INSERT INTO sources (kind, external_id, origin, title, url, doi, venue, year, authors, abstract, cited_by,
                              declared_design, sample_size, extra)
-        VALUES (${r.kind}, ${r.externalId}, ${r.origin}, ${r.title}, ${r.url}, ${r.doi}, ${r.venue}, ${r.year},
+        VALUES (${r.kind}, ${r.externalId}, ${r.origin}, ${r.title}, ${r.url}, ${normDoi}, ${r.venue}, ${r.year},
                 ${r.authors}, ${r.abstract}, ${r.citedBy}, ${r.declaredDesign}, ${r.sampleSize}, ${sql.json(r.extra as never)})
         RETURNING id`;
       id = row!.id;
@@ -912,15 +960,108 @@ export interface SeedDossier {
   }[];
 }
 
-/** Idempotently populates a topic with curated peer-reviewed sources, graded claims, synthesis ledger, milestones, and entities. */
-export async function seedTopicDossier(sql: Sql, topicId: string, dossier: SeedDossier): Promise<void> {
-  const sourceIds = await upsertSources(sql, topicId, dossier.sources, "curated-seed");
-  for (let i = 0; i < dossier.sources.length; i++) {
-    const src = dossier.sources[i]!;
-    const sid = sourceIds[i]!;
-    await setSourceDesign(sql, sid, src.design, src.sampleSize);
+/**
+ * Creates a seed topic only if it does not already exist (CREATE IF NOT EXISTS semantics).
+ * Never overwrites or updates an existing topic row.
+ */
+export async function ensureSeedTopic(
+  sql: Sql,
+  input: {
+    slug: string;
+    title: string;
+    brief: string;
+    parentId: string | null;
+    depth: number;
+    summary: string;
+    dossier?: SeedDossier;
+  },
+): Promise<Topic> {
+  const existing = await getTopicBySlug(sql, input.slug);
+  if (existing) return existing;
+  if (input.dossier) {
+    const [inserted] = await sql<Topic[]>`
+      INSERT INTO topics (parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at)
+      VALUES (
+        ${input.parentId},
+        ${input.slug},
+        ${input.title.trim()},
+        ${input.brief},
+        ${input.depth},
+        'ready',
+        ${input.dossier.summary},
+        ${input.dossier.gaps},
+        ${sql.json(input.dossier.synthesis as never)},
+        now()
+      )
+      ON CONFLICT (slug) DO NOTHING
+      RETURNING id, parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at`;
+    if (inserted) return inserted;
+  } else {
+    const [inserted] = await sql<Topic[]>`
+      INSERT INTO topics (parent_id, slug, title, brief, depth, summary)
+      VALUES (${input.parentId}, ${input.slug}, ${input.title.trim()}, ${input.brief}, ${input.depth}, ${input.summary})
+      ON CONFLICT (slug) DO NOTHING
+      RETURNING id, parent_id, slug, title, brief, depth, status, summary, gaps, synthesis, last_researched_at`;
+    if (inserted) return inserted;
   }
-  await markExtracted(sql, topicId, sourceIds);
+  return (await getTopicBySlug(sql, input.slug))!;
+}
+
+/**
+ * Additively populates a topic with curated peer-reviewed sources, graded claims,
+ * synthesis ledger, milestones, entities, and controversies using strict
+ * CREATE IF NOT EXISTS / ON CONFLICT DO NOTHING semantics. Never overwrites or deletes existing rows.
+ */
+export async function seedTopicDossier(
+  sql: Sql,
+  topicId: string,
+  dossier: SeedDossier,
+  options: { populateTopicFields?: boolean } = {},
+): Promise<void> {
+  const sourceIds: string[] = [];
+  for (const r of dossier.sources) {
+    const normDoi = r.doi ? r.doi.toLowerCase().trim() : null;
+    const [existingSource] = await sql<{ id: string }[]>`
+      SELECT id FROM sources
+      WHERE external_id = ${r.externalId}
+         OR (${normDoi}::text IS NOT NULL AND lower(doi) = ${normDoi})
+      LIMIT 1`;
+    let sid: string;
+    if (existingSource) {
+      sid = existingSource.id;
+    } else {
+      const safeSampleSize =
+        r.sampleSize != null && Number.isFinite(r.sampleSize)
+          ? Math.min(2_147_483_647, Math.max(0, Math.trunc(r.sampleSize)))
+          : null;
+      const [insertedSource] = await sql<{ id: string }[]>`
+        INSERT INTO sources (
+          kind, external_id, origin, title, url, doi, venue, year,
+          authors, abstract, cited_by, declared_design, design, sample_size, extra
+        )
+        VALUES (
+          ${r.kind}, ${r.externalId}, ${r.origin}, ${r.title}, ${r.url}, ${normDoi}, ${r.venue}, ${r.year},
+          ${r.authors}, ${r.abstract}, ${r.citedBy}, ${r.declaredDesign}, ${r.design}, ${safeSampleSize}, ${sql.json(r.extra as never)}
+        )
+        ON CONFLICT (external_id) DO NOTHING
+        RETURNING id`;
+      if (insertedSource) {
+        sid = insertedSource.id;
+      } else {
+        const [fallbackSource] = await sql<{ id: string }[]>`
+          SELECT id FROM sources
+          WHERE external_id = ${r.externalId}
+             OR (${normDoi}::text IS NOT NULL AND lower(doi) = ${normDoi})
+          LIMIT 1`;
+        sid = fallbackSource!.id;
+      }
+    }
+    await sql`
+      INSERT INTO topic_sources (topic_id, source_id, query, extracted)
+      VALUES (${topicId}, ${sid}, 'curated-seed', true)
+      ON CONFLICT (topic_id, source_id) DO NOTHING`;
+    sourceIds.push(sid);
+  }
 
   const claimIds: string[] = [];
   for (const c of dossier.claims) {
@@ -962,28 +1103,33 @@ export async function seedTopicDossier(sql: Sql, topicId: string, dossier: SeedD
   }
 
   for (const e of dossier.entities) {
-    await upsertEntity(sql, topicId, e);
+    await sql`
+      INSERT INTO entities (topic_id, kind, name, country, url, summary, attributes, source_urls)
+      VALUES (${topicId}, ${e.kind}, ${e.name}, ${e.country}, ${e.url}, ${e.summary}, ${sql.json(e.attributes)}, ${e.sourceUrls})
+      ON CONFLICT (topic_id, kind, name) DO NOTHING`;
   }
 
-  const existingDebates = await topicControversies(sql, topicId);
-  if (existingDebates.length === 0 && dossier.controversies.length > 0) {
-    await replaceControversies(
-      sql,
-      topicId,
-      dossier.controversies.map((d) => ({
-        kind: d.kind,
-        note: d.note,
-        claimIds: d.claimIndexes.map((idx) => claimIds[idx]).filter((id): id is string => Boolean(id)),
-      })),
-    );
+  for (const d of dossier.controversies) {
+    const resolvedClaimIds = d.claimIndexes.map((idx) => claimIds[idx]).filter((id): id is string => Boolean(id));
+    await sql`
+      INSERT INTO controversies (topic_id, kind, note, claim_ids)
+      SELECT ${topicId}, ${d.kind}, ${d.note}, ${resolvedClaimIds}::uuid[]
+      WHERE NOT EXISTS (
+        SELECT 1 FROM controversies WHERE topic_id = ${topicId} AND kind = ${d.kind} AND note = ${d.note}
+      )`;
   }
 
-  await sql`
-    UPDATE topics
-    SET summary = ${dossier.summary},
-        gaps = CASE WHEN cardinality(gaps) = 0 THEN ${dossier.gaps} ELSE gaps END,
-        synthesis = CASE WHEN synthesis IS NULL OR synthesis = '{}'::jsonb THEN ${sql.json(dossier.synthesis as never)} ELSE synthesis END,
-        status = CASE WHEN status IN ('idle', 'error') THEN 'ready' ELSE status END,
-        last_researched_at = COALESCE(last_researched_at, now())
-    WHERE id = ${topicId}`;
+  if (options.populateTopicFields !== false) {
+    await sql`
+      UPDATE topics
+      SET summary = ${dossier.summary},
+          gaps = ${dossier.gaps},
+          synthesis = ${sql.json(dossier.synthesis as never)},
+          status = 'ready',
+          last_researched_at = now()
+      WHERE id = ${topicId}
+        AND summary IS NULL
+        AND last_researched_at IS NULL
+        AND status = 'idle'`;
+  }
 }

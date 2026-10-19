@@ -1,7 +1,23 @@
 import { fileURLToPath } from "node:url";
 import { getSql, type Sql } from "./client";
+import { ECONOMICS_FINANCE_DOSSIERS } from "./economics-finance-dossiers";
 import { FERTILITY_SEED_DOSSIERS } from "./fertility-dossiers";
-import { createTopic, getTopicBySlug, linkTopics, moveTopic, seedTopicDossier, setTopicSummaryIfEmpty } from "./repo";
+import { MATH_SEED_DOSSIERS } from "./math-dossiers";
+import { PHYSICS_CLASSICAL_DOSSIERS } from "./physics-classical-dossiers";
+import { PHYSICS_FRONTIER_GRAVITY_DOSSIERS } from "./physics-frontier-gravity-dossiers";
+import { PHYSICS_GRAVITY_STRING_DOSSIERS } from "./physics-gravity-string-dossiers";
+import { PHYSICS_QUANTUM_DOSSIERS } from "./physics-quantum-dossiers";
+import { ensureSeedTopic, getTopicBySlug, linkTopics, type SeedDossier, seedTopicDossier } from "./repo";
+
+export const ALL_SEED_DOSSIERS: Record<string, SeedDossier> = {
+  ...FERTILITY_SEED_DOSSIERS,
+  ...PHYSICS_CLASSICAL_DOSSIERS,
+  ...PHYSICS_QUANTUM_DOSSIERS,
+  ...PHYSICS_GRAVITY_STRING_DOSSIERS,
+  ...PHYSICS_FRONTIER_GRAVITY_DOSSIERS,
+  ...MATH_SEED_DOSSIERS,
+  ...ECONOMICS_FINANCE_DOSSIERS,
+};
 
 export interface SeedNode {
   slug: string;
@@ -26,31 +42,85 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
         slug: "physics-and-cosmology",
         title: "Physics & Cosmology",
         brief:
-          "Fundamental laws of matter, energy, motion, fields, spacetime, quantum phenomena, gravitation, and the origin and structure of the cosmos.",
+          "Fundamental laws of matter, energy, motion, fields, spacetime, quantum mechanics, the Standard Model, string theory, modified/emergent gravity (MOND, Quantised Inertia), and the empirical regime limits of General Relativity and dark matter.",
         children: [
           {
             slug: "classical-mechanics-thermodynamics-electromagnetism",
             title: "Classical Mechanics, Thermodynamics & Electromagnetism",
             brief:
-              "Newtonian, Lagrangian, and Hamiltonian mechanics, continuum and fluid dynamics, statistical mechanics, entropy, and Maxwellian electrodynamics.",
+              "Newtonian, Lagrangian, and Hamiltonian mechanics, symplectic phase-space geometry, continuum and fluid dynamics, statistical mechanics, entropy, and Maxwellian electrodynamics.",
+            children: [
+              {
+                slug: "analytical-mechanics-lagrangian-hamiltonian-symplectic",
+                title: "Analytical Mechanics: Newtonian, Lagrangian, Hamiltonian & Symplectic Dynamics",
+                brief:
+                  "Principle of least action, Euler–Lagrange equations, Noether's theorem, Hamiltonian phase-space flows, Poisson brackets, Liouville's theorem, KAM theory, and three-body chaos.",
+              },
+              {
+                slug: "thermodynamics-statistical-mechanics-and-entropy",
+                title: "Thermodynamics, Statistical Mechanics & Non-Equilibrium Entropy",
+                brief:
+                  "Laws of thermodynamics, Boltzmann–Gibbs statistical ensembles, partition functions, Landau phase transitions, Wilson renormalization group, and non-equilibrium fluctuation theorems.",
+              },
+              {
+                slug: "electrodynamics-maxwell-equations-and-classical-fields",
+                title: "Classical Electrodynamics, Maxwell's Equations & Continuum Field Dynamics",
+                brief:
+                  "Covariant Maxwell equations, U(1) gauge invariance, Poynting flux, Liénard–Wiechert radiation, magnetohydrodynamics, Navier–Stokes turbulence, and radiation-reaction limits.",
+              },
+            ],
           },
           {
             slug: "relativity-gravitation-spacetime-physics",
             title: "Relativity, Gravitation & Spacetime Physics",
             brief:
-              "Special and general relativity, Riemannian spacetime geometry, gravitational waves, black hole horizons, and relativistic cosmology.",
+              "Special and general relativity, Lorentzian spacetime geometry, gravitational waves, black hole horizons, and empirical breakdown regimes at Planckian singularities and ultralow accelerations (a < a0).",
             children: [
               {
                 slug: "quantum-gravity-string-theory-loop-quantum-gravity",
                 title: "Quantum Gravity, String Theory & Loop Quantum Gravity",
                 brief:
-                  "Superstring theory, M-theory, AdS/CFT holographic correspondence, loop quantum gravity, spin foams, causal set theory, and asymptotic safety.",
+                  "Non-renormalizability of perturbative Einstein gravity, Bekenstein–Hawking black hole entropy, the Page curve information paradox, superstring/M-theory, and background-independent quantum geometry.",
+                children: [
+                  {
+                    slug: "string-theory-m-theory-and-holographic-duality",
+                    title: "String Theory, M-Theory, Calabi–Yau Compactification & AdS/CFT Holography",
+                    brief:
+                      "Relativistic strings, Green–Schwarz anomaly cancellation, 11D M-theory, D-brane black hole microstates, Maldacena's AdS/CFT duality, the 10^500 landscape, and Swampland constraints.",
+                  },
+                  {
+                    slug: "loop-quantum-gravity-spin-foams-and-causal-sets",
+                    title: "Loop Quantum Gravity, Spin Foams, Causal Dynamical Triangulations & Asymptotic Safety",
+                    brief:
+                      "Ashtekar–Barbero connections, SU(2) spin networks, discrete Planck-scale area/volume spectra, EPRL spin foams, Loop Quantum Cosmology bounce, and causal set theory.",
+                  },
+                ],
               },
               {
                 slug: "modified-emergent-and-frontier-gravity-theories",
                 title: "Modified, Emergent & Frontier Gravity Theories",
                 brief:
-                  "Modified Newtonian Dynamics (MOND), TeVeS, Verlinde's entropic/emergent gravity, Quantised Inertia / Horizon Mechanics (McCulloch / MiHsC), scalar-tensor f(R) theories, and galactic rotation curves.",
+                  "Modified Newtonian Dynamics (MOND), relativistic AeST/TeVeS, McCulloch's Quantised Inertia (MiHsC), Verlinde's emergent gravity, wide-binary tests, and the epistemic limits of ad-hoc dark matter halos.",
+                children: [
+                  {
+                    slug: "mond-modified-newtonian-dynamics-and-galactic-rotation",
+                    title: "Modified Newtonian Dynamics (MOND), Relativistic Extensions & Galactic Dynamics",
+                    brief:
+                      "Milgrom's acceleration threshold a0 ≈ 1.2×10^-10 m/s^2, zero-parameter Baryonic Tully–Fisher and Radial Acceleration Relations across SPARC galaxies, the External Field Effect, and AeST relativistic field theory.",
+                  },
+                  {
+                    slug: "quantised-inertia-horizon-mechanics-and-unruh-radiation",
+                    title: "Quantised Inertia (MiHsC), Horizon Mechanics, Unruh Radiation & Anti-Gravity Propulsion",
+                    brief:
+                      "Mike McCulloch's Hubble-scale Casimir/Rindler horizon model of inertia, Unruh radiation damping, zero-parameter galaxy rotation and wide-binary predictions, and laboratory horizon-drive/anti-gravity thrust bounds.",
+                  },
+                  {
+                    slug: "dark-matter-adhoc-epistemology-and-gr-breakdown-limits",
+                    title: "Dark Matter Ad-Hoc Parameters vs. General Relativity Breakdown at Galactic & Wide-Binary Scales",
+                    brief:
+                      "Epistemic audit of per-galaxy ΛCDM halo parameter fitting and 40-year WIMP direct-detection nulls versus the empirical breakdown of General Relativity in galactic rotation curves and Gaia DR3 wide binary star systems.",
+                  },
+                ],
               },
               {
                 slug: "roger-penrose-twistor-theory-singularities-cosmology",
@@ -64,13 +134,33 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
             slug: "quantum-mechanics-field-theory-particle-physics",
             title: "Quantum Mechanics, Quantum Field Theory & Particle Physics",
             brief:
-              "Wave mechanics, Hilbert space formalism, entanglement, decoherence, Quantum Electrodynamics, Quantum Chromodynamics, the Standard Model, and neutrino/collider physics.",
+              "Wave mechanics, Hilbert space operator formalism, Bell nonlocality, relativistic Quantum Field Theory, the SU(3)×SU(2)×U(1) Standard Model, and fault-tolerant quantum information.",
+            children: [
+              {
+                slug: "quantum-mechanics-hilbert-space-and-entanglement",
+                title: "Quantum Mechanics: Wave Mechanics, Entanglement, Nonlocality & Measurement",
+                brief:
+                  "Schrödinger and Dirac equations, canonical commutation relations, Born rule, EPR paradox, loophole-free Bell–CHSH inequality violations, decoherence, and interpretations of the measurement problem.",
+              },
+              {
+                slug: "standard-model-gauge-theories-and-particle-physics",
+                title: "The Standard Model: Gauge Symmetries, Electroweak Unification, QCD & Anomalies",
+                brief:
+                  "Local SU(3)_C × SU(2)_L × U(1)_Y Yang–Mills gauge theory, QED anomalous magnetic moment precision, QCD asymptotic freedom and confinement, the Brout–Englert–Higgs mechanism, neutrino oscillations, and g-2 tensions.",
+              },
+              {
+                slug: "quantum-information-computing-and-error-correction",
+                title: "Quantum Information, Quantum Computing & Fault-Tolerant Error Correction",
+                brief:
+                  "Von Neumann entropy, no-cloning theorem, Shor and Grover algorithms, BQP complexity, decoherence thresholds, Kitaev surface codes, and sub-threshold logical qubits.",
+              },
+            ],
           },
           {
             slug: "condensed-matter-atomic-molecular-optical-physics",
             title: "Condensed Matter, Atomic, Molecular & Optical Physics",
             brief:
-              "Electronic band structure, superconductivity, topological phases of matter, Bose–Einstein condensates, quantum optics, and photonics.",
+              "Electronic band structure, Landau symmetry breaking, BCS and high-Tc superconductivity, Integer and Fractional Quantum Hall Effects, topological insulators, Bose–Einstein condensates, and optical atomic clocks.",
           },
         ],
       },
@@ -332,19 +422,45 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
     slug: "formal-sciences-mathematics-and-computing",
     title: "Formal Sciences, Mathematics & Computing",
     brief:
-      "Pure and applied mathematics, geometry, topology, logic, probability and statistics, theoretical computer science, artificial intelligence, and systems architecture.",
+      "Pure and applied mathematics, differential geometry, Lie groups, functional analysis, measure-theoretic probability, stochastic calculus, mathematical statistics, theoretical computer science, and artificial intelligence.",
     children: [
       {
         slug: "pure-applied-mathematics-geometry-and-topology",
         title: "Pure & Applied Mathematics, Geometry & Topology",
         brief:
-          "Number theory, algebra, real and complex analysis, differential geometry, algebraic topology, dynamical systems, and partial differential equations.",
+          "Number theory, algebra, real and complex analysis, differential geometry, Lie groups, functional analysis, dynamical systems, and partial differential equations.",
+        children: [
+          {
+            slug: "differential-geometry-manifolds-and-topology",
+            title: "Differential Geometry, Manifolds, Tensor Calculus & Algebraic Topology",
+            brief:
+              "Riemannian and Lorentzian manifolds, Levi-Civita curvature tensors, symplectic 2-forms, principal fibre bundles, Chern–Pontryagin invariants, Calabi–Yau manifolds, and information geometry.",
+          },
+          {
+            slug: "group-theory-lie-algebras-and-symmetry",
+            title: "Group Theory, Lie Algebras, Representation Theory & Noetherian Symmetry",
+            brief:
+              "Galois groups, continuous Lie groups and Lie algebras, Noether's first and second theorems, Wigner's Poincaré representations, SU(3)×SU(2)×U(1) gauge symmetries, and renormalization scale invariance.",
+          },
+          {
+            slug: "functional-analysis-pdes-and-dynamical-systems",
+            title: "Functional Analysis, Operator Algebras, PDEs & Nonlinear Dynamical Systems",
+            brief:
+              "Infinite-dimensional Hilbert and Banach spaces, spectral theory of unbounded operators, Sobolev PDEs (Schrödinger, Maxwell, Navier–Stokes, Black–Scholes), KAM tori, and chaotic attractors.",
+          },
+        ],
+      },
+      {
+        slug: "probability-theory-stochastic-calculus-and-statistics",
+        title: "Probability Theory, Stochastic Calculus, Martingales & Mathematical Statistics",
+        brief:
+          "Kolmogorov measure-theoretic probability, Brownian motion, Itô stochastic calculus, Doob martingales, Girsanov's theorem, Feynman–Kac PDE duality, Extreme Value Theory, Bayesian inference, and Random Matrix Theory.",
       },
       {
         slug: "logic-computation-information-artificial-intelligence",
         title: "Logic, Computation, Information & Artificial Intelligence",
         brief:
-          "Mathematical logic, Gödel incompleteness, Turing computability, complexity theory, cryptography, statistical machine learning, and autonomous reasoning systems.",
+          "Mathematical logic, Gödel incompleteness, Turing computability, complexity theory, Shannon information entropy, cryptography, statistical machine learning, and autonomous reasoning systems.",
       },
     ],
   },
@@ -396,15 +512,47 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
   },
   {
     slug: "economics-and-political-economy",
-    title: "Economics & Political Economy",
+    title: "Economics, Finance & Political Economy",
     brief:
-      "Microeconomics, macroeconomics, econometrics, economic history, public finance, industrial organisation, and global trade.",
+      "Microeconomics, game theory, macroeconomics, central banking, financial markets, market microstructure, stochastic quantitative finance, econometrics, statistical arbitrage, and econophysics.",
     children: [
       {
         slug: "macroeconomics-political-economy-and-economic-history",
-        title: "Macroeconomics, Political Economy & Economic History",
+        title: "Macroeconomics, Monetary Theory, Central Banking & Economic History",
         brief:
-          "Economic growth, monetary and fiscal institutions, demographic transitions, innovation economics, and long-run living standards.",
+          "Endogenous growth, monetary and fiscal regimes, New Keynesian DSGE vs Lucas critique, yield-curve dynamics, Minsky financial instability, and long-run sovereign credit cycles.",
+      },
+      {
+        slug: "microeconomics-game-theory-and-market-design",
+        title: "Microeconomics, Game Theory, Information Economics & Mechanism Design",
+        brief:
+          "Arrow–Debreu general equilibrium, Kahneman–Tversky prospect theory, Nash and Bayesian equilibria, Akerlof adverse selection, signaling, VCG/Milgrom–Wilson auctions, and stable matching.",
+      },
+      {
+        slug: "financial-markets-asset-pricing-and-market-microstructure",
+        title: "Financial Markets, Asset Pricing & Market Microstructure",
+        brief:
+          "Stochastic discount factors, Fama–French factor models, Adaptive Markets, limit order books, Kyle's lambda, Glosten–Milgrom adverse selection, square-root market impact, and VPIN order-flow toxicity.",
+        children: [
+          {
+            slug: "quantitative-finance-stochastic-calculus-and-derivatives",
+            title: "Quantitative Finance, Stochastic Calculus & Derivatives Pricing",
+            brief:
+              "Bachelier and Black–Scholes–Merton dynamic replication, Harrison–Kreps–Pliska risk-neutral martingale pricing, Feynman–Kac PDEs, Heston/SABR/Rough volatility, and tail-hedging breakdowns.",
+          },
+          {
+            slug: "econometrics-financial-time-series-and-statistical-arbitrage",
+            title: "Econometrics, Financial Time Series, Statistical Arbitrage & Alpha Research",
+            brief:
+              "ARCH/GARCH volatility clustering, Engle–Granger and Johansen cointegration, Ornstein–Uhlenbeck mean reversion, Kalman filtering, Random Matrix Theory covariance cleaning, Kelly sizing, and Deflated Sharpe Ratio.",
+          },
+          {
+            slug: "econophysics-complex-systems-and-tail-risk",
+            title: "Econophysics, Complex Financial Networks, Mandelbrot Fractals & Tail Risk",
+            brief:
+              "Mandelbrot multifractals, inverse-cubic power-law tails (α ≈ 3), Extreme Value Theory and Expected Shortfall, Ising spin-glass herding, Sornette LPPLS crash diagnostics, and systemic network contagion.",
+          },
+        ],
       },
     ],
   },
@@ -461,6 +609,214 @@ export const CROSS_DISCIPLINE_LINKS: {
   relation: string;
   note: string;
 }[] = [
+  // Physics ↔ Mathematics & Statistics
+  {
+    slugA: "physics-and-cosmology",
+    slugB: "formal-sciences-mathematics-and-computing",
+    relation: "bridges",
+    note: "Differential geometry, Lie algebras, Hilbert-space operator theory, and stochastic calculus provide the structural language of physical law from Planck scales to cosmology.",
+  },
+  {
+    slugA: "analytical-mechanics-lagrangian-hamiltonian-symplectic",
+    slugB: "differential-geometry-manifolds-and-topology",
+    relation: "bridges",
+    note: "Symplectic 2-forms ω = ∑ dp_i ∧ dq_i on cotangent bundles T*Q and Darboux's theorem form the exact geometric foundation of Hamiltonian phase-space mechanics.",
+  },
+  {
+    slugA: "analytical-mechanics-lagrangian-hamiltonian-symplectic",
+    slugB: "group-theory-lie-algebras-and-symmetry",
+    relation: "bridges",
+    note: "Emmy Noether's First Theorem maps every continuous Lie group symmetry of the Lagrangian action directly to a conserved physical current (energy, momentum, angular momentum).",
+  },
+  {
+    slugA: "analytical-mechanics-lagrangian-hamiltonian-symplectic",
+    slugB: "functional-analysis-pdes-and-dynamical-systems",
+    relation: "intersects",
+    note: "Hamilton–Jacobi PDEs, Kolmogorov–Arnold–Moser (KAM) invariant tori, and Lyapunov exponents govern integrable vs chaotic trajectories in classical and celestial mechanics.",
+  },
+  {
+    slugA: "thermodynamics-statistical-mechanics-and-entropy",
+    slugB: "probability-theory-stochastic-calculus-and-statistics",
+    relation: "bridges",
+    note: "Boltzmann–Gibbs ensembles, partition functions, Einstein–Smoluchowski Brownian motion, and Fokker–Planck stochastic diffusion unite statistical physics with measure-theoretic probability.",
+  },
+  {
+    slugA: "thermodynamics-statistical-mechanics-and-entropy",
+    slugB: "information-theory-cybernetics-and-rhetoric",
+    relation: "bridges",
+    note: "Boltzmann entropy S = k_B ln Ω, Shannon information entropy H = -∑ p_i log p_i, Jaynes maximum-entropy inference, and Landauer's k_B T ln 2 erasure limit unify thermodynamics and information.",
+  },
+  {
+    slugA: "electrodynamics-maxwell-equations-and-classical-fields",
+    slugB: "differential-geometry-manifolds-and-topology",
+    relation: "intersects",
+    note: "Exterior differential 2-forms (dF = 0, d*F = μ0 J) and U(1) principal bundle curvature express Maxwell's electromagnetic equations in coordinate-free geometric form.",
+  },
+  {
+    slugA: "electrodynamics-maxwell-equations-and-classical-fields",
+    slugB: "standard-model-gauge-theories-and-particle-physics",
+    relation: "bridges",
+    note: "Classical U(1) electromagnetic gauge invariance is the direct Abelian prototype for Quantum Electrodynamics and non-Abelian SU(3)_C × SU(2)_L × U(1)_Y Yang–Mills gauge theories.",
+  },
+  {
+    slugA: "quantum-mechanics-hilbert-space-and-entanglement",
+    slugB: "functional-analysis-pdes-and-dynamical-systems",
+    relation: "bridges",
+    note: "Dirac–von Neumann quantum mechanics is built on infinite-dimensional separable Hilbert spaces, C*-algebras, and the spectral theorem for unbounded self-adjoint operators.",
+  },
+  {
+    slugA: "quantum-mechanics-hilbert-space-and-entanglement",
+    slugB: "probability-theory-stochastic-calculus-and-statistics",
+    relation: "intersects",
+    note: "The Born rule |ψ|^2, Feynman–Kac path integrals, and non-Kolmogorovian Bell–CHSH entanglement correlations connect quantum measurement to probability theory.",
+  },
+  {
+    slugA: "standard-model-gauge-theories-and-particle-physics",
+    slugB: "group-theory-lie-algebras-and-symmetry",
+    relation: "bridges",
+    note: "Wigner's Poincaré group classification of mass/spin, Gell-Mann's SU(3) Eightfold Way, and the SU(3)_C × SU(2)_L × U(1)_Y Lie algebra define all elementary particles and gauge interactions.",
+  },
+  {
+    slugA: "standard-model-gauge-theories-and-particle-physics",
+    slugB: "differential-geometry-manifolds-and-topology",
+    relation: "intersects",
+    note: "Principal fibre bundle connections, Yang–Mills curvature 2-forms, and Chern–Pontryagin topological instanton invariants govern non-perturbative gauge field theory.",
+  },
+  {
+    slugA: "quantum-information-computing-and-error-correction",
+    slugB: "logic-computation-information-artificial-intelligence",
+    relation: "bridges",
+    note: "BQP complexity, Shor's prime-factoring algorithm, Kitaev topological surface codes, and post-quantum lattice cryptography unite quantum mechanics and theoretical computer science.",
+  },
+  {
+    slugA: "condensed-matter-atomic-molecular-optical-physics",
+    slugB: "differential-geometry-manifolds-and-topology",
+    relation: "intersects",
+    note: "Berry phase connections, TKNN Chern invariants, and topological insulators apply algebraic topology directly to quantized Hall conductance in solid-state physics.",
+  },
+  {
+    slugA: "relativity-gravitation-spacetime-physics",
+    slugB: "differential-geometry-manifolds-and-topology",
+    relation: "bridges",
+    note: "Pseudo-Riemannian Lorentzian 4-manifolds, Levi-Civita metric connections, and the Riemann/Einstein curvature tensors form the exact mathematical core of General Relativity.",
+  },
+  {
+    slugA: "string-theory-m-theory-and-holographic-duality",
+    slugB: "differential-geometry-manifolds-and-topology",
+    relation: "bridges",
+    note: "Ricci-flat Kähler Calabi–Yau manifolds, homological mirror symmetry, and Ryu–Takayanagi holographic entanglement surfaces drive deep dualities between string theory and geometry.",
+  },
+  {
+    slugA: "loop-quantum-gravity-spin-foams-and-causal-sets",
+    slugB: "group-theory-lie-algebras-and-symmetry",
+    relation: "intersects",
+    note: "SU(2) spin networks, Ashtekar–Barbero connection variables, and SL(2,C) EPRL spin-foam intertwiners quantize discrete Planckian area and volume via Lie representation theory.",
+  },
+  // Frontier Gravity, MOND, Quantised Inertia & Dark Matter / GR Breakdown Epistemology
+  {
+    slugA: "mond-modified-newtonian-dynamics-and-galactic-rotation",
+    slugB: "dark-matter-adhoc-epistemology-and-gr-breakdown-limits",
+    relation: "bridges",
+    note: "Milgrom's acceleration constant a0 ≈ 1.2×10^-10 m/s^2 predicts galactic rotation curves and the Baryonic Tully–Fisher relation with zero free per-galaxy halo parameters, exposing the ad-hoc parameter fitting of ΛCDM.",
+  },
+  {
+    slugA: "quantised-inertia-horizon-mechanics-and-unruh-radiation",
+    slugB: "dark-matter-adhoc-epistemology-and-gr-breakdown-limits",
+    relation: "bridges",
+    note: "McCulloch's Quantised Inertia (MiHsC) derives inertia from Rindler and Hubble horizon damping of Unruh radiation, predicting galactic rotation flattening and Gaia DR3 wide-binary boosts with zero free parameters.",
+  },
+  {
+    slugA: "quantised-inertia-horizon-mechanics-and-unruh-radiation",
+    slugB: "quantum-mechanics-hilbert-space-and-entanglement",
+    relation: "intersects",
+    note: "Horizon-scale Casimir confinement of quantum vacuum fluctuations and Unruh thermal radiation link relativistic quantum field effects directly to macroscopic inertial mass.",
+  },
+  {
+    slugA: "dark-matter-adhoc-epistemology-and-gr-breakdown-limits",
+    slugB: "epistemology-philosophy-of-science-scientific-method",
+    relation: "bridges",
+    note: "Comparing 2–3 adjustable dark-matter halo parameters per galaxy (plus 40 years of direct-detection nulls) against zero-parameter modified-gravity scaling laws exemplifies Lakatosian auxiliary hypotheses vs Popperian falsifiability.",
+  },
+  // Economics, Finance & Fin-Quant ↔ Mathematics, Statistics & Physics
+  {
+    slugA: "economics-and-political-economy",
+    slugB: "formal-sciences-mathematics-and-computing",
+    relation: "bridges",
+    note: "Convex optimization, game theory, stochastic calculus, econometrics, and algorithmic mechanism design form the formal mathematical backbone of modern economics and quantitative finance.",
+  },
+  {
+    slugA: "microeconomics-game-theory-and-market-design",
+    slugB: "pure-applied-mathematics-geometry-and-topology",
+    relation: "bridges",
+    note: "Brouwer and Kakutani topological fixed-point theorems prove the existence of Nash strategic equilibria and Arrow–Debreu competitive general equilibria.",
+  },
+  {
+    slugA: "microeconomics-game-theory-and-market-design",
+    slugB: "logic-computation-information-artificial-intelligence",
+    relation: "intersects",
+    note: "Algorithmic game theory, Vickrey–Clarke–Groves auction complexity, and multi-agent reinforcement learning connect microeconomic incentives directly to computation.",
+  },
+  {
+    slugA: "macroeconomics-political-economy-and-economic-history",
+    slugB: "econometrics-financial-time-series-and-statistical-arbitrage",
+    relation: "bridges",
+    note: "Structural vector autoregressions (SVAR), cointegration, state-space Kalman filtering, and regime-switching models test macroeconomic monetary and credit-cycle theories.",
+  },
+  {
+    slugA: "macroeconomics-political-economy-and-economic-history",
+    slugB: "history-of-science-technology-and-libraries",
+    relation: "intersects",
+    note: "Endogenous technological growth (Romer, Mokyr), scientific institutions, and multi-century sovereign debt/inflation archives unite economic history with the history of science.",
+  },
+  {
+    slugA: "financial-markets-asset-pricing-and-market-microstructure",
+    slugB: "probability-theory-stochastic-calculus-and-statistics",
+    relation: "bridges",
+    note: "Stochastic discount factors, martingale pricing measures, Hawkes point processes for limit-order-book arrivals, and Bayesian Kyle/Glosten–Milgrom filtering govern asset pricing and microstructure.",
+  },
+  {
+    slugA: "quantitative-finance-stochastic-calculus-and-derivatives",
+    slugB: "probability-theory-stochastic-calculus-and-statistics",
+    relation: "bridges",
+    note: "Itô's Lemma, Girsanov's measure transformation, and the Harrison–Kreps–Pliska Fundamental Theorem of Asset Pricing apply continuous-time martingale theory directly to derivatives replication.",
+  },
+  {
+    slugA: "quantitative-finance-stochastic-calculus-and-derivatives",
+    slugB: "functional-analysis-pdes-and-dynamical-systems",
+    relation: "bridges",
+    note: "The Black–Scholes–Merton parabolic pricing PDE is mapped via the Feynman–Kac theorem directly onto the heat diffusion equation and parabolic operator semigroups.",
+  },
+  {
+    slugA: "quantitative-finance-stochastic-calculus-and-derivatives",
+    slugB: "quantum-mechanics-field-theory-particle-physics",
+    relation: "intersects",
+    note: "Euclidean path integrals, Feynman–Kac propagators, and Langevin/Fokker–Planck equations share identical mathematical structure across quantum mechanics and quantitative derivatives pricing.",
+  },
+  {
+    slugA: "econometrics-financial-time-series-and-statistical-arbitrage",
+    slugB: "probability-theory-stochastic-calculus-and-statistics",
+    relation: "bridges",
+    note: "Ornstein–Uhlenbeck SDEs, Engle–Granger/Johansen cointegration, ARCH/GARCH volatility clustering, and Marchenko–Pastur random matrix theory power statistical arbitrage and portfolio inference.",
+  },
+  {
+    slugA: "econometrics-financial-time-series-and-statistical-arbitrage",
+    slugB: "logic-computation-information-artificial-intelligence",
+    relation: "intersects",
+    note: "Combinatorial purged cross-validation (CPCV), Deflated Sharpe Ratio multiple-testing corrections, and Shannon–Kelly bet sizing govern statistical machine learning in financial markets.",
+  },
+  {
+    slugA: "econophysics-complex-systems-and-tail-risk",
+    slugB: "thermodynamics-statistical-mechanics-and-entropy",
+    relation: "bridges",
+    note: "Ising spin-glass herding models, renormalization group critical exponents, and non-equilibrium phase transitions map statistical physics directly onto financial market crashes.",
+  },
+  {
+    slugA: "econophysics-complex-systems-and-tail-risk",
+    slugB: "probability-theory-stochastic-calculus-and-statistics",
+    relation: "bridges",
+    note: "Mandelbrot's Lévy stable Paretian laws, universal inverse-cubic power-law tails (α ≈ 3), and Pickands–Balkema–de Haan Extreme Value Theory replace Gaussian tail assumptions in risk management.",
+  },
+  // Chemistry, Biology, Medicine, Humanities & Governance Crossovers
   {
     slugA: "physical-chemistry-quantum-chemistry-chemical-physics",
     slugB: "quantum-mechanics-field-theory-particle-physics",
@@ -480,10 +836,28 @@ export const CROSS_DISCIPLINE_LINKS: {
     note: "Crystallography, electronic band theory, superconductors, and quantum materials sit at the intersection of solid-state chemistry and condensed matter physics.",
   },
   {
+    slugA: "organic-supramolecular-and-synthetic-chemistry",
+    slugB: "biochemistry-chemical-biology-and-abiogenesis",
+    relation: "bridges",
+    note: "Asymmetric catalysis, non-covalent supramolecular self-assembly, and prebiotic carbon synthesis bridge synthetic organic chemistry and the molecular origins of life.",
+  },
+  {
     slugA: "biochemistry-chemical-biology-and-abiogenesis",
     slugB: "molecular-cellular-and-evolutionary-biology",
     relation: "bridges",
     note: "Enzymatic catalysis, nucleic acid chemistry, bioenergetics, and prebiotic abiogenesis connect molecular chemistry directly to living cells.",
+  },
+  {
+    slugA: "biological-taxonomy-systematics-tree-of-life",
+    slugB: "logic-computation-information-artificial-intelligence",
+    relation: "intersects",
+    note: "Maximum-likelihood and Bayesian Markov Chain Monte Carlo (MCMC) phylogenomics apply computational graph and statistical inference algorithms to reconstruct the Tree of Life.",
+  },
+  {
+    slugA: "botany-mycology-microbiology-and-ecology",
+    slugB: "thermodynamics-statistical-mechanics-and-entropy",
+    relation: "intersects",
+    note: "Photosynthetic quantum-thermodynamic energy transduction, trophic cascades, and Prigogine dissipative structures govern biosphere ecology.",
   },
   {
     slugA: "roger-penrose-twistor-theory-singularities-cosmology",
@@ -540,10 +914,28 @@ export const CROSS_DISCIPLINE_LINKS: {
     note: "Shannon entropy, error-correcting codes, and Wiener's cybernetic feedback unite communication theory with computer science and AI.",
   },
   {
+    slugA: "world-literature-poetics-and-comparative-mythology",
+    slugB: "ancient-civilisations-epigraphy-near-eastern-archaeology",
+    relation: "intersects",
+    note: "Philological reconstruction of Gilgamesh, Homeric epics, and Ptolemaic Alexandrian scholia connects comparative literature directly to material archaeology.",
+  },
+  {
+    slugA: "visual-arts-painting-sculpture-and-iconography",
+    slugB: "differential-geometry-manifolds-and-topology",
+    relation: "intersects",
+    note: "Renaissance linear perspective (Brunelleschi, Alberti, Piero della Francesca) directly catalysed projective geometry and optical mathematics.",
+  },
+  {
     slugA: "musicology-harmony-acoustics-and-performing-arts",
     slugB: "classical-mechanics-thermodynamics-electromagnetism",
     relation: "intersects",
     note: "Wave equations, harmonic overtone series, resonance, and psychoacoustics link musical harmony directly to physical acoustics.",
+  },
+  {
+    slugA: "aesthetics-art-history-and-philosophy-of-beauty",
+    slugB: "group-theory-lie-algebras-and-symmetry",
+    relation: "intersects",
+    note: "Crystallographic wallpaper groups, golden-ratio quasicrystalline proportions, and symmetry transformations link formal aesthetics to mathematical group theory.",
   },
   {
     slugA: "neuroscience-cognitive-science-and-consciousness",
@@ -563,32 +955,75 @@ export const CROSS_DISCIPLINE_LINKS: {
     relation: "bridges",
     note: "Normative bioethics and philosophy of law shape constitutional rights and international regulation of medicine and biotechnology.",
   },
+  {
+    slugA: "political-theory-comparative-institutions-geopolitics",
+    slugB: "microeconomics-game-theory-and-market-design",
+    relation: "bridges",
+    note: "Social choice theory (Arrow's impossibility theorem), public choice, voting mechanism design, and strategic deterrence unite political science and game theory.",
+  },
+  {
+    slugA: "architectural-history-structural-engineering-urban-systems",
+    slugB: "classical-mechanics-thermodynamics-electromagnetism",
+    relation: "bridges",
+    note: "Continuum mechanics, Cauchy stress–strain elasticity, catenary arch statics, and building thermodynamics ground architectural engineering in classical physics.",
+  },
 ];
 
-async function ensureNode(sql: Sql, node: SeedNode, parentId: string | null): Promise<void> {
-  let existing = await getTopicBySlug(sql, node.slug);
-  if (!existing) {
-    existing = await createTopic(sql, { title: node.title, brief: node.brief, parentId });
-    await sql`UPDATE topics SET slug = ${node.slug} WHERE id = ${existing.id} AND NOT EXISTS (SELECT 1 FROM topics WHERE slug = ${node.slug} AND id <> ${existing.id})`;
-  } else if (parentId && existing.parentId !== parentId) {
-    existing = await moveTopic(sql, existing.id, parentId);
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+
+/**
+ * Enforces the non-destructive seeding policy for Dev/CI reset seeders:
+ * 1. Database host MUST be strictly `localhost` or `127.0.0.1` (or `::1`).
+ * 2. Environment MUST explicitly include `ALLOW_DESTRUCTIVE_SEED=true`.
+ */
+export function assertLocalResetAllowed(
+  connectionUrl: string | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): void {
+  if (!connectionUrl) {
+    throw new Error("Refusing destructive seed reset: database connection URL is not set.");
   }
+  let parsed: URL;
+  try {
+    parsed = new URL(connectionUrl);
+  } catch {
+    throw new Error("Refusing destructive seed reset: invalid database connection URL.");
+  }
+  const host = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  if (!LOCAL_HOSTS.has(host)) {
+    throw new Error(
+      `Refusing destructive seed reset on non-local host "${parsed.hostname}". Only localhost / 127.0.0.1 is permitted.`,
+    );
+  }
+  if (env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+    throw new Error(
+      "Refusing destructive seed reset: explicit ALLOW_DESTRUCTIVE_SEED=true is required.",
+    );
+  }
+}
+
+async function ensureNode(sql: Sql, node: SeedNode, parentId: string | null, depth = 0): Promise<void> {
   const childNames = (node.children ?? []).map((c) => c.title);
   const subSentence =
     childNames.length > 0 ? ` Core branches include ${childNames.join("; ")}.` : "";
-  await setTopicSummaryIfEmpty(
-    sql,
-    existing.id,
-    `${node.title} investigates ${node.brief.charAt(0).toLowerCase()}${node.brief.slice(1)}${subSentence}`,
-  );
+  const defaultSummary = `${node.title} investigates ${node.brief.charAt(0).toLowerCase()}${node.brief.slice(1)}${subSentence}`;
+  const existing = await ensureSeedTopic(sql, {
+    slug: node.slug,
+    title: node.title,
+    brief: node.brief,
+    parentId,
+    depth,
+    summary: defaultSummary,
+    dossier: ALL_SEED_DOSSIERS[node.slug],
+  });
   for (const child of node.children ?? []) {
-    await ensureNode(sql, child, existing.id);
+    await ensureNode(sql, child, existing.id, existing.depth + 1);
   }
 }
 
 export async function seed(sql: Sql): Promise<void> {
   for (const trunk of ENCYCLOPAEDIC_TRUNKS) {
-    await ensureNode(sql, trunk, null);
+    await ensureNode(sql, trunk, null, 0);
   }
   for (const link of CROSS_DISCIPLINE_LINKS) {
     const a = await getTopicBySlug(sql, link.slugA);
@@ -597,19 +1032,22 @@ export async function seed(sql: Sql): Promise<void> {
       await linkTopics(sql, a.id, b.id, link.relation, link.note);
     }
   }
-  for (const [slug, dossier] of Object.entries(FERTILITY_SEED_DOSSIERS)) {
+  for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
     const topic = await getTopicBySlug(sql, slug);
     if (topic) {
-      await seedTopicDossier(sql, topic.id, dossier);
+      await seedTopicDossier(sql, topic.id, dossier, { populateTopicFields: false });
     }
   }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  if (process.argv.includes("--reset") || process.env.RESET_SEED === "true") {
+    assertLocalResetAllowed(process.env.DATABASE_URL, process.env);
+  }
   const sql = getSql();
   seed(sql)
     .then(() => {
-      console.log("Seeded the encyclopaedic Tree of Knowledge and cross-discipline links");
+      console.log("Seeded the encyclopaedic Tree of Knowledge, cross-discipline links, and curated dossiers");
       return sql.end();
     })
     .catch((err) => {
@@ -617,3 +1055,4 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       process.exit(1);
     });
 }
+

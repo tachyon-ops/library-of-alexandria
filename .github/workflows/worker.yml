@@ -39,6 +39,8 @@ jobs:
       - name: Checkout repository
         if: steps.check.outputs.ready == 'true'
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         if: steps.check.outputs.ready == 'true'
@@ -51,7 +53,24 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: npm ci
 
-      - name: Migrate and seed database (idempotent)
+      - name: Verify non-destructive migration & seed gates
+        if: steps.check.outputs.ready == 'true'
+        run: npm run db:verify-safe
+
+      - name: Capture compressed pre-migration logical database dump
+        if: steps.check.outputs.ready == 'true'
+        run: npm run db:backup
+
+      - name: Upload pre-migration database backup artifact
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-migration-db-backup-${{ github.run_id }}
+          path: backups/*.sql.gz
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Migrate and seed database (idempotent, additive-only)
         if: steps.check.outputs.ready == 'true'
         run: |
           npm run db:migrate
@@ -60,3 +79,4 @@ jobs:
       - name: Drain queued research jobs
         if: steps.check.outputs.ready == 'true'
         run: npm run drain:worker
+

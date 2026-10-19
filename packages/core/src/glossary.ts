@@ -558,6 +558,141 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
       "The temporary endocrine structure that forms in the ovary right after an egg is ovulated, producing natural progesterone, estrogen, and relaxin to support early pregnancy and placental blood vessels.",
     etymology: "Latin corpus ('body') + luteum ('yellow').",
   },
+  {
+    term: "Lagrangian & Hamiltonian Mechanics",
+    aliases: ["lagrangian", "hamiltonian", "symplectic", "euler-lagrange", "liouville"],
+    domain: "Classical & Mathematical Physics",
+    synopsis:
+      "Reformulations of Newtonian mechanics around scalar energy functions and the Principle of Least Action (δS = 0), evolving states on symplectic phase-space manifolds.",
+    whyItMatters:
+      "Provides the direct mathematical bridge from classical trajectories to quantum commutators ([q, p] = iℏ), path integrals, gauge field theories, and optimal control in quantitative finance.",
+  },
+  {
+    term: "Noether's Theorem",
+    aliases: ["noether", "noetherian"],
+    domain: "Mathematical Physics & Group Theory",
+    synopsis:
+      "Emmy Noether's 1918 theorem proving that every continuous differentiable symmetry of the action of a physical system corresponds to an exact conservation law.",
+    whyItMatters:
+      "Time translation invariance yields energy conservation; spatial translation yields momentum conservation; rotational symmetry yields angular momentum; and U(1) phase symmetry yields electric charge conservation.",
+  },
+  {
+    term: "Hilbert Space",
+    aliases: ["hilbert", "eigenstate", "eigenstates", "eigenvalue", "eigenvalues", "hermitian", "unitary"],
+    domain: "Quantum Mechanics & Functional Analysis",
+    synopsis:
+      "A complete, often infinite-dimensional inner-product vector space in which quantum physical states live as normalized vectors and observables act as self-adjoint (Hermitian) operators.",
+    whyItMatters:
+      "Unites pure functional analysis with quantum mechanics, spectral theory, signal processing, and kernel methods in statistical machine learning.",
+  },
+  {
+    term: "Quantum Entanglement & Nonlocality",
+    aliases: ["entanglement", "entangled", "nonlocality", "chsh", "decoherence"],
+    domain: "Quantum Mechanics & Quantum Information",
+    synopsis:
+      "A non-classical correlation in which composite quantum systems share an inseparable joint state whose measurement statistics violate Bell's local hidden-variable inequalities.",
+    whyItMatters:
+      "Verified by loophole-free Bell tests (Aspect, Clauser, Zeilinger) and serves as the foundational resource for quantum computing, quantum cryptography, and AdS/CFT holographic spacetime emergence.",
+  },
+  {
+    term: "Standard Model of Particle Physics",
+    aliases: ["yang-mills", "electroweak", "higgs", "qcd", "chromodynamics", "qed", "quark", "quarks", "gluon", "gluons", "neutrino", "neutrinos"],
+    domain: "Particle Physics & Quantum Field Theory",
+    synopsis:
+      "The relativistic quantum gauge field theory based on local SU(3)_C × SU(2)_L × U(1)_Y symmetry governing strong, weak, and electromagnetic interactions plus the Higgs boson.",
+    whyItMatters:
+      "Achieves 12-decimal-place precision in QED, yet remains incomplete due to non-zero neutrino masses, the Muon g-2 tension, the absence of gravity, and the 10^120 vacuum-energy cosmological constant problem.",
+  },
+  {
+    term: "String Theory & AdS/CFT Holography",
+    aliases: ["superstring", "m-theory", "calabi-yau", "ads/cft", "holographic", "swampland", "brane", "branes", "maldacena"],
+    domain: "Quantum Gravity & Mathematical Physics",
+    synopsis:
+      "A framework replacing 0D point particles with 1D vibrating strings in 10 or 11 spacetime dimensions, naturally containing gravitons and linking bulk gravity to boundary quantum field theory via AdS/CFT duality.",
+    whyItMatters:
+      "Yielded profound mathematical breakthroughs in mirror symmetry and black hole entropy, but faces empirical falsifiability challenges due to the 10^500 Calabi–Yau vacua landscape and null LHC supersymmetry searches.",
+  },
+  {
+    term: "Modified Newtonian Dynamics (MOND)",
+    aliases: ["mond", "milgrom", "milgromian", "btfr", "tully-fisher", "teves", "aest", "sparc"],
+    domain: "Gravitational Physics & Galactic Dynamics",
+    synopsis:
+      "Mordehai Milgrom's 1983 law proposing that below a universal acceleration threshold a₀ ≈ 1.2 × 10⁻¹⁰ m/s², effective gravitational acceleration transitions from g_N = GM/r² to g = √(g_N · a₀).",
+    whyItMatters:
+      "Predicts flat galactic rotation curves, the zero-scatter Baryonic Tully–Fisher Relation (v_f⁴ = G·M_b·a₀), and the Radial Acceleration Relation directly from visible baryonic matter with zero per-galaxy dark matter halo tuning.",
+  },
+  {
+    term: "Quantised Inertia (MiHsC / Horizon Mechanics)",
+    aliases: ["quantised inertia", "quantized inertia", "mihsc", "mcculloch", "unruh", "rindler"],
+    domain: "Frontier Gravitational & Horizon Physics",
+    synopsis:
+      "Mike McCulloch's theory proposing that inertial mass arises from asymmetric Rindler event horizons damping Unruh quantum vacuum radiation relative to the cosmic Hubble horizon: m_i = m_g(1 - 2c²/(|a|Θ)).",
+    whyItMatters:
+      "Accounts for galaxy rotation flattening and wide-binary acceleration anomalies at low acceleration without adjustable dark-matter parameters, while motivating experimental tests of horizon-engineered thrust.",
+  },
+  {
+    term: "Dark Matter (ΛCDM) & Ad-Hoc Halo Problem",
+    aliases: ["dark matter", "lcdm", "wimp", "wimps", "nfw", "xenonnt", "lux-zeplin"],
+    domain: "Cosmology & Epistemology of Physics",
+    synopsis:
+      "The standard cosmological postulate that ~85% of matter consists of non-baryonic collisionless particles forming invisible halos around galaxies to reconcile General Relativity with observed kinematics.",
+    whyItMatters:
+      "Successfully fits large-scale CMB acoustic peaks, but requires 2–3 ad-hoc free halo parameters per galaxy to fit rotation curves and has yielded 40+ years of null results in direct WIMP detectors (LZ, XENONnT) and collider searches.",
+  },
+  {
+    term: "Wide Binary Star Acceleration Anomaly",
+    aliases: ["wide binaries", "wide binary", "wide-binary", "chae", "gaia-dr3"],
+    domain: "Astrophysics & Tests of Gravity",
+    synopsis:
+      "Binary stars separated by >2,000–30,000 AU experience internal orbital accelerations below a₀ ≈ 1.2 × 10⁻¹⁰ m/s² on scales far too small to host any dark matter halo.",
+    whyItMatters:
+      "Provides a direct test between General Relativity and low-acceleration modified gravity (MOND / Quantised Inertia); Gaia DR3 analyses by Chae (2023–2024) and Hernandez report a 30–40% gravitational boost below a₀, actively debated by Banik et al. (2024).",
+  },
+  {
+    term: "Stochastic Calculus & Itô's Lemma",
+    aliases: ["stochastic", "stochastic calculus", "ito", "ito's lemma", "ito lemma", "wiener", "brownian", "martingale", "martingales", "girsanov", "feynman-kac", "sde", "sdes"],
+    domain: "Probability Theory & Quantitative Finance",
+    synopsis:
+      "The calculus of continuous-time random processes driven by Brownian motion (Wiener processes), where non-vanishing quadratic variation (dW_t)² = dt adds a second-order curvature drift term in Itô's Lemma.",
+    whyItMatters:
+      "Unites physical diffusion and Euclidean quantum path integrals (via the Feynman–Kac formula) with risk-neutral martingale asset pricing and the Black–Scholes–Merton PDE.",
+  },
+  {
+    term: "Black–Scholes–Merton & Stochastic Volatility",
+    aliases: ["black-scholes", "bachelier", "heston", "sabr", "greeks"],
+    domain: "Quantitative Finance & Derivatives",
+    synopsis:
+      "The foundational no-arbitrage dynamic delta-hedging framework pricing derivatives under risk-neutral measure Q, extended by Heston, SABR, and Rough Volatility models to capture volatility smiles and jumps.",
+    whyItMatters:
+      "Demonstrates both the power of parabolic PDEs in finance and their breakdown limits when Gaussian continuity assumptions meet fat-tailed jumps and illiquidity.",
+  },
+  {
+    term: "Market Microstructure & Limit Order Book (LOB)",
+    aliases: ["microstructure", "lob", "glosten-milgrom", "vpin", "hft"],
+    domain: "Financial Markets & Quantitative Trading",
+    synopsis:
+      "The study of how continuous double-auction limit order books, liquidity providers, and informed traders interact at tick-by-tick scales to form prices and bid-ask spreads.",
+    whyItMatters:
+      "Reveals Kyle's λ adverse selection price impact and the universal square-root market impact law (ΔP/P ≈ Y·σ·√(Q/V)), which governs institutional execution and high-frequency statistical arbitrage.",
+  },
+  {
+    term: "Cointegration, GARCH & Statistical Arbitrage",
+    aliases: ["cointegration", "garch", "arch", "arima", "ornstein-uhlenbeck", "stat-arb", "kalman", "marchenko-pastur"],
+    domain: "Financial Econometrics & Alpha Research",
+    synopsis:
+      "Econometric methods modeling time-varying volatility clustering (GARCH), stationary mean-reverting asset spreads (Ornstein–Uhlenbeck / cointegration), and Random Matrix Theory covariance denoising.",
+    whyItMatters:
+      "Forms the quantitative backbone of market-neutral statistical arbitrage, factor portfolio construction, and Deflated Sharpe Ratio testing against backtest overfitting.",
+  },
+  {
+    term: "Econophysics, Fat Tails & Extreme Value Theory",
+    aliases: ["econophysics", "mandelbrot", "paretian", "multifractal", "lppl", "sornette", "evt", "var", "cvar"],
+    domain: "Econophysics & Quantitative Risk",
+    synopsis:
+      "The application of statistical physics, scaling laws, and Extreme Value Theory to financial markets, establishing that asset returns obey inverse-cubic power laws (P(|r| > x) ~ x⁻³) rather than Gaussian bell curves.",
+    whyItMatters:
+      "Explains why standard Gaussian Value-at-Risk (VaR) systematically underestimates market crashes, motivating fractal cascades, Expected Shortfall (CVaR), and Log-Periodic Power Law bubble diagnostics.",
+  },
 ];
 
 const GLOSSARY_INDEX = new Map<string, GlossaryEntry>();
@@ -575,7 +710,11 @@ for (const item of CURATED_GLOSSARY) {
     ...(item.aliases ?? []).map((a) => a.toLowerCase()),
   ];
   for (const k of keys) {
-    if (k) GLOSSARY_INDEX.set(k, entry);
+    if (k) {
+      GLOSSARY_INDEX.set(k, entry);
+      const asciiKey = k.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+      GLOSSARY_INDEX.set(asciiKey, entry);
+    }
   }
 }
 

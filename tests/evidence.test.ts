@@ -12,6 +12,18 @@ import {
   tierForClaim,
   tierForSource,
 } from "@lib/core";
+import {
+  ALL_SEED_DOSSIERS,
+  CROSS_DISCIPLINE_LINKS,
+  ECONOMICS_FINANCE_DOSSIERS,
+  ENCYCLOPAEDIC_TRUNKS,
+  MATH_SEED_DOSSIERS,
+  PHYSICS_CLASSICAL_DOSSIERS,
+  PHYSICS_FRONTIER_GRAVITY_DOSSIERS,
+  PHYSICS_GRAVITY_STRING_DOSSIERS,
+  PHYSICS_QUANTUM_DOSSIERS,
+  type SeedNode,
+} from "@lib/db";
 
 describe("evidence tiers", () => {
   it("maps designs to tiers", () => {
@@ -54,7 +66,7 @@ describe("helpers", () => {
   it("normalises DOIs", () => {
     expect(normaliseDoi("https://doi.org/10.1093/HUMREP/deac249")).toBe("10.1093/humrep/deac249");
   });
-  it("looks up scientific glossary terms, general dictionary words, and morphological roots", () => {
+  it("looks up scientific glossary terms across biomedical, physics, mathematics, and quantitative finance", () => {
     const auto = lookupGlossaryTerm("Autologous");
     expect(auto?.term).toBe("Autologous");
     expect(auto?.synopsis).toContain("own body");
@@ -64,6 +76,26 @@ describe("helpers", () => {
 
     const zymot = lookupGlossaryTerm("ZyMōt");
     expect(zymot?.term).toContain("ZyMōt");
+
+    const mond = lookupGlossaryTerm("MOND");
+    expect(mond?.term).toContain("MOND");
+    expect(mond?.synopsis).toContain("Milgrom");
+
+    const qi = lookupGlossaryTerm("Quantised Inertia");
+    expect(qi?.term).toContain("Quantised Inertia");
+    expect(qi?.synopsis).toContain("Unruh");
+
+    const wideBinaries = lookupGlossaryTerm("wide binaries");
+    expect(wideBinaries?.term).toContain("Wide Binary");
+    expect(wideBinaries?.whyItMatters).toContain("Gaia");
+
+    const ito = lookupGlossaryTerm("Itô's Lemma");
+    expect(ito?.term).toContain("Itô");
+    expect(ito?.synopsis).toContain("quadratic variation");
+
+    const cointegration = lookupGlossaryTerm("cointegration");
+    expect(cointegration?.term).toContain("Cointegration");
+    expect(cointegration?.synopsis).toContain("Ornstein");
 
     const morph = lookupGlossaryTerm("folliculogenesis");
     expect(morph?.synopsis).toContain("small sac / follicle");
@@ -88,6 +120,7 @@ describe("helpers", () => {
       "40",
     ]);
     expect(suggestTopicTitle("what is the evidence on coq10 and prp for ivf?")).toBe("CoQ10 and PRP for IVF");
+    expect(suggestTopicTitle("how does mond and quantised inertia explain wide binaries?")).toContain("MOND");
 
     const treeNodes = [
       {
@@ -106,11 +139,33 @@ describe("helpers", () => {
         brief: "Rapamycin, IVG, MRT, PRP",
         depth: 1,
       },
+      {
+        id: "t-grav",
+        parentId: null,
+        slug: "modified-emergent-and-frontier-gravity-theories",
+        title: "Modified, Emergent & Frontier Gravity Theories",
+        brief: "MOND, Quantised Inertia, wide binaries, dark matter limits",
+        depth: 2,
+      },
+      {
+        id: "t-quant",
+        parentId: null,
+        slug: "quantitative-finance-stochastic-calculus-and-derivatives",
+        title: "Quantitative Finance, Stochastic Calculus & Derivatives Pricing",
+        brief: "Black-Scholes, Ito calculus, martingale pricing",
+        depth: 2,
+      },
     ];
 
     const proposal = inferBranchProposal("rapamycin mtor follicular longevity", treeNodes);
     expect(proposal.parentId).toBe("t-frontier");
     expect(proposal.title).toBe("Rapamycin mTOR Follicular Longevity");
+
+    const gravProposal = inferBranchProposal("quantised inertia mond wide binary stars", treeNodes);
+    expect(gravProposal.parentId).toBe("t-grav");
+
+    const quantProposal = inferBranchProposal("black scholes ito stochastic volatility", treeNodes);
+    expect(quantProposal.parentId).toBe("t-quant");
 
     const synthesis = synthesizeSearchBriefing(
       "rapamycin",
@@ -180,4 +235,86 @@ describe("helpers", () => {
     expect(synthesis.citations.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () => {
+  function collectSlugs(nodes: SeedNode[]): Set<string> {
+    const out = new Set<string>();
+    const walk = (list: SeedNode[]) => {
+      for (const node of list) {
+        out.add(node.slug);
+        if (node.children) walk(node.children);
+      }
+    };
+    walk(nodes);
+    return out;
+  }
+
+  it("maps every dossier and cross-discipline link to a valid tree node and validates all references", () => {
+    const treeSlugs = collectSlugs(ENCYCLOPAEDIC_TRUNKS);
+
+    expect(Object.keys(PHYSICS_CLASSICAL_DOSSIERS)).toHaveLength(5);
+    expect(Object.keys(PHYSICS_QUANTUM_DOSSIERS)).toHaveLength(5);
+    expect(Object.keys(PHYSICS_GRAVITY_STRING_DOSSIERS)).toHaveLength(5);
+    expect(Object.keys(PHYSICS_FRONTIER_GRAVITY_DOSSIERS)).toHaveLength(4);
+    expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
+    expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(40);
+
+    for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
+      expect(treeSlugs.has(slug), `dossier slug ${slug} must exist in ENCYCLOPAEDIC_TRUNKS`).toBe(true);
+      expect(dossier.summary.length).toBeGreaterThan(80);
+      expect(dossier.gaps.length).toBeGreaterThanOrEqual(1);
+      expect((dossier.synthesis.benchmarks ?? []).length).toBeGreaterThanOrEqual(1);
+      expect((dossier.synthesis.levers ?? []).length).toBeGreaterThanOrEqual(1);
+      expect((dossier.synthesis.clinicalQuestions ?? []).length).toBeGreaterThanOrEqual(1);
+      expect((dossier.synthesis.sweepQueue ?? []).length).toBeGreaterThanOrEqual(1);
+      expect(dossier.sources.length).toBeGreaterThanOrEqual(1);
+      expect(dossier.claims.length).toBeGreaterThanOrEqual(1);
+      if (!(slug in PHYSICS_CLASSICAL_DOSSIERS || slug in PHYSICS_QUANTUM_DOSSIERS || slug in PHYSICS_GRAVITY_STRING_DOSSIERS || slug in PHYSICS_FRONTIER_GRAVITY_DOSSIERS || slug in MATH_SEED_DOSSIERS || slug in ECONOMICS_FINANCE_DOSSIERS)) {
+        expect(dossier.milestones.length).toBeGreaterThanOrEqual(0);
+      } else {
+        expect(dossier.sources.length).toBeGreaterThanOrEqual(4);
+        expect(dossier.claims.length).toBeGreaterThanOrEqual(4);
+        expect(dossier.milestones.length).toBeGreaterThanOrEqual(4);
+      }
+
+      for (const claim of dossier.claims) {
+        expect(claim.sourceIndexes.length).toBeGreaterThanOrEqual(1);
+        for (const idx of claim.sourceIndexes) {
+          expect(idx).toBeGreaterThanOrEqual(0);
+          expect(idx).toBeLessThan(dossier.sources.length);
+        }
+      }
+      for (const controversy of dossier.controversies) {
+        expect(controversy.claimIndexes.length).toBeGreaterThanOrEqual(1);
+        for (const idx of controversy.claimIndexes) {
+          expect(idx).toBeGreaterThanOrEqual(0);
+          expect(idx).toBeLessThan(dossier.claims.length);
+        }
+      }
+      for (const milestone of dossier.milestones) {
+        if (milestone.sourceIndex !== undefined) {
+          expect(milestone.sourceIndex).toBeGreaterThanOrEqual(0);
+          expect(milestone.sourceIndex).toBeLessThan(dossier.sources.length);
+        }
+      }
+    }
+
+    for (const link of CROSS_DISCIPLINE_LINKS) {
+      expect(treeSlugs.has(link.slugA), `link slugA ${link.slugA} must exist in tree`).toBe(true);
+      expect(treeSlugs.has(link.slugB), `link slugB ${link.slugB} must exist in tree`).toBe(true);
+      expect(link.note.length).toBeGreaterThan(20);
+    }
+
+    // Verify visibility of ad-hoc dark matter parameters and GR breakdown on galaxy rotation & wide binary scales
+    const grBreakdown = ALL_SEED_DOSSIERS["dark-matter-adhoc-epistemology-and-gr-breakdown-limits"]!;
+    expect(grBreakdown.summary.toLowerCase()).toContain("ad-hoc");
+    expect(grBreakdown.summary.toLowerCase()).toContain("wide binary");
+    const mond = ALL_SEED_DOSSIERS["mond-modified-newtonian-dynamics-and-galactic-rotation"]!;
+    expect(mond.summary).toContain("Milgrom");
+    const qi = ALL_SEED_DOSSIERS["quantised-inertia-horizon-mechanics-and-unruh-radiation"]!;
+    expect(qi.summary).toContain("Unruh");
+  });
+});
+
 
