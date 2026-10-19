@@ -13,6 +13,7 @@ import {
   type ClaimView,
   type EntityView,
   type SourceView,
+  type TopicLinkView,
 } from "@lib/db";
 import {
   CONTROVERSY_LABELS,
@@ -159,6 +160,30 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
     claimIds: Array.isArray(d.claimIds) ? d.claimIds : [],
   }));
 
+  const isClinicalTopic =
+    topic.slug.includes("medicine") ||
+    topic.slug.includes("fertility") ||
+    topic.slug.includes("ovarian") ||
+    topic.slug.includes("endometrial") ||
+    topic.slug.includes("andrology") ||
+    topic.slug.includes("maternal") ||
+    topic.slug.includes("gamete") ||
+    topic.slug.includes("reproductive") ||
+    topic.slug.includes("geroscience") ||
+    topic.slug.includes("neuroscience") ||
+    ancestors.some((a) => a.slug.includes("medicine") || a.slug.includes("fertility"));
+
+  const hasIntermediateSections =
+    benchmarks.length > 0 ||
+    levers.length > 0 ||
+    clinicalQuestions.length > 0 ||
+    sweepQueue.length > 0 ||
+    validMilestones.length > 0 ||
+    claims.length > 0 ||
+    validDebates.length > 0 ||
+    safeEntities.length > 0 ||
+    ((topic.gaps ?? []).length > 0 && sweepQueue.length === 0);
+
   return (
     <main className="topic-layout">
       <AutoRefresh active={busy} />
@@ -271,6 +296,13 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
 
         <section className="summary">
           <p>{descriptionText}</p>
+          <NodeTopologyMap
+            displayTitle={displayTitle}
+            ancestors={ancestors}
+            childrenNodes={children}
+            associatedNodes={connectedTopics}
+            showNotes={!hasIntermediateSections}
+          />
         </section>
 
         {benchmarks.length > 0 && (
@@ -297,19 +329,35 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
 
         {levers.length > 0 && (
           <section className="decision-ledger-section">
-            <h2>Where each lever applies</h2>
+            <h2>{isClinicalTopic ? "Where each lever applies" : "Where each model, theorem & mechanism applies"}</h2>
             <p className="section-note">
-              A graded decision ledger of interventions across clinical subgroups. Each row names its best landmark evidence, measured effect, clinical reading, and epistemic verdict.
+              {isClinicalTopic
+                ? "A graded decision ledger of interventions across clinical subgroups. Each row names its best landmark evidence, measured effect, clinical reading, and epistemic verdict."
+                : "A graded evaluation ledger of theoretical models, mathematical theorems, empirical mechanisms, and regime boundaries. Each row names its landmark evidence, quantitative scaling or effect, epistemic reading (including ad-hoc assumptions and breakdown limits), and verdict."}
             </p>
 
             <div className="verdict-legend" role="note" aria-label="Verdict legend">
-              <span className="verdict-tag" data-verdict="Supported">Supported: RCT live-birth gain</span>
-              <span className="verdict-tag" data-verdict="Targeted">Targeted: specific subgroup</span>
-              <span className="verdict-tag" data-verdict="Guideline">Guideline: clinical consensus</span>
-              <span className="verdict-tag" data-verdict="Weak">Weak: inconsistent/unproven gain</span>
-              <span className="verdict-tag" data-verdict="Not supported">Not supported: RCTs show no gain</span>
-              <span className="verdict-tag" data-verdict="Trial only">Trial: human trial in progress</span>
-              <span className="verdict-tag" data-verdict="Lab only">Lab: preclinical / cell dish</span>
+              {isClinicalTopic ? (
+                <>
+                  <span className="verdict-tag" data-verdict="Supported">Supported: RCT live-birth gain</span>
+                  <span className="verdict-tag" data-verdict="Targeted">Targeted: specific subgroup</span>
+                  <span className="verdict-tag" data-verdict="Guideline">Guideline: clinical consensus</span>
+                  <span className="verdict-tag" data-verdict="Weak">Weak: inconsistent/unproven gain</span>
+                  <span className="verdict-tag" data-verdict="Not supported">Not supported: RCTs show no gain</span>
+                  <span className="verdict-tag" data-verdict="Trial only">Trial: human trial in progress</span>
+                  <span className="verdict-tag" data-verdict="Lab only">Lab: preclinical / cell dish</span>
+                </>
+              ) : (
+                <>
+                  <span className="verdict-tag" data-verdict="Supported">Supported: replicated empirical / mathematical proof</span>
+                  <span className="verdict-tag" data-verdict="Targeted">Targeted: valid in bounded regime / scale</span>
+                  <span className="verdict-tag" data-verdict="Guideline">Guideline: canonical law / standard framework</span>
+                  <span className="verdict-tag" data-verdict="Weak">Weak: ad-hoc parameters / low-SNR / contested</span>
+                  <span className="verdict-tag" data-verdict="Not supported">Not supported: falsified / null replication</span>
+                  <span className="verdict-tag" data-verdict="Trial only">Trial: active experiment / sky survey</span>
+                  <span className="verdict-tag" data-verdict="Lab only">Lab: theoretical / numerical simulation</span>
+                </>
+              )}
             </div>
 
             {leverCategories.map((category) => {
@@ -321,9 +369,15 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
                     <table className="ledger-table">
                       <thead>
                         <tr>
-                          <th scope="col" style={{ width: "24%" }}>Lever &amp; Mechanism</th>
-                          <th scope="col" style={{ width: "26%" }}>Best Landmark Evidence</th>
-                          <th scope="col" style={{ width: "36%" }}>Measured Effect &amp; Clinical Reading</th>
+                          <th scope="col" style={{ width: "24%" }}>
+                            {isClinicalTopic ? "Lever & Mechanism" : "Model, Theorem & Mechanism"}
+                          </th>
+                          <th scope="col" style={{ width: "26%" }}>
+                            {isClinicalTopic ? "Best Landmark Evidence" : "Landmark Evidence & Derivation"}
+                          </th>
+                          <th scope="col" style={{ width: "36%" }}>
+                            {isClinicalTopic ? "Measured Effect & Clinical Reading" : "Quantitative Scaling & Regime Reading"}
+                          </th>
                           <th scope="col" style={{ width: "14%" }}>Verdict</th>
                         </tr>
                       </thead>
@@ -350,7 +404,8 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
                               </p>
                               {lever.reading && (
                                 <p className="lever-reading muted small">
-                                  <strong>Clinical reading:</strong> {lever.reading}
+                                  <strong>{isClinicalTopic ? "Clinical reading:" : "Epistemic & regime reading:"}</strong>{" "}
+                                  {lever.reading}
                                 </p>
                               )}
                             </td>
@@ -372,9 +427,15 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
 
         {clinicalQuestions.length > 0 && (
           <section className="clinic-questions-section">
-            <h2>Questions for specialist consultations</h2>
+            <h2>
+              {isClinicalTopic
+                ? "Questions for specialist consultations"
+                : "Key theoretical, empirical & quantitative questions"}
+            </h2>
             <p className="section-note">
-              High-yield clinical and laboratory inquiries directly derived from the evidence record.
+              {isClinicalTopic
+                ? "High-yield clinical and laboratory inquiries directly derived from the evidence record."
+                : "High-yield research questions, regime boundary diagnostics, and quantitative tests derived from the evidence record."}
             </p>
             <ol className="clinic-questions">
               {clinicalQuestions.map((q, idx) => (
@@ -390,7 +451,9 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           <section className="sweep-queue-section">
             <h2>Queued for next research sweep</h2>
             <p className="section-note">
-              Frontier clinical trials, emerging biology, and targeted subgroup outcomes tracked by the autonomous research worker.
+              {isClinicalTopic
+                ? "Frontier clinical trials, emerging biology, and targeted subgroup outcomes tracked by the autonomous research worker."
+                : "Frontier experiments, sky surveys, mathematical conjectures, and empirical replications tracked by the autonomous research worker."}
             </p>
             <ul className="sweep-queue">
               {sweepQueue.map((item, idx) => (
@@ -484,7 +547,10 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
         {safeEntities.length > 0 && (
           <details className="collapsible-section">
             <summary className="section-summary">
-              <span>In the world ({safeEntities.length} clinics, treatments, and groups)</span>
+              <span>
+                In the world ({safeEntities.length}{" "}
+                {isClinicalTopic ? "clinics, treatments, and groups" : "institutes, experiments, and groups"})
+              </span>
             </summary>
             <p className="section-note" style={{ marginTop: "0.85rem" }}>
               Found on the web. Only entries a retrieved page supports are kept; verify before acting.
@@ -506,21 +572,19 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
           </section>
         )}
 
-        {connectedTopics.length > 0 && (
-          <section>
-            <h2>Connected disciplines across the tree</h2>
+        {hasIntermediateSections && (
+          <section className="topology-before-branches">
+            <h2>Node lineage &amp; crossover disciplines</h2>
             <p className="section-note">
-              Cross-branch and cross-trunk intersections linking this field to related scientific domains.
+              Parent lineage, active node, direct child sub-branches, and associated crossover disciplines across the Tree of Knowledge.
             </p>
-            <ul className="cross-links">
-              {connectedTopics.map((l) => (
-                <li key={l.id}>
-                  <span className="relation-badge">{l.relation}</span>{" "}
-                  <Link href={`/topic/${l.slug}`}>{normaliseTopicTitle(l.title)}</Link>
-                  {(l.note ?? l.brief) && <span className="muted"> — {l.note ?? l.brief}</span>}
-                </li>
-              ))}
-            </ul>
+            <NodeTopologyMap
+              displayTitle={displayTitle}
+              ancestors={ancestors}
+              childrenNodes={children}
+              associatedNodes={connectedTopics}
+              showNotes
+            />
           </section>
         )}
 
@@ -738,4 +802,103 @@ function groupBy<T, K>(xs: T[], key: (x: T) => K): Map<K, T[]> {
   const m = new Map<K, T[]>();
   for (const x of xs) m.set(key(x), [...(m.get(key(x)) ?? []), x]);
   return m;
+}
+
+function NodeTopologyMap({
+  displayTitle,
+  ancestors,
+  childrenNodes,
+  associatedNodes,
+  showNotes = false,
+}: {
+  displayTitle: string;
+  ancestors: Topic[];
+  childrenNodes: Topic[];
+  associatedNodes: TopicLinkView[];
+  showNotes?: boolean;
+}) {
+  return (
+    <div className="node-topology-map" role="region" aria-label="Node hierarchy and crossover map">
+      <div className="node-map-row">
+        <span className="node-map-label">Hierarchy:</span>
+        <div className="node-map-flow">
+          {ancestors.length > 0 ? (
+            ancestors.map((a) => (
+              <span key={a.id} className="node-map-step">
+                <Link href={`/topic/${a.slug}`} className="node-map-pill node-map-parent" title="Parent discipline">
+                  {normaliseTopicTitle(a.title)}
+                </Link>
+                <span className="node-map-arrow" aria-hidden="true">
+                  →
+                </span>
+              </span>
+            ))
+          ) : (
+            <span className="node-map-step">
+              <Link href="/" className="node-map-pill node-map-parent" title="Root of the Tree of Knowledge">
+                Tree of Knowledge (Root)
+              </Link>
+              <span className="node-map-arrow" aria-hidden="true">
+                →
+              </span>
+            </span>
+          )}
+          <span className="node-map-pill node-map-self" aria-current="page">
+            {displayTitle}
+          </span>
+          <span className="node-map-arrow" aria-hidden="true">
+            →
+          </span>
+          {childrenNodes.length > 0 ? (
+            <span className="node-map-children">
+              {childrenNodes.map((c) => (
+                <Link key={c.id} href={`/topic/${c.slug}`} className="node-map-pill node-map-child" title={c.brief ?? "Child sub-discipline"}>
+                  {normaliseTopicTitle(c.title)}
+                </Link>
+              ))}
+            </span>
+          ) : (
+            <span className="node-map-empty muted small">Leaf node (no child sub-branches yet)</span>
+          )}
+        </div>
+      </div>
+
+      <div className="node-map-row node-map-crossovers">
+        <span className="node-map-label">+ Associated nodes:</span>
+        {associatedNodes.length > 0 ? (
+          <div className="node-map-assoc-wrap">
+            <div className="node-map-flow">
+              {associatedNodes.map((l) => (
+                <Link
+                  key={l.id}
+                  href={`/topic/${l.slug}`}
+                  className="node-map-pill node-map-assoc"
+                  title={l.note ?? l.brief ?? l.relation}
+                >
+                  <span className="node-map-plus" aria-hidden="true">
+                    +
+                  </span>{" "}
+                  {normaliseTopicTitle(l.title)}{" "}
+                  <span className="node-map-rel">({l.relation})</span>
+                </Link>
+              ))}
+            </div>
+            {showNotes && (
+              <ul className="cross-links node-map-notes">
+                {associatedNodes.map((l) => (
+                  <li key={l.id}>
+                    <span className="relation-badge">+ {l.relation}</span>{" "}
+                    <Link href={`/topic/${l.slug}`}>{normaliseTopicTitle(l.title)}</Link>
+                    {(l.note ?? l.brief) && <span className="muted"> — {l.note ?? l.brief}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <span className="node-map-empty muted small">No cross-branch associations recorded yet</span>
+        )}
+      </div>
+    </div>
+  );
 }
