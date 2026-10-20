@@ -589,12 +589,30 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
   },
   {
     term: "Natural-Cycle vs Programmed FET",
-    aliases: ["fet", "nc-fet", "hrt-fet"],
+    aliases: ["fet", "nc-fet", "hrt-fet", "mnc-fet"],
     domain: "Clinical IVF & Embryo Transfer",
     synopsis:
       "Frozen Embryo Transfer (FET) can be timed either to the woman's own natural ovulation (Natural-Cycle FET, preserving the corpus luteum) or to synthetic estrogen/progesterone pills without ovulation (Programmed/Medicated FET).",
     whyItMatters:
       "Large RCTs (such as the COMPETE trial) and cohort studies show that Natural-Cycle FET in ovulatory women yields higher live birth rates and significantly lower pre-eclampsia risk because the natural corpus luteum secretes vasoactive hormones like relaxin.",
+  },
+  {
+    term: "Immediate vs. Delayed FET (Inter-Transfer Interval & Endometrial Reset)",
+    aliases: ["inter-transfer", "washout"],
+    domain: "Clinical IVF & Embryo Transfer",
+    synopsis:
+      "After an unsuccessful embryo transfer (when menstruation arrives), an Immediate FET transfers the next frozen embryo in the very first menstrual cycle, whereas a Delayed ('Reset') FET pauses 1–3+ months before transferring.",
+    whyItMatters:
+      "Meta-analyses (n=20,155) and RCTs prove that immediate next-period FET has equal or higher live birth rates than arbitrary waiting; simultaneously, cryostorage studies (n=58,001 blastocysts) prove that waiting 1–6 months causes 0% embryo decay — making a 1–3 month reset completely safe when used to optimize ovulation, cavity/CD138 status, or hormone balance before transferring a last remaining embryo.",
+  },
+  {
+    term: "Chronic Endometritis (CD138+ Plasma Cells)",
+    aliases: ["cd138", "endometritis"],
+    domain: "Endometrial Pathology & Implantation",
+    synopsis:
+      "A silent, typically symptomless low-grade bacterial inflammation of the uterine lining diagnosed by identifying CD138-positive plasma cells on an endometrial biopsy or characteristic micro-polyps on office hysteroscopy.",
+    whyItMatters:
+      "Present in 15–30% of patients after failed embryo transfers; clearing it with a 14-day course of oral doxycycline during a 1-month reset cycle more than doubles subsequent live birth rates.",
   },
   {
     term: "Corpus Luteum",

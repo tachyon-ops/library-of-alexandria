@@ -31,6 +31,8 @@ const LEGACY_TITLE_MAP: Record<string, string> = {
     "Male & Ovarian Gamete Rejuvenation, Spermatogenesis & Follicular Activation",
   "BB/AA, 1PN/2PN -What Grading Methods Are The":
     "Blastocyst Morphological Grading (Gardner AA/BB) & Zygote Pronuclear Scoring (2PN/1PN)",
+  "Consecutive or Spaced Out +40s yo female IVF Cycles":
+    "Inter-Transfer Interval (Immediate vs. Delayed FET & Endometrial Reset) & Consecutive IVF Cycles After 40",
 };
 
 export function normaliseTopicTitle(title: string): string {

@@ -1,9 +1,12 @@
 import {
+  ALL_SEED_DOSSIERS,
+  ensureSeedTopic,
   getAncestors,
   getChildren,
   getTopicBySlug,
   openJobCount,
   recentJobs,
+  seedTopicDossier,
   topicClaims,
   topicControversies,
   topicEntities,
@@ -11,7 +14,10 @@ import {
   topicMilestones,
   topicSources,
   type ClaimView,
+  type ControversyView,
   type EntityView,
+  type MilestoneView,
+  type SeedDossier,
   type SourceView,
   type TopicLinkView,
 } from "@lib/db";
@@ -102,10 +108,27 @@ export default async function TopicPage({
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const db = sql();
-  const topic = await getTopicBySlug(db, slug);
+  let topic = await getTopicBySlug(db, slug);
+  if (!topic && slug === "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer") {
+    const parent = await getTopicBySlug(db, "endometrial-receptivity-implantation-biology");
+    const dossier = ALL_SEED_DOSSIERS[slug];
+    if (dossier) {
+      topic = await ensureSeedTopic(db, {
+        slug,
+        title: "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
+        brief:
+          "Immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus multi-month delayed transfer after a failed embryo transfer or retrieval, cryostorage duration safety at −196°C, HPO-axis washout from programmed HRT to natural ovulatory cycles, CD138 chronic endometritis clearance, and strategic optimization before transferring a final remaining embryo.",
+        parentId: parent?.id ?? null,
+        depth: parent ? parent.depth + 1 : 3,
+        summary: dossier.summary,
+        dossier,
+      });
+      await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
+    }
+  }
   if (!topic) notFound();
 
-  const [roots, ancestors, children, connectedTopics, claims, dbSources, entities, milestones, debates, open, jobs] = await Promise.all([
+  const [roots, ancestors, children, connectedTopics, rawClaims, rawDbSources, entities, rawMilestones, rawDebates, open, jobs] = await Promise.all([
     loadTree(),
     getAncestors(db, topic.id),
     getChildren(db, topic.id),
@@ -118,6 +141,20 @@ export default async function TopicPage({
     openJobCount(db, topic.id),
     recentJobs(db, topic.id, 8),
   ]);
+
+  const isLegacyFetIntervalTopic =
+    topic.slug === "advanced-maternal-age-pregnancy-after-40-frontier-studies-on-40-fertility-and-ne-41";
+  const curatedDossier: SeedDossier | undefined = isLegacyFetIntervalTopic
+    ? ALL_SEED_DOSSIERS["inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer"]
+    : ALL_SEED_DOSSIERS[topic.slug];
+
+  const { claims, dbSources, milestones, debates } = mergeCuratedDossierRecords(
+    curatedDossier,
+    rawClaims ?? [],
+    rawDbSources ?? [],
+    rawMilestones ?? [],
+    rawDebates ?? [],
+  );
 
   const busy = open > 0 || topic.status === "queued" || topic.status === "researching";
   const claimNumber = new Map((claims ?? []).map((c, i) => [c.id, i + 1]));
@@ -138,13 +175,22 @@ export default async function TopicPage({
   const running = activeJob ?? queuedJobs[0];
   const failed = safeJobs.find((j) => j.status === "failed");
   const displayTitle = normaliseTopicTitle(topic.title);
-  const briefText =
-    (topic.brief ? topic.brief.replace(/after 44/gi, "after 40") : null) ??
-    (ancestors.length > 0
-      ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
-      : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
+  const briefText = isLegacyFetIntervalTopic
+    ? "Immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus waiting 1–3+ months to 'reset' before transferring a final remaining vitrified embryo after a failed transfer, alongside consecutive (DuoStim) versus spaced ovarian stimulation cycles after age 40."
+    : (topic.brief ? topic.brief.replace(/after 44/gi, "after 40") : null) ??
+      (ancestors.length > 0
+        ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
+        : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
+
+  const effectiveSummary =
+    isLegacyFetIntervalTopic && curatedDossier
+      ? topic.summary && !topic.summary.includes("−196°C")
+        ? `${curatedDossier.summary}\n\n${topic.summary}`
+        : (topic.summary ?? curatedDossier.summary)
+      : (topic.summary ?? curatedDossier?.summary ?? null);
+
   const descriptionText =
-    topic.summary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, (claims ?? []).length);
+    effectiveSummary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, (claims ?? []).length);
 
   let synthesis: TopicSynthesis | null = null;
   if (typeof topic.synthesis === "string") {
@@ -156,6 +202,16 @@ export default async function TopicPage({
   } else if (topic.synthesis && typeof topic.synthesis === "object") {
     synthesis = topic.synthesis;
   }
+  if (
+    curatedDossier?.synthesis &&
+    (!synthesis || (!synthesis.benchmarks?.length && !synthesis.levers?.length))
+  ) {
+    synthesis = curatedDossier.synthesis;
+  }
+
+  const effectiveGaps = Array.from(
+    new Set([...(curatedDossier?.gaps ?? []), ...(topic.gaps ?? [])]),
+  );
 
   const benchmarks = Array.isArray(synthesis?.benchmarks) ? synthesis.benchmarks : [];
   const levers = Array.isArray(synthesis?.levers) ? synthesis.levers : [];
@@ -197,7 +253,7 @@ export default async function TopicPage({
     claims.length > 0 ||
     validDebates.length > 0 ||
     safeEntities.length > 0 ||
-    ((topic.gaps ?? []).length > 0 && sweepQueue.length === 0);
+    (effectiveGaps.length > 0 && sweepQueue.length === 0);
 
   const spawnedSlugs = (resolvedSearchParams?.spawned ?? "")
     .split(",")
@@ -222,9 +278,9 @@ export default async function TopicPage({
   const monograph = buildDynamicFieldArticle({
     title: displayTitle,
     brief: briefText,
-    status: topic.status,
-    summary: topic.summary,
-    gaps: topic.gaps ?? [],
+    status: topic.status === "idle" && curatedDossier ? "ready" : topic.status,
+    summary: effectiveSummary,
+    gaps: effectiveGaps,
     synthesis,
     ancestors: ancestors.map((a) => ({ title: normaliseTopicTitle(a.title), slug: a.slug })),
     children: children.map((c) => ({ title: normaliseTopicTitle(c.title), slug: c.slug, brief: c.brief })),
@@ -645,11 +701,11 @@ export default async function TopicPage({
           </details>
         )}
 
-        {(topic.gaps ?? []).length > 0 && sweepQueue.length === 0 && (
+        {effectiveGaps.length > 0 && sweepQueue.length === 0 && (
           <section>
             <h2>Open questions</h2>
             <ul className="gaps">
-              {topic.gaps.map((g) => (
+              {effectiveGaps.map((g) => (
                 <li key={g}>{g}</li>
               ))}
             </ul>
@@ -832,6 +888,135 @@ function EntityTable({ title, rows }: { title: string; rows: EntityView[] }) {
 
 function shortTitle(t: string): string {
   return t.length > 70 ? `${t.slice(0, 68)}…` : t;
+}
+
+function mergeCuratedDossierRecords(
+  dossier: SeedDossier | undefined,
+  rawClaims: ClaimView[],
+  rawDbSources: SourceView[],
+  rawMilestones: MilestoneView[],
+  rawDebates: ControversyView[],
+): {
+  claims: ClaimView[];
+  dbSources: SourceView[];
+  milestones: MilestoneView[];
+  debates: ControversyView[];
+} {
+  if (!dossier) {
+    return {
+      claims: rawClaims,
+      dbSources: rawDbSources,
+      milestones: rawMilestones,
+      debates: rawDebates,
+    };
+  }
+
+  const dbSources = [...rawDbSources];
+  const existingSourceKeys = new Set(
+    rawDbSources.flatMap((s) =>
+      [s.doi?.toLowerCase().trim(), s.url?.toLowerCase().trim(), s.title.toLowerCase().trim()].filter(
+        (v): v is string => Boolean(v),
+      ),
+    ),
+  );
+
+  const dossierSourceViews: SourceView[] = dossier.sources.map((s, idx) => ({
+    id: `dossier-src-${idx}-${s.externalId}`,
+    kind: s.kind,
+    origin: s.origin,
+    title: s.title,
+    url: s.url ?? (s.doi ? `https://doi.org/${s.doi}` : null),
+    doi: s.doi ?? null,
+    venue: s.venue ?? null,
+    year: s.year ?? null,
+    authors: s.authors ?? [],
+    citedBy: s.citedBy ?? null,
+    design: s.design ?? null,
+  }));
+
+  for (const ds of dossierSourceViews) {
+    const keys = [ds.doi?.toLowerCase().trim(), ds.url?.toLowerCase().trim(), ds.title.toLowerCase().trim()].filter(
+      (v): v is string => Boolean(v),
+    );
+    if (!keys.some((k) => existingSourceKeys.has(k))) {
+      dbSources.push(ds);
+      for (const k of keys) existingSourceKeys.add(k);
+    }
+  }
+
+  const existingStatements = new Set(rawClaims.map((c) => c.statement.trim().toLowerCase()));
+  const dossierClaimViews: ClaimView[] = [];
+  for (let idx = 0; idx < dossier.claims.length; idx++) {
+    const c = dossier.claims[idx]!;
+    if (existingStatements.has(c.statement.trim().toLowerCase())) continue;
+    existingStatements.add(c.statement.trim().toLowerCase());
+    const claimSources = c.sourceIndexes
+      .map((sIdx) => dossierSourceViews[sIdx])
+      .filter((s): s is SourceView => Boolean(s))
+      .map((s) => ({
+        id: s.id,
+        title: s.title,
+        url: s.url,
+        year: s.year,
+        design: s.design,
+        venue: s.venue,
+      }));
+    dossierClaimViews.push({
+      id: `dossier-claim-${idx}`,
+      statement: c.statement,
+      tier: c.tier,
+      controversy: c.controversy,
+      direction: c.direction,
+      confidence: c.confidence,
+      rationale: c.rationale,
+      sources: claimSources,
+    });
+  }
+
+  const tierRank: Record<string, number> = { T1: 1, T2: 2, T3: 3, T4: 4, T5: 5, T6: 6 };
+  const claims = [...dossierClaimViews, ...rawClaims].sort(
+    (a, b) => (tierRank[a.tier] ?? 9) - (tierRank[b.tier] ?? 9) || b.confidence - a.confidence,
+  );
+
+  const existingMilestoneTitles = new Set(rawMilestones.map((m) => m.title.trim().toLowerCase()));
+  const milestones = [...rawMilestones];
+  for (let idx = 0; idx < dossier.milestones.length; idx++) {
+    const m = dossier.milestones[idx]!;
+    if (existingMilestoneTitles.has(m.title.trim().toLowerCase())) continue;
+    existingMilestoneTitles.add(m.title.trim().toLowerCase());
+    const linkedSrc = m.sourceIndex !== undefined ? dossierSourceViews[m.sourceIndex] : undefined;
+    milestones.push({
+      id: `dossier-milestone-${idx}`,
+      year: m.year,
+      title: m.title,
+      description: m.description,
+      sourceUrl: linkedSrc?.url ?? null,
+    });
+  }
+  milestones.sort((a, b) => a.year - b.year || a.title.localeCompare(b.title));
+
+  const existingDebateNotes = new Set(rawDebates.map((d) => d.note.trim().toLowerCase()));
+  const debates = [...rawDebates];
+  for (let idx = 0; idx < dossier.controversies.length; idx++) {
+    const d = dossier.controversies[idx]!;
+    if (existingDebateNotes.has(d.note.trim().toLowerCase())) continue;
+    existingDebateNotes.add(d.note.trim().toLowerCase());
+    const resolvedClaimIds = d.claimIndexes
+      .map((cIdx) => {
+        const stmt = dossier.claims[cIdx]?.statement.trim().toLowerCase();
+        if (!stmt) return null;
+        return claims.find((cl) => cl.statement.trim().toLowerCase() === stmt)?.id ?? null;
+      })
+      .filter((id): id is string => Boolean(id));
+    debates.push({
+      id: `dossier-debate-${idx}`,
+      kind: d.kind,
+      note: d.note,
+      claimIds: resolvedClaimIds,
+    });
+  }
+
+  return { claims, dbSources, milestones, debates };
 }
 
 function mergeSources(dbSources: SourceView[] = [], claims: ClaimView[] = []): SourceView[] {

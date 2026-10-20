@@ -606,6 +606,25 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
     keywords: ["gardner", "bb/aa", "aa/bb", "4aa", "4bb", "5aa", "3bb", "blastocyst grading", "embryo grading", "inner cell mass", "trophectoderm", "morphokinetics", "time-lapse"],
   },
   {
+    slugSubstring: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
+    keywords: [
+      "immediate fet",
+      "delayed fet",
+      "postponed fet",
+      "inter-transfer",
+      "next embryo transfer",
+      "failed embryo transfer",
+      "failed transfer",
+      "last embryo",
+      "washout",
+      "consecutive fet",
+      "spaced out",
+      "wait a few months",
+      "endometrial reset",
+      "next period",
+    ],
+  },
+  {
     slugSubstring: "ovarian-reserve-oocyte-cryopreservation",
     keywords: ["vitrified", "vitrification", "cryopreservation", "egg freezing", "oocyte", "oocytes", "thaw", "warming", "amh", "follicle", "euploid", "aneuploidy", "duostim"],
   },
@@ -649,6 +668,29 @@ interface CanonicalFacetSpec {
  * raw conversational strings.
  */
 const CANONICAL_TOPIC_FACETS: CanonicalFacetSpec[] = [
+  {
+    slug: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
+    title: "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
+    brief:
+      "Immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus multi-month delayed transfer after a failed embryo transfer or retrieval, cryostorage duration safety at −196°C, HPO-axis washout from programmed HRT to natural ovulatory cycles, CD138 chronic endometritis clearance, and strategic optimization before transferring a final remaining embryo.",
+    parentSlugs: [
+      "endometrial-receptivity-implantation-biology",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(immediate\s+(?:vs\.?|versus|or)\s+(?:delayed|postponed|spaced)|inter-transfer\s+interval|next\s+embryo\s+transfer|failed\s+(?:embryo\s+)?transfer|last\s+embryo|wait\s+a\s+few\s+months|consecutive\s+(?:or|vs\.?|versus)\s+spaced)\b/.test(
+        q,
+      ) ||
+      ((terms.has("transfer") || terms.has("fet") || terms.has("embryo")) &&
+        (terms.has("immediate") ||
+          terms.has("delayed") ||
+          terms.has("postponed") ||
+          terms.has("consecutive") ||
+          terms.has("spaced") ||
+          terms.has("reset") ||
+          terms.has("wait") ||
+          terms.has("period"))),
+  },
   {
     slug: "blastocyst-morphological-grading-gardner-criteria-morphokinetics",
     title: "Blastocyst Morphological Grading (Gardner AA/BB System) & Embryo Morphokinetics",

@@ -278,7 +278,15 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 slug: "endometrial-receptivity-implantation-biology",
                 title: "Endometrial Receptivity & Implantation Biology",
                 brief:
-                  "Endometrial physiology, natural-cycle versus programmed embryo transfer, recurrent implantation failure, reproductive immunology, and maternal-fetal microRNA exchange.",
+                  "Endometrial physiology, natural-cycle versus programmed embryo transfer, inter-transfer intervals (immediate vs. delayed FET and endometrial reset), recurrent implantation failure, reproductive immunology, and maternal-fetal microRNA exchange.",
+                children: [
+                  {
+                    slug: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
+                    title: "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
+                    brief:
+                      "Immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus multi-month delayed transfer after a failed embryo transfer or retrieval, cryostorage duration safety at −196°C, HPO-axis washout from programmed HRT to natural ovulatory cycles, CD138 chronic endometritis clearance, and strategic optimization before transferring a final remaining embryo.",
+                  },
+                ],
               },
               {
                 slug: "andrology-male-factor-infertility",
@@ -1007,6 +1015,12 @@ export const CROSS_DISCIPLINE_LINKS: {
     relation: "intersects",
     note: "Oocyte nuclear competence (MII vs IVM-rescued MI/GV) and meiotic spindle integrity determine embryonic genome activation at the 8-cell stage and subsequent Gardner blastocyst expansion.",
   },
+  {
+    slugA: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
+    slugB: "ovarian-reserve-oocyte-cryopreservation",
+    relation: "bridges",
+    note: "Contrasts time-critical consecutive ovarian stimulation (DuoStim for aging unretrieved oocytes after 40) against time-independent Frozen Embryo Transfer scheduling of vitrified blastocysts (−196°C) and strategic endometrial reset before a final transfer.",
+  },
 ];
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
@@ -1095,6 +1109,32 @@ export async function seed(sql: Sql): Promise<void> {
     const topic = await getTopicBySlug(sql, slug);
     if (topic) {
       await seedTopicDossier(sql, topic.id, dossier, { populateTopicFields: false });
+    }
+  }
+
+  // Additively enrich the existing user inquiry on consecutive vs. spaced IVF/FET cycles after 40
+  const legacyIntervalTopic = await getTopicBySlug(
+    sql,
+    "advanced-maternal-age-pregnancy-after-40-frontier-studies-on-40-fertility-and-ne-41",
+  );
+  const fetIntervalDossier =
+    ALL_SEED_DOSSIERS["inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer"];
+  if (legacyIntervalTopic && fetIntervalDossier) {
+    await seedTopicDossier(sql, legacyIntervalTopic.id, fetIntervalDossier, {
+      populateTopicFields: false,
+    });
+    const canonicalFetNode = await getTopicBySlug(
+      sql,
+      "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
+    );
+    if (canonicalFetNode) {
+      await linkTopics(
+        sql,
+        legacyIntervalTopic.id,
+        canonicalFetNode.id,
+        "bridges",
+        "Unites consecutive vs. spaced Frozen Embryo Transfer (immediate next-period FET vs. 1–3 month last-embryo reset) with consecutive vs. spaced ovarian stimulation (DuoStim).",
+      );
     }
   }
 }
