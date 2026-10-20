@@ -7,6 +7,7 @@ import {
   lookupGlossaryTerm,
   normaliseDesign,
   normaliseDoi,
+  reassessTopicTaxonomy,
   slugify,
   suggestTopicTitle,
   synthesizeSearchBriefing,
@@ -303,6 +304,39 @@ describe("helpers", () => {
     expect(synthesis.paragraphs.length).toBeGreaterThanOrEqual(2);
     expect(synthesis.citations.length).toBeGreaterThanOrEqual(2);
     expect(synthesis.suggestedBranches.length).toBeGreaterThanOrEqual(1);
+
+    // Continuous canonical taxonomy reassessment: misplaced topics move to their canonical parent
+    const misplacedTopic = {
+      id: "t-misplaced",
+      slug: "endometrial-receptivity-implantation-biology-blastocyst-grading-bb-aa",
+      title: "Blastocyst Morphological Grading (AA/BB) & Pronuclear Scoring",
+      brief: "Gardner ICM and trophectoderm grading and 2PN/1PN zygote assessment.",
+      parentId: "t-ovarian",
+      depth: 2,
+    };
+
+    const reassessment = reassessTopicTaxonomy(
+      misplacedTopic,
+      [...treeNodes, misplacedTopic],
+      "Gardner 4AA vs 4BB euploid blastocyst transfer live birth rates and trophectoderm grade.",
+    );
+    expect(reassessment.shouldMove).toBe(true);
+    expect(reassessment.recommendedParentId).toBe("t-art");
+
+    // Protected canonical trunks never move
+    const protectedCheck = reassessTopicTaxonomy(
+      {
+        id: "t-ovarian",
+        slug: "ovarian-reserve-oocyte-cryopreservation",
+        title: "Ovarian Reserve, Folliculogenesis & Oocyte Cryopreservation",
+        brief: "AMH, AFC, oocyte quality",
+        parentId: "t-root",
+        depth: 1,
+      },
+      treeNodes,
+    );
+    expect(protectedCheck.shouldMove).toBe(false);
+    expect(protectedCheck.recommendedParentId).toBe("t-root");
   });
 });
 
