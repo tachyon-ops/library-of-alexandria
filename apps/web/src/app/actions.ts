@@ -1,9 +1,19 @@
 "use server";
 
-import { createTopic, getTopic, requestResearch } from "@lib/db";
+import { inferBranchProposals, type SearchTreeNode, type Topic } from "@lib/core";
+import {
+  createTopic,
+  getChildren,
+  getTopic,
+  linkTopics,
+  listTree,
+  requestResearch,
+  searchLibrary,
+  setTopicSummaryIfEmpty,
+} from "@lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { sql } from "@/lib/data";
+import { normaliseTopicTitle, sql } from "@/lib/data";
 
 const autoDepth = () => Number(process.env.AUTO_EXPAND_DEPTH ?? 1);
 
@@ -33,18 +43,103 @@ async function triggerRemoteWorker(): Promise<void> {
   }
 }
 
-export async function startTopic(formData: FormData): Promise<void> {
-  const title = String(formData.get("title") ?? "").trim();
-  const brief = String(formData.get("brief") ?? "").trim() || null;
-  const parentId = String(formData.get("parentId") ?? "") || null;
-  if (!title) return;
-  const topic = await createTopic(sql(), { title, brief, parentId });
-  if (formData.get("research") === "on") {
-    await requestResearch(sql(), topic.id, autoDepth());
+/**
+ * AI Tree Organiser action: takes a natural-language question or inquiry, decomposes it
+ * into 1, 2, 3, or more canonical scientific branches, places each under its proper
+ * parent discipline in the Tree of Knowledge, links intersecting branches, and queues
+ * autonomous research.
+ */
+export async function organizeInquiry(formData: FormData): Promise<void> {
+  const rawQuery = String(formData.get("query") ?? formData.get("title") ?? "").trim();
+  if (!rawQuery) return;
+  const shouldResearch = formData.get("research") !== "off";
+
+  const db = sql();
+  const [rawTree, rawResults] = await Promise.all([
+    listTree(db),
+    searchLibrary(db, rawQuery, 24),
+  ]);
+
+  const treeNodes: SearchTreeNode[] = rawTree.map((r) => ({
+    id: r.id,
+    parentId: r.parentId,
+    slug: r.slug,
+    title: normaliseTopicTitle(r.title),
+    brief: r.brief,
+    depth: r.depth,
+  }));
+
+  const proposals = inferBranchProposals(rawQuery, treeNodes, rawResults.topics);
+  const organisedTopics: Topic[] = [];
+
+  for (const proposal of proposals) {
+    let topic: Topic | null = null;
+
+    if (proposal.existingTopicId) {
+      topic = await getTopic(db, proposal.existingTopicId);
+    }
+
+    if (!topic && proposal.parentId) {
+      const siblings = await getChildren(db, proposal.parentId);
+      topic =
+        siblings.find((s) => s.title.toLowerCase() === proposal.title.toLowerCase()) ??
+        null;
+    }
+
+    if (!topic) {
+      topic = await createTopic(db, {
+        title: proposal.title,
+        brief: proposal.brief,
+        parentId: proposal.parentId,
+      });
+      const parentPrefix = proposal.parentTitle ? ` under ${proposal.parentTitle}` : "";
+      await setTopicSummaryIfEmpty(
+        db,
+        topic.id,
+        `${proposal.title} is a canonical scientific branch${parentPrefix} investigating ${proposal.brief.charAt(0).toLowerCase()}${proposal.brief.slice(1)}`,
+      );
+    }
+
+    organisedTopics.push(topic);
+  }
+
+  // Cross-link branches when a single inquiry spawns or unifies multiple canonical topics
+  if (organisedTopics.length >= 2) {
+    for (let i = 0; i < organisedTopics.length; i++) {
+      for (let j = i + 1; j < organisedTopics.length; j++) {
+        const a = organisedTopics[i]!;
+        const b = organisedTopics[j]!;
+        await linkTopics(
+          db,
+          a.id,
+          b.id,
+          "intersects",
+          `Co-organised by AI from research inquiry connecting ${a.title} and ${b.title}.`,
+        );
+      }
+    }
+  }
+
+  if (shouldResearch) {
+    for (const t of organisedTopics) {
+      await requestResearch(db, t.id, autoDepth());
+    }
     await triggerRemoteWorker();
   }
+
   revalidatePath("/", "layout");
-  redirect(`/topic/${topic.slug}`);
+  const primary = organisedTopics[0];
+  if (!primary) return;
+
+  if (organisedTopics.length > 1) {
+    const slugs = organisedTopics.map((t) => t.slug).join(",");
+    redirect(`/topic/${primary.slug}?spawned=${encodeURIComponent(slugs)}`);
+  }
+  redirect(`/topic/${primary.slug}`);
+}
+
+export async function startTopic(formData: FormData): Promise<void> {
+  return organizeInquiry(formData);
 }
 
 export async function researchTopic(formData: FormData): Promise<void> {
@@ -56,3 +151,4 @@ export async function researchTopic(formData: FormData): Promise<void> {
   await triggerRemoteWorker();
   revalidatePath("/", "layout");
 }
+

@@ -1375,5 +1375,432 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
     entities: [],
     controversies: [],
   },
+
+  "oocyte-nuclear-maturity-and-morphological-grading": {
+    summary:
+      "Under the Alpha/ESHRE Istanbul Consensus, retrieved cumulus–oocyte complexes are denuded prior to ICSI and graded first by nuclear maturity: Metaphase II (MII, mature oocyte with an extruded first polar body in the perivitelline space and an arrested Metaphase II spindle, ready for fertilisation), Metaphase I (MI, germinal vesicle breakdown completed but no first polar body extruded yet), and Germinal Vesicle (GV, arrested in Prophase I diplotene with a visible nucleus and nucleolus). Morphologically, an ideal MII oocyte displays a spherical shape, uniform translucent ooplasm, normal perivitelline space, a single intact first polar body, and a homogeneous zona pellucida. Systematic reviews (Rienzi et al., Hum Reprod Update) demonstrate that most minor single cytoplasmic or extracytoplasmic dysmorphisms (dark ooplasm, refractile bodies, slightly fragmented polar body, small vacuoles <14 µm) do not significantly reduce euploidy or live-birth potential once fertilized; however, two specific anomalies carry strong clinical warnings: Giant Oocytes (diploid 2n eggs arising from nuclear division without cytokinesis, which uniformly cause triploid 3PN/digynic embryos and must be excluded) and Smooth Endoplasmic Reticulum (SER) discs/aggregates, which require cautious monitoring and specialized embryo selection.",
+    gaps: [
+      "Standardized quantitative computer-vision and polarized light (PolScope) spindle retardance cutoffs for predicting maternal cohesin integrity before ICSI",
+      "Multicenter RCT outcomes of rescuing immature GV and MI sibling oocytes using iPSC-derived Ovarian Support Cell co-culture (OSC-IVM) in women over 40",
+    ],
+    synthesis: {
+      benchmarks: [
+        {
+          metric: "75%–85%",
+          label: "Typical proportion of retrieved oocytes at mature Metaphase II (MII) stage after standard hCG/GnRH-agonist trigger",
+          source: "Alpha Scientists in Reproductive Medicine & ESHRE Istanbul Consensus (Hum Reprod 2011)",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+        {
+          metric: "0% safe transfer",
+          label: "Giant oocytes (~30% larger volume, diploid) uniformly produce digynic triploid embryos and are strictly excluded from ICSI",
+          source: "Balakier et al. & ESHRE Istanbul Consensus (Hum Reprod 2011)",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+        {
+          metric: "~68%–72%",
+          label: "Ex vivo GV/MI-to-MII rescue maturation rate achieved with human iPSC-derived Ovarian Support Cells (OSC-IVM)",
+          source: "Piechota et al., Hum Reprod 2023",
+          sourceUrl: "https://doi.org/10.1093/humrep/dead194",
+        },
+      ],
+      levers: [
+        {
+          name: "Nuclear Maturity Triage (MII vs. Delayed-MII Rescue vs. GV/MI IVM)",
+          category: "Oocyte Nuclear Maturity Assessment",
+          description:
+            "Classifying denuded eggs into Metaphase II (1st polar body present), Metaphase I (no GV, no polar body), and Germinal Vesicle (intact Prophase I nucleus) to time ICSI accurately.",
+          bestEvidence: "Alpha/ESHRE Istanbul Consensus (Hum Reprod 2011) & Rienzi et al., Hum Reprod Update 2011",
+          effect: "MII oocytes achieve 70–80% 2PN fertilisation; MI oocytes maturing within 3–4h post-denudation retain moderate competence after cytoplasmic spindle completion",
+          reading:
+            "Performing ICSI too early after polar body extrusion before Metaphase II spindle assembly completes can induce chromosome scattering; PolScope or 3–4h post-extrusion timing optimizes euploid fertilisation.",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+        {
+          name: "Polarized Light Microscopy (PolScope) Meiotic Spindle Imaging",
+          category: "Non-Invasive Organelle & Spindle Grading",
+          description:
+            "Birefringence imaging of the Metaphase II meiotic spindle and inner zona pellucida layer prior to ICSI needle insertion.",
+          bestEvidence: "Meta-analysis of PolScope studies (Petersen et al.; Rienzi et al., Hum Reprod Update 2011)",
+          effect: "Visible, high-retardance MII spindles predict higher 2PN fertilisation, blastocyst progression, and avoid physical spindle damage during ICSI",
+          reading:
+            "Particularly valuable in maternal age 40+ where the meiotic spindle can be displaced from directly beneath the first polar body.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1093/humupd/dmq049",
+        },
+        {
+          name: "Istanbul Consensus Dysmorphism Stratification (SER Discs, Vacuoles & Giant Oocytes)",
+          category: "Cytoplasmic & Extracytoplasmic Morphology",
+          description:
+            "Distinguishing benign extracytoplasmic variations (perivitelline debris, polar body fragmentation, dark zona) from severe intracytoplasmic anomalies (giant diploid oocytes, large vacuoles >14 µm, central granulation).",
+          bestEvidence: "Rienzi et al. Systematic Review (Hum Reprod Update 2011, 50 studies) & ESHRE Atlas of Human Embryology",
+          effect: "Prevents unnecessary discard of viable MII eggs with minor cosmetic dysmorphisms while strictly excluding triploidy-causing giant oocytes",
+          reading:
+            "Do not discard MII oocytes solely for dark ooplasm or fragmented polar bodies; exclude giant oocytes and prioritize SER-negative sibling embryos first.",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1093/humupd/dmq049",
+        },
+      ],
+      clinicalQuestions: [
+        "Does the embryology lab use polarized light microscopy (PolScope) to confirm Metaphase II spindle position and maturity before ICSI injection?",
+        "What is the lab's protocol for immature MI and GV oocytes retrieved alongside MII eggs — are they observed for 4-hour rescue maturation or co-cultured?",
+      ],
+      sweepQueue: [
+        "Non-invasive AI computer-vision oocyte scoring (Magenta / Violet models) predicting blastocyst euploidy from MII brightfield images",
+      ],
+    },
+    sources: [
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/der037",
+        origin: "literature",
+        title: "The Istanbul consensus workshop on embryo assessment: proceedings of an expert meeting",
+        url: "https://doi.org/10.1093/humrep/der037",
+        doi: "10.1093/humrep/der037",
+        venue: "Human Reproduction",
+        year: 2011,
+        authors: ["Alpha Scientists in Reproductive Medicine", "ESHRE Special Interest Group of Embryology"],
+        abstract:
+          "International consensus establishing standardized terminology and grading criteria for human oocytes, zygote pronuclear scoring, cleavage embryos, and blastocysts.",
+        citedBy: 1850,
+        declaredDesign: "guideline",
+        design: "guideline",
+        sampleSize: null,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humupd/dmq049",
+        origin: "literature",
+        title: "Predictive value of oocyte morphology in human IVF: a systematic review of the literature",
+        url: "https://doi.org/10.1093/humupd/dmq049",
+        doi: "10.1093/humupd/dmq049",
+        venue: "Human Reproduction Update",
+        year: 2011,
+        authors: ["Laura Rienzi", "Benedetta Balaban", "Thomas Ebner", "Janos Mandelbaum"],
+        abstract:
+          "Systematic review of 50 studies analyzing extracytoplasmic and intracytoplasmic oocyte dysmorphisms, polar body morphology, zona pellucida birefringence, and Metaphase II spindle imaging on fertilisation and developmental competence.",
+        citedBy: 690,
+        declaredDesign: "systematic_review",
+        design: "systematic_review",
+        sampleSize: 50,
+        extra: {},
+      },
+    ],
+    claims: [
+      {
+        statement:
+          "Under the Alpha/ESHRE Istanbul Consensus, only Metaphase II (MII) oocytes with an extruded first polar body are nuclear-mature for immediate fertilisation, while giant diploid oocytes must be excluded due to uniform triploid (digynic) zygote formation.",
+        tier: "T1",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.98,
+        rationale: "Alpha/ESHRE Istanbul Consensus guideline (Hum Reprod 2011).",
+        sourceIndexes: [0],
+      },
+      {
+        statement:
+          "Systematic review of 50 clinical studies shows that isolated minor extracytoplasmic oocyte dysmorphisms (polar body fragmentation, dark zona, small perivitelline debris) do not reliably reduce fertilisation or live-birth potential, whereas visible Metaphase II spindle birefringence positively predicts embryo developmental competence.",
+        tier: "T1",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.94,
+        rationale: "Rienzi et al. systematic review in Human Reproduction Update (2011).",
+        sourceIndexes: [0, 1],
+      },
+    ],
+    milestones: [
+      {
+        year: 2011,
+        title: "Alpha & ESHRE Istanbul Consensus on Oocyte and Embryo Grading",
+        description: "Unified global scoring criteria for oocyte nuclear maturity (MII/MI/GV), dysmorphisms, pronuclear scoring, and blastocyst grading.",
+        sourceIndex: 0,
+      },
+    ],
+    entities: [],
+    controversies: [],
+  },
+
+  "zygote-pronuclear-scoring-2pn-1pn-3pn-fertilisation": {
+    summary:
+      "At 16–18 hours post-insemination (Day 1), the fertilisation check evaluates pronuclear (PN) number and polar body (PB) extrusion: a normal fertilised zygote is 2PN2PB, displaying two symmetrically juxtaposed pronuclei (one maternal, one paternal) with aligned nucleolar precursor bodies (NPBs) and two polar bodies. Historically, monopronuclear (1PN) and appronuclear (0PN) zygotes were discarded under the assumption that 1PN embryos were haploid (parthenogenetic/androgenetic) and 0PN embryos were unfertilised. However, modern time-lapse imaging and genome-wide SNP haplotyping / PGT-A studies (Destouni et al., Bradley et al., Capalbo et al.) prove that 30–50% of 1PN and 0PN zygotes that successfully develop to the blastocyst stage are actually normal biparental diploids (46,XX or 46,XY) resulting from asynchronous pronuclear formation, early pronuclear membrane breakdown before the 17-hour snapshot, or fusion of maternal and paternal pronuclei into a single diploid pronucleus. Conversely, tripronuclear (3PN) zygotes arise from dispermic penetration (in conventional IVF) or non-extrusion of the second polar body (digyny in ICSI) and are overwhelmingly triploid (69 chromosomes) or chaotic aneuploid, warranting clinical exclusion.",
+    gaps: [
+      "Routine integration of biparental SNP haplotyping alongside copy-number PGT-A so clinics can distinguish normal biparental diploid 1PN/0PN blastocysts from uniparental diploid or haploid embryos prior to transfer",
+    ],
+    synthesis: {
+      benchmarks: [
+        {
+          metric: "70%–80%",
+          label: "Expected normal 2PN2PB fertilisation rate per injected mature Metaphase II oocyte after ICSI",
+          source: "ESHRE Vienna Consensus Key Performance Indicators (Hum Reprod Open 2017)",
+          sourceUrl: "https://doi.org/10.1093/hropen/hox011",
+        },
+        {
+          metric: "30%–50%",
+          label: "Proportion of 1PN- and 0PN-derived blastocysts confirmed as normal biparental euploid diploids via SNP-array / haplotyping PGT-A",
+          source: "Bradley et al., Fertil Steril 2017; Destouni et al., Genome Res 2016",
+          sourceUrl: "https://doi.org/10.1016/j.fertnstert.2017.08.004",
+        },
+        {
+          metric: ">95% triploid/abnormal",
+          label: "Chromosomal abnormality rate in 3PN zygotes (polyspermy or digynic second polar body retention)",
+          source: "Alpha/ESHRE Istanbul Consensus (Hum Reprod 2011)",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+      ],
+      levers: [
+        {
+          name: "2PN2PB Standard Fertilisation & Scott Z-Score (Z1–Z4) Nucleolar Alignment",
+          category: "Normal Diploid Fertilisation (2PN)",
+          description:
+            "Confirming two equal-sized pronuclei closely abutted in the centre of the zygote at 16–18h post-ICSI/IVF, with aligned nucleolar precursor bodies (NPBs).",
+          bestEvidence: "Alpha/ESHRE Istanbul Consensus (2011) & Scott et al., Hum Reprod 2000",
+          effect: "2PN2PB zygotes with symmetrical pronuclei and aligned NPBs (Z1/Z2) show the highest Day-5 blastocyst conversion and euploidy rates",
+          reading:
+            "Gold-standard first-line selection cohort; pronuclear fading (tPNf) at ~23–25 hours post-insemination marks transition to first cleavage (t2).",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+        {
+          name: "Extended Blastocyst Culture & Biparental SNP-PGT-A Rescue of 1PN and 0PN Zygotes",
+          category: "Abnormal Pronuclear Rescue (1PN & 0PN)",
+          description:
+            "Culturing 1PN and 0PN zygotes to Day 5–6 blastocysts instead of discarding them on Day 1, followed by SNP-based or haplotyping PGT-A to verify biparental diploidy (46 chromosomes with both maternal and paternal alleles).",
+          bestEvidence: "Bradley et al., Fertil Steril 2017 (n=2,130 1PN/0PN embryos) & Capalbo et al., Hum Reprod 2017",
+          effect: "Rescues healthy live births from 1PN and 0PN blastocysts that would otherwise be discarded — vital in low-yield autologous cycles",
+          reading:
+            "Standard copy-number NGS PGT-A cannot distinguish haploid (23,X) from diploid (46,XX) without allele ratios; SNP/haplotyping PGT-A confirms biparental diploidy before transferring a 1PN-derived blastocyst.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1016/j.fertnstert.2017.08.004",
+        },
+        {
+          name: "Exclusion of 3PN (Tripronuclear) Zygotes",
+          category: "Polyspermy & Digyny Triage (3PN)",
+          description:
+            "Identifying three pronuclei at 16–18h post-insemination (3PN1PB after ICSI due to failed 2nd polar body extrusion, or 3PN2PB after IVF due to dispermy).",
+          bestEvidence: "Alpha/ESHRE Istanbul Consensus (Hum Reprod 2011)",
+          effect: "Prevents transfer of triploid (69,XXX / 69,XXY) pregnancies associated with partial hydatidiform mole and first-trimester miscarriage",
+          reading:
+            "3PN zygotes should never be transferred without definitive biparental diploid molecular verification.",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+      ],
+      clinicalQuestions: [
+        "Does our clinic automatically discard 1PN and 0PN zygotes on Day 1, or are they cultured to Day 5–6 blastocysts and tested with biparental SNP-based PGT-A to rescue diploid embryos?",
+        "Does the lab use continuous time-lapse incubator imaging (EmbryoScope) so asynchronous pronuclear appearance/fading is never misclassified as 0PN or 1PN?",
+      ],
+      sweepQueue: [
+        "Time-lapse deep-learning verification of pronuclear fusion vs asynchronous pronuclear appearance in 1PN2PB ICSI zygotes",
+      ],
+    },
+    sources: [
+      {
+        kind: "paper",
+        externalId: "doi:10.1016/j.fertnstert.2017.08.004",
+        origin: "literature",
+        title: "Clinical outcome of monopronuclear (1PN) and appronuclear (0PN) embryos following extended culture and preimplantation genetic testing",
+        url: "https://doi.org/10.1016/j.fertnstert.2017.08.004",
+        doi: "10.1016/j.fertnstert.2017.08.004",
+        venue: "Fertility and Sterility",
+        year: 2017,
+        authors: ["Clare K. Bradley", "Kylie A. Traversa", "Tomas Stojanov"],
+        abstract:
+          "Large cohort analysis demonstrating that culturing 1PN and 0PN zygotes to the blastocyst stage and applying genetic ploidy/biparental testing rescues transferable diploid euploid blastocysts and yields healthy live births.",
+        citedBy: 145,
+        declaredDesign: "cohort",
+        design: "cohort",
+        sampleSize: 2130,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/dex033",
+        origin: "literature",
+        title: "Clinical value of single-nucleotide polymorphism-based preimplantation genetic testing for biparental diploidy in 1PN and 0PN blastocysts",
+        url: "https://doi.org/10.1093/humrep/dex033",
+        doi: "10.1093/humrep/dex033",
+        venue: "Human Reproduction",
+        year: 2017,
+        authors: ["Antonio Capalbo", "Danilo Cimadomo", "Laura Rienzi", "Filippo Maria Ubaldi"],
+        abstract:
+          "Demonstrates that SNP-based haplotyping distinguishes true biparental diploid (46,XX/46,XY) blastocysts derived from 1PN and 0PN zygotes from haploid or uniparental embryos, rescuing viable embryos in poor-prognosis patients.",
+        citedBy: 162,
+        declaredDesign: "cohort",
+        design: "cohort",
+        sampleSize: 380,
+        extra: {},
+      },
+    ],
+    claims: [
+      {
+        statement:
+          "While 2PN2PB at 16–18 hours post-insemination is the standard marker of normal diploid fertilisation, 30–50% of 1PN and 0PN zygotes that reach the blastocyst stage are true biparental diploids that can be verified via SNP/haplotyping PGT-A and produce healthy live births.",
+        tier: "T3",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.93,
+        rationale: "Large clinical cohorts with molecular SNP-haplotyping confirmation (Bradley et al. 2017; Capalbo et al. 2017).",
+        sourceIndexes: [0, 1],
+      },
+    ],
+    milestones: [
+      {
+        year: 2017,
+        title: "SNP-Haplotyping Rescue of Biparental Diploid 1PN & 0PN Blastocysts",
+        description: "Bradley et al. and Capalbo et al. prove that 1PN/0PN blastocysts confirmed as biparental diploid produce healthy live births and should not be discarded on Day 1.",
+        sourceIndex: 0,
+      },
+    ],
+    entities: [],
+    controversies: [],
+  },
+
+  "blastocyst-morphological-grading-gardner-criteria-morphokinetics": {
+    summary:
+      "The Gardner and Schoolcraft (1999) blastocyst grading system is the international clinical standard for evaluating Day 5–7 embryos across three components: (1) Blastocoel Expansion & Hatching Stage from 1 to 6 (Stage 1: early blastocoel <50% volume; Stage 2: blastocoel ≥50%; Stage 3: full blastocyst filling the embryo; Stage 4: expanded blastocyst with thinning zona pellucida; Stage 5: hatching out of the zona; Stage 6: fully hatched); (2) Inner Cell Mass (ICM) Grade A–C for the fetal-forming cells (A: tightly packed, many cells; B: loosely grouped, several cells; C: very few/indistinct cells); and (3) Trophectoderm (TE) Grade A–C for the placenta-forming outer epithelium (A: cohesive layer of many cells; B: loose epithelium of fewer cells; C: very few large cells). Composite grades are grouped clinically into Top Quality (AA: e.g. 4AA, 5AA, 3AA), Good Quality (AB, BA, BB: e.g. 4AB, 4BA, 4BB), Fair Quality (BC, CB), and Poor Quality (CC). Large multicenter studies (Capalbo et al., Hum Reprod 2014; Zhao et al.) prove two critical rules: first, Trophectoderm grade correlates more strongly with implantation and live birth than ICM grade (making 4BA often slightly higher implanting than 4AB); second, once PGT-A confirms chromosomal euploidy, a good-to-moderate blastocyst (such as 4BB or even 4BC) achieves ~45–55% live birth rates — proving that chromosomal euploidy overrides cosmetic morphological grade in women over 38.",
+    gaps: [
+      "Head-to-head RCTs comparing deep-learning video morphokinetic selection (iDAScore / ERICA) against invasive trophectoderm biopsy in patients with ≤3 blastocysts",
+    ],
+    synthesis: {
+      benchmarks: [
+        {
+          metric: "~55%–65% vs ~48%–55%",
+          label: "Live birth rate per single euploid blastocyst transfer for AA vs BB Gardner morphology (Capalbo et al., Hum Reprod 2014)",
+          source: "Capalbo et al., Hum Reprod 2014 (n=956 euploid blastocysts)",
+          sourceUrl: "https://doi.org/10.1093/humrep/deu033",
+        },
+        {
+          metric: "~52% vs ~30%",
+          label: "Euploidy rate of excellent/good (AA/AB/BA) vs poor (CC/BC) blastocysts across all maternal ages (still requires PGT-A after age 38)",
+          source: "Capalbo et al., Hum Reprod 2014",
+          sourceUrl: "https://doi.org/10.1093/humrep/deu033",
+        },
+        {
+          metric: "TE > ICM",
+          label: "Trophectoderm grade (second letter in 4AA/4BA/4BB) is the strongest independent morphological predictor of implantation and live birth",
+          source: "Ahlström et al., Hum Reprod 2011; Hill et al., Fertil Steril 2013",
+          sourceUrl: "https://doi.org/10.1093/humrep/der325",
+        },
+      ],
+      levers: [
+        {
+          name: "Gardner & Schoolcraft 3-Part Blastocyst Grading (1–6 Expansion, A–C ICM, A–C TE)",
+          category: "Blastocyst Morphological Scoring (AA, AB, BA, BB, BC)",
+          description:
+            "Scoring Day 5–7 blastocysts by expansion (1–6), Inner Cell Mass (first letter A/B/C), and Trophectoderm (second letter A/B/C): e.g., 4AA (top), 4AB/4BA (good-plus), 4BB (standard good), 4BC/4CB (fair).",
+          bestEvidence: "Gardner & Schoolcraft (1999); Alpha/ESHRE Istanbul Consensus (2011); Ahlström et al. (2011)",
+          effect: "Stratifies untested blastocyst implantation potential (~50–60% for AA, ~40–50% for AB/BA/BB, ~25–30% for BC/CB in young cohorts)",
+          reading:
+            "A 4BB blastocyst is a solid, high-competence 'good' embryo (loosely grouped ICM + cohesive/moderate trophectoderm) and should never be viewed as poor quality.",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+        {
+          name: "Euploidy Priority Over Morphology (4BB Euploid vs. 4AA Untested/Aneuploid)",
+          category: "Morphology–Ploidy Integration",
+          description:
+            "Prioritizing chromosomal euploidy over Gardner morphological grade when selecting Day 5–7 blastocysts in maternal age ≥38.",
+          bestEvidence: "Capalbo, Rienzi, Ubaldi et al., Human Reproduction 2014 (n=956 biopsied blastocysts)",
+          effect: "Once confirmed euploid, 4BB, 4BC, and Day-6 blastocysts yield comparable live birth rates to 4AA blastocysts; morphology alone misses ~50–80% of aneuploid AA embryos after age 40",
+          reading:
+            "Never discard a slow-growing Day 6 or Day 7 BB/BC blastocyst if it is chromosomally euploid; chromosomal ploidy is the primary determinant of live birth.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1093/humrep/deu033",
+        },
+        {
+          name: "Day 3 Cleavage Grading (Cell Number 6–10, Fragmentation <10%, Symmetry) & Time-Lapse Morphokinetics",
+          category: "Cleavage & Morphokinetic Grading",
+          description:
+            "Evaluating Day 2 (4-cell, ~44h) and Day 3 (8-cell, ~68h) blastomere count, symmetry, multinucleation, and continuous time-lapse division intervals (t2,cc2, s2, t5, tB).",
+          bestEvidence: "Cochrane Review on Time-Lapse Systems (Armstrong et al.) & Istanbul Consensus (2011)",
+          effect: "Uninterrupted closed-incubator culture prevents temperature/pH drops and identifies direct unequal cleavage (1-to-3 cell division) and multinucleation",
+          reading:
+            "Essential when performing Day 3 transfers in low-yield cycles: an 8-cell Grade 1 (<10% fragmentation, symmetric, mononucleated) Day 3 embryo is the top cleavage benchmark.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1093/humrep/der037",
+        },
+      ],
+      clinicalQuestions: [
+        "What is the exact 3-part Gardner score (Expansion 1–6, ICM A–C, Trophectoderm A–C) and Day of blastulation (Day 5, 6, or 7) for each of our embryos?",
+        "Does our clinic freeze and biopsy fair-grade (BC/CB) and Day-7 blastocysts so no potentially euploid autologous embryo is discarded?",
+      ],
+      sweepQueue: [
+        "Non-invasive cell-free DNA in spent blastocyst culture medium (niPGT-A) combined with Gardner BB/BC morphological grading",
+      ],
+    },
+    sources: [
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/deu033",
+        origin: "literature",
+        title: "Correlation between standard blastocyst morphology, euploidy and implantation: an observational study in two centers involving 956 screened blastocysts",
+        url: "https://doi.org/10.1093/humrep/deu033",
+        doi: "10.1093/humrep/deu033",
+        venue: "Human Reproduction",
+        year: 2014,
+        authors: ["Antonio Capalbo", "Laura Rienzi", "Danilo Cimadomo", "Roberta Maggiulli", "Thomas Elliott", "Graham Wright", "Zsolt Peter Nagy", "Filippo Maria Ubaldi"],
+        abstract:
+          "Multicenter cohort of 956 biopsied blastocysts proving that while Gardner morphology (AA, AB, BA, BB, BC, CC) weakly correlates with euploidy, once a blastocyst is confirmed euploid, implantation potential is similarly high across AA, AB, BA, BB, and slower Day-6 embryos.",
+        citedBy: 620,
+        declaredDesign: "cohort",
+        design: "cohort",
+        sampleSize: 956,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/der325",
+        origin: "literature",
+        title: "Trophectoderm morphology: an important parameter for predicting live birth after single blastocyst transfer",
+        url: "https://doi.org/10.1093/humrep/der325",
+        doi: "10.1093/humrep/der325",
+        venue: "Human Reproduction",
+        year: 2011,
+        authors: ["A. Ahlström", "C. Westin", "E. Reismer", "M. Wikland", "T. Hardarson"],
+        abstract:
+          "Large clinical cohort of 1,117 single blastocyst transfers demonstrating that trophectoderm (TE) grade is a stronger independent predictor of live birth than inner cell mass (ICM) grade or expansion stage.",
+        citedBy: 510,
+        declaredDesign: "cohort",
+        design: "cohort",
+        sampleSize: 1117,
+        extra: {},
+      },
+    ],
+    claims: [
+      {
+        statement:
+          "In the Gardner blastocyst grading system (Expansion 1–6, ICM A–C, Trophectoderm A–C), once chromosomal euploidy is confirmed by PGT-A, good and moderate blastocysts (such as 4BB or 4BC) achieve implantation and live-birth rates comparable to top-graded 4AA blastocysts.",
+        tier: "T3",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.96,
+        rationale: "Multicenter study of 956 screened blastocysts (Capalbo et al., Hum Reprod 2014).",
+        sourceIndexes: [0],
+      },
+      {
+        statement:
+          "Among the three components of Gardner blastocyst grading, Trophectoderm (TE) grade (the second letter in AA, BA, AB, BB) is a stronger independent predictor of implantation and live birth than Inner Cell Mass (ICM) grade.",
+        tier: "T3",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.94,
+        rationale: "Ahlström et al. cohort of 1,117 single blastocyst transfers (Hum Reprod 2011).",
+        sourceIndexes: [1],
+      },
+    ],
+    milestones: [
+      {
+        year: 2014,
+        title: "Capalbo & Rienzi Prove Euploidy Overrides Gardner Morphology (AA vs BB/BC)",
+        description: "Multicenter study of 956 biopsied blastocysts demonstrates that any euploid blastocyst (whether 4AA, 4BB, or 4BC) has high implantation competence.",
+        sourceIndex: 0,
+      },
+    ],
+    entities: [],
+    controversies: [],
+  },
 };
+
 

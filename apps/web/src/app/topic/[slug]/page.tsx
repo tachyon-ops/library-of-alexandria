@@ -90,8 +90,15 @@ function formatJobTime(d: Date | string | number | null | undefined): string {
   }
 }
 
-export default async function TopicPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function TopicPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ spawned?: string }>;
+}) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const db = sql();
   const topic = await getTopicBySlug(db, slug);
   if (!topic) notFound();
@@ -184,6 +191,26 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
     safeEntities.length > 0 ||
     ((topic.gaps ?? []).length > 0 && sweepQueue.length === 0);
 
+  const spawnedSlugs = (resolvedSearchParams?.spawned ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const treeNodeBySlug = new Map<string, { slug: string; title: string; parentTitle: string | null }>();
+  const indexTreeNodes = (nodes: typeof roots, parentTitle: string | null) => {
+    for (const n of nodes) {
+      treeNodeBySlug.set(n.slug, { slug: n.slug, title: normaliseTopicTitle(n.title), parentTitle });
+      if (Array.isArray(n.children) && n.children.length > 0) {
+        indexTreeNodes(n.children, normaliseTopicTitle(n.title));
+      }
+    }
+  };
+  indexTreeNodes(roots, null);
+
+  const spawnedBranches = spawnedSlugs
+    .map((s) => treeNodeBySlug.get(s))
+    .filter((n): n is { slug: string; title: string; parentTitle: string | null } => Boolean(n));
+
   return (
     <main className="topic-layout">
       <AutoRefresh active={busy} />
@@ -192,6 +219,28 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
       </nav>
 
       <article className="topic">
+        {spawnedBranches.length > 1 && (
+          <section className="spawned-branches-banner" role="status" aria-label="AI tree organisation summary">
+            <div className="spawned-banner-header">
+              <span className="new-topic-kicker">AI Tree Organiser</span>
+              <strong>
+                Organised &amp; cross-linked {spawnedBranches.length} canonical branches from your inquiry
+              </strong>
+            </div>
+            <ul className="spawned-branches-list">
+              {spawnedBranches.map((b, idx) => (
+                <li key={b.slug} className={b.slug === topic.slug ? "is-current" : ""}>
+                  <span className="spawned-index">{idx + 1}.</span>
+                  <Link href={`/topic/${b.slug}?spawned=${encodeURIComponent(spawnedSlugs.join(","))}`}>
+                    {b.title}
+                  </Link>
+                  {b.parentTitle && <span className="muted small"> · under {b.parentTitle}</span>}
+                  {b.slug === topic.slug && <span className="spawned-current-tag">viewing</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <p className="trail">
           <Link href="/">Library</Link>
           {ancestors.map((a) => (
@@ -600,9 +649,11 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
               ))}
             </ul>
           ) : (
-            <p className="muted">No branches yet. The scout proposes some when it researches this topic, or add one yourself.</p>
+            <p className="muted">
+              No sub-branches yet. Autonomous research agents and the AI tree organiser spawn canonical sub-disciplines here when needed.
+            </p>
           )}
-          <NewTopicForm parentId={topic.id} parentTitle={topic.title} />
+          <NewTopicForm parentId={topic.id} parentTitle={displayTitle} />
         </section>
 
         <details id="sources" className="collapsible-section">

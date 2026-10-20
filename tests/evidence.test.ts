@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   extractSearchTerms,
   inferBranchProposal,
+  inferBranchProposals,
   invertedIndexToText,
   lookupGlossaryTerm,
   normaliseDesign,
@@ -77,6 +78,14 @@ describe("helpers", () => {
     const zymot = lookupGlossaryTerm("ZyMōt");
     expect(zymot?.term).toContain("ZyMōt");
 
+    const gardner = lookupGlossaryTerm("4BB");
+    expect(gardner?.term).toContain("Gardner Blastocyst Grading");
+    expect(gardner?.synopsis).toContain("Inner Cell Mass");
+
+    const pronuclear = lookupGlossaryTerm("2PN");
+    expect(pronuclear?.term).toContain("Pronuclear Scoring");
+    expect(pronuclear?.whyItMatters).toContain("1PN");
+
     const mond = lookupGlossaryTerm("MOND");
     expect(mond?.term).toContain("MOND");
     expect(mond?.synopsis).toContain("Milgrom");
@@ -112,7 +121,7 @@ describe("helpers", () => {
     expect(anyWord).not.toBeNull();
     expect(anyWord?.synopsis.length).toBeGreaterThan(10);
   });
-  it("extracts search terms, suggests branch placement, and synthesises grounded briefings", () => {
+  it("extracts search terms, decomposes multi-topic questions into canonical branches, and synthesises grounded briefings", () => {
     expect(extractSearchTerms("What is the evidence on rapamycin for ovarian reserve after 40?")).toEqual([
       "rapamycin",
       "ovarian",
@@ -130,6 +139,22 @@ describe("helpers", () => {
         title: "Reproductive Medicine & Human Fertility",
         brief: "Root fertility branch",
         depth: 0,
+      },
+      {
+        id: "t-ovarian",
+        parentId: "t-root",
+        slug: "ovarian-reserve-oocyte-cryopreservation",
+        title: "Ovarian Reserve & Oocyte Cryopreservation",
+        brief: "Oocyte vitrification, follicular waves, oocyte maturity",
+        depth: 1,
+      },
+      {
+        id: "t-art",
+        parentId: "t-root",
+        slug: "assisted-reproductive-technology-gamete-donation",
+        title: "Assisted Reproductive Technology & Gamete Donation",
+        brief: "IVF, ICSI, embryo selection, blastocyst culture",
+        depth: 1,
       },
       {
         id: "t-frontier",
@@ -155,6 +180,14 @@ describe("helpers", () => {
         brief: "Black-Scholes, Ito calculus, martingale pricing",
         depth: 2,
       },
+      {
+        id: "t-statarb",
+        parentId: null,
+        slug: "econometrics-financial-time-series-and-statistical-arbitrage",
+        title: "Econometrics, Financial Time Series, Statistical Arbitrage & Alpha Research",
+        brief: "GARCH, cointegration, Ornstein-Uhlenbeck",
+        depth: 2,
+      },
     ];
 
     const proposal = inferBranchProposal("rapamycin mtor follicular longevity", treeNodes);
@@ -166,6 +199,42 @@ describe("helpers", () => {
 
     const quantProposal = inferBranchProposal("black scholes ito stochastic volatility", treeNodes);
     expect(quantProposal.parentId).toBe("t-quant");
+
+    // Multi-topic decomposition: a single question about BB/AA, 1PN/2PN, oocytes, and embryos spawns 3 canonical branches
+    const gradingBranches = inferBranchProposals(
+      "BB/AA, 1PN/2PN -what grading methods are there for oocytes end embryos",
+      treeNodes,
+    );
+    expect(gradingBranches).toHaveLength(3);
+    expect(gradingBranches.map((b) => b.title)).toEqual([
+      "Blastocyst Morphological Grading (Gardner AA/BB System) & Embryo Morphokinetics",
+      "Zygote Pronuclear Scoring (2PN, 1PN, 0PN & 3PN) & Fertilisation Ploidy Assessment",
+      "Oocyte Nuclear Maturity (MII/MI/GV) & Morphological Grading",
+    ]);
+    expect(gradingBranches[0]!.parentId).toBe("t-art");
+    expect(gradingBranches[1]!.parentId).toBe("t-art");
+    expect(gradingBranches[2]!.parentId).toBe("t-ovarian");
+    for (const b of gradingBranches) {
+      expect(b.title.toLowerCase()).not.toContain("what grading methods");
+      expect(b.title.toLowerCase()).not.toContain("end embryos");
+    }
+
+    // Multi-topic decomposition in physics (MOND, Quantised Inertia, Dark Matter / Wide Binaries)
+    const gravityBranches = inferBranchProposals(
+      "How do MOND, Quantised Inertia, and dark matter compare in wide binary stars?",
+      treeNodes,
+    );
+    expect(gravityBranches).toHaveLength(3);
+    expect(gravityBranches.every((b) => b.parentId === "t-grav")).toBe(true);
+
+    // General multi-clause decomposition outside pre-indexed canonical facets
+    const compoundBranches = inferBranchProposals(
+      "Black-Scholes option pricing vs GARCH volatility clustering",
+      treeNodes,
+    );
+    expect(compoundBranches).toHaveLength(2);
+    expect(compoundBranches[0]!.parentId).toBe("t-quant");
+    expect(compoundBranches[1]!.parentId).toBe("t-statarb");
 
     const synthesis = synthesizeSearchBriefing(
       "rapamycin",
@@ -233,6 +302,7 @@ describe("helpers", () => {
     expect(synthesis.matchedLevers).toHaveLength(1);
     expect(synthesis.paragraphs.length).toBeGreaterThanOrEqual(2);
     expect(synthesis.citations.length).toBeGreaterThanOrEqual(2);
+    expect(synthesis.suggestedBranches.length).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -258,7 +328,7 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(PHYSICS_FRONTIER_GRAVITY_DOSSIERS)).toHaveLength(4);
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(40);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(43);
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
       expect(treeSlugs.has(slug), `dossier slug ${slug} must exist in ENCYCLOPAEDIC_TRUNKS`).toBe(true);
