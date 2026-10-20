@@ -1,5 +1,5 @@
 import { planTopic, readSources, reviewTopic, scanWeb, type Llm } from "@lib/agents";
-import { normaliseDesign, reassessTopicTaxonomy, tierForClaim, type StudyDesign } from "@lib/core";
+import { buildDynamicFieldArticle, normaliseDesign, reassessTopicTaxonomy, tierForClaim, type StudyDesign } from "@lib/core";
 import type { SourceAdapter } from "@lib/crawlers";
 import * as repo from "@lib/db";
 import type { Job, Sql } from "@lib/db";
@@ -194,14 +194,46 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
         topic.id,
         review.controversies.map((c) => ({ kind: c.kind, note: c.note, claimIds: c.claimIndexes.map((i) => claims[i]!.id) })),
       );
-      await repo.saveTopicReview(d.sql, topic.id, review.summary, review.gaps, review.synthesis);
+      const [updatedClaims, sources, milestones, children] = await Promise.all([
+        repo.topicClaims(d.sql, topic.id),
+        repo.topicSources(d.sql, topic.id),
+        repo.topicMilestones(d.sql, topic.id),
+        repo.getChildren(d.sql, topic.id),
+      ]);
+      const monograph = buildDynamicFieldArticle({
+        title: topic.title,
+        brief: topic.brief,
+        status: "ready",
+        summary: review.summary,
+        gaps: review.gaps,
+        synthesis: review.synthesis ?? null,
+        ancestors: ancestors.map((a) => ({ title: a.title, slug: a.slug })),
+        children: children.map((c) => ({ title: c.title, slug: c.slug, brief: c.brief })),
+        claims: updatedClaims,
+        sources,
+        milestones,
+        debates: review.controversies.map((c) => ({ kind: c.kind, note: c.note })),
+        entities,
+      });
+      const enrichedSynthesis = {
+        ...(review.synthesis ?? {}),
+        article: {
+          title: monograph.title,
+          subtitle: monograph.subtitle,
+          synopsis: monograph.synopsis,
+          sections: monograph.sections,
+          conclusions: monograph.conclusions,
+          keyTakeaways: monograph.keyTakeaways,
+        },
+      };
+      await repo.saveTopicReview(d.sql, topic.id, review.summary, review.gaps, enrichedSynthesis);
       const evidenceSignal = [
         review.summary,
-        ...claims.slice(0, 12).map((c) => c.statement),
+        ...updatedClaims.slice(0, 12).map((c) => c.statement),
         ...(review.synthesis?.levers ?? []).map((l) => `${l.name} ${l.description}`),
       ].join(" ");
       await reassessAndApplyTaxonomy(d, { ...topic, summary: review.summary }, evidenceSignal);
-      d.log(`review ${topic.slug}: ${review.merges.length} merges, ${review.controversies.length} controversies`);
+      d.log(`review ${topic.slug}: ${review.merges.length} merges, ${review.controversies.length} controversies, article composed`);
       return;
     }
   }

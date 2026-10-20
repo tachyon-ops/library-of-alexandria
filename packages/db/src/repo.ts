@@ -692,6 +692,7 @@ export async function claimNextJob(sql: Sql): Promise<Job | null> {
     WHERE id = (
       SELECT id FROM jobs WHERE status = 'queued' AND run_after <= now()
       ORDER BY
+        COALESCE((payload->>'autoSpawned')::boolean, false) ASC,
         CASE kind
           WHEN 'harvest' THEN 0
           WHEN 'scan'    THEN 1
@@ -700,7 +701,6 @@ export async function claimNextJob(sql: Sql): Promise<Job | null> {
           WHEN 'plan'    THEN 4
           ELSE 5
         END,
-        COALESCE((payload->>'autoSpawned')::boolean, false) ASC,
         run_after,
         id
       FOR UPDATE SKIP LOCKED LIMIT 1
