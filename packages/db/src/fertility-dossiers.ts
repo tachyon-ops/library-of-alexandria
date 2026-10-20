@@ -3,24 +3,24 @@ import type { SeedDossier } from "./repo";
 export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
   "reproductive-medicine-human-fertility": {
     summary:
-      "Human reproductive aging is overwhelmingly driven by oocyte meiotic and mitochondrial senescence rather than uterine decline: while endometrial receptivity remains high into the late 40s and early 50s, oocyte aneuploidy rises from ~30% at age 30 to 85–95% by ages 44–45 due to cohesin ring deterioration and spindle ATP deficits. For couples strictly pursuing 100% of their own genetic material (autologous nuclear DNA), clinical and translational strategies combine double stimulation within a single cycle (DuoStim) to double oocyte harvest in 28 days, microfluidic sperm selection (ZyMōt) or testicular sperm aspiration (TESA) to eliminate post-testicular DNA fragmentation, and frontier cellular/organelle interventions. These frontier tracks include Maternal Spindle Transfer (MST, where an enucleated donor egg supplies healthy cytoplasm/mitochondria while preserving 100% maternal and paternal chromosomes), engineered iPSC-derived ovarian support cell maturation (Gameto Fertilo, Phase 3 NCT06858111), mTORC1 inhibition via low-dose rapamycin (Columbia VIBRANT trial, NCT05836025), NAD+/NMN sirtuin spindle stabilization, spermidine-induced mitophagy, and Hippo-pathway In Vitro Activation (IVA) of dormant primordial follicles.",
+      "Human reproductive aging is overwhelmingly driven by oocyte meiotic and mitochondrial senescence rather than uterine decline: while endometrial receptivity remains high into the late 40s and early 50s, oocyte aneuploidy rises from ~30% at age 30 to 85–95% by age 45 due to cohesin ring deterioration and spindle ATP deficits. For couples strictly pursuing 100% of their own genetic material (autologous nuclear DNA), clinical and translational strategies combine double stimulation within a single cycle (DuoStim) to double oocyte harvest in 28 days, microfluidic sperm selection (ZyMōt) or testicular sperm aspiration (TESA) to eliminate post-testicular DNA fragmentation, and frontier cellular/organelle interventions. These frontier tracks include Maternal Spindle Transfer (MST, where an enucleated donor egg supplies healthy cytoplasm/mitochondria while preserving 100% maternal and paternal chromosomes), engineered iPSC-derived ovarian support cell maturation (Gameto Fertilo, Phase 3 NCT06858111), mTORC1 inhibition via low-dose rapamycin (Columbia VIBRANT trial, NCT05836025), NAD+/NMN sirtuin spindle stabilization, spermidine-induced mitophagy, and Hippo-pathway In Vitro Activation (IVA) of dormant primordial follicles.",
     gaps: [
-      "Long-term longitudinal follow-up and expansion of Maternal Spindle Transfer (MST) trials specifically stratified for women aged 43–46 with autologous oocytes",
+      "Long-term longitudinal follow-up and expansion of Maternal Spindle Transfer (MST) trials specifically stratified for women aged 40–45 with autologous oocytes",
       "Human randomized controlled trial dose-response data for oral spermidine and nicotinamide mononucleotide (NMN) on blastocyst euploidy rates",
       "Completion of human meiotic chromosome crossover and synapsis in vitro for iPSC-derived In Vitro Gametogenesis (IVG)",
-      "Large-scale multicenter RCT comparing fresh Day 3 cleavage transfer versus PGT-A blastocyst banking in women over 43 with ≤3 oocytes per retrieval",
+      "Large-scale multicenter RCT comparing fresh Day 3 cleavage transfer versus PGT-A blastocyst banking in women over 40 with ≤3 oocytes per retrieval",
     ],
     synthesis: {
       benchmarks: [
         {
           metric: "85%–95%",
-          label: "Autologous blastocyst chromosomal aneuploidy rate at maternal ages 44–45 across PGT-A registries",
+          label: "Autologous blastocyst chromosomal aneuploidy rate at maternal ages 40–45 across PGT-A registries",
           source: "Franasiak et al., Fertil Steril (15,169 biopsies)",
           sourceUrl: "https://doi.org/10.1016/j.fertnstert.2013.11.004",
         },
         {
           metric: "5.0%–8.6%",
-          label: "Cumulative live birth rate per autologous retrieval series at ages 44–45 in disaggregated SART registry data",
+          label: "Cumulative live birth rate per autologous retrieval series at ages 40–45 in disaggregated SART registry data",
           source: "Seifer et al., Reprod Biol Endocrinol 2023",
           sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/37993884/",
         },
@@ -46,7 +46,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
           bestEvidence: "Multicenter prospective cohorts & meta-analyses (Vaiarelli et al. 2020; Ubaldi et al. 2016)",
           effect: "Doubles mature oocyte and euploid blastocyst yield within 30 days; luteal oocytes match or exceed follicular quality",
           reading:
-            "Essential time-saving protocol when maternal age is 44+, preventing cycle drop-out and capturing asynchronous follicle waves.",
+            "Essential time-saving protocol when maternal age is 40+, preventing cycle drop-out and capturing asynchronous follicle waves.",
           verdict: "Supported",
           sourceUrl: "https://doi.org/10.1093/humrep/deaa042",
         },
@@ -172,7 +172,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         },
         {
           name: "Microfluidic Sperm Sorting (ZyMōt) & Testicular Sperm (TESA)",
-          category: "6. Paternal Chromatin & Zygote Protection (Age 42+)",
+          category: "6. Paternal Chromatin & Zygote Protection (Age 40+)",
           description:
             "Replacing centrifuge spinning with microfluidic membrane migration (ZyMōt) or aspirating testicular sperm (TESA) to bypass epididymal oxidative DNA breaks.",
           bestEvidence: "Esteves et al. meta-analyses on testicular vs ejaculated ICSI in high DFI; Quinn et al. microfluidic trials",
@@ -190,7 +190,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
           bestEvidence: "COMPETE RCT (902 ovulatory women) & ASPRE Multicenter Trial (Rolnik et al., NEJM 2017, n=1,776)",
           effect: "Natural-cycle FET increases live birth (54% vs 43%, RR 1.26) and lowers pre-eclampsia; 150 mg aspirin cuts preterm pre-eclampsia by 62% (OR 0.38)",
           reading:
-            "High-certainty maternal protection protocol for carrying an autologous pregnancy safely after age 44.",
+            "High-certainty maternal protection protocol for carrying an autologous pregnancy safely after age 40.",
           verdict: "Guideline",
           sourceUrl: "https://doi.org/10.1056/NEJMoa1704559",
         },
@@ -205,7 +205,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       sweepQueue: [
         "Columbia University VIBRANT trial (NCT05836025) full cohort unblinding on weekly rapamycin for ovarian reserve and blastocyst euploidy",
         "Gameto FIRST Phase 3 trial (NCT06858111) live birth endpoints for iPSC-derived ovarian support cell in vitro maturation (Fertilo)",
-        "Institute of Life (Athens) & Embryotools expanded Maternal Spindle Transfer cohort outcomes in women aged 42–46",
+        "Institute of Life (Athens) & Embryotools expanded Maternal Spindle Transfer cohort outcomes in women aged 40–45",
         "Translational human trials of oral spermidine and NMN/NR supplementation on oocyte mitochondrial membrane potential and meiotic spindle integrity",
       ],
     },
@@ -542,7 +542,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
     controversies: [
       {
         kind: "contested",
-        note: "PGT-A Trophectoderm Biopsy vs. Fresh Day 3 Cleavage Transfer in Women Aged 44+: While PGT-A prevents transferring lethal aneuploid blastocysts, critics (e.g., Gleicher et al.) demonstrate that in women with ≤3 oocytes, extended culture to Day 5 and laser biopsy cause high embryo loss and discard self-correcting mosaic embryos that could produce healthy live births if transferred on Day 3.",
+        note: "PGT-A Trophectoderm Biopsy vs. Fresh Day 3 Cleavage Transfer in Women Aged 40+: While PGT-A prevents transferring lethal aneuploid blastocysts, critics (e.g., Gleicher et al.) demonstrate that in women with ≤3 oocytes, extended culture to Day 5 and laser biopsy cause high embryo loss and discard self-correcting mosaic embryos that could produce healthy live births if transferred on Day 3.",
         claimIndexes: [1],
       },
       {
@@ -824,7 +824,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
     summary:
       "Mitochondrial Replacement Therapy (MRT) — encompassing Maternal Spindle Transfer (MST), Pronuclear Transfer (PNT), and Germinal Vesicle Transfer (GVT) — separates nuclear genetic inheritance from cytoplasmic energy support. By extracting the mother's chromosome-bearing meiotic spindle (or the fertilized parental pronuclei) and placing it into an enucleated young donor oocyte, the reconstituted embryo retains 100% of the intended mother's and father's nuclear genome (~20,000+ genes governing all physical, cognitive, and personal traits) while gaining a young cohort of ~300,000 donor mitochondria (37 metabolic genes). In the landmark 2023 Institute of Life (Athens) and Embryotools (Barcelona) prospective trial of 25 couples with 3–11 prior failed IVF cycles and embryonic arrest, MST achieved 6 healthy live births with <1% maternal mtDNA carryover and zero heteroplasmy reversion at pediatric follow-up.",
     gaps: [
-      "Pre-meiotic Germinal Vesicle Transfer (GVT) to rescue chromosome segregation before Meiosis I spindle formation in women aged 44–46",
+      "Pre-meiotic Germinal Vesicle Transfer (GVT) to rescue chromosome segregation before Meiosis I spindle formation in women aged 40–45",
       "Purified autologous oogonial/stem-cell mitochondrial injection protocols that eliminate even third-party mtDNA",
     ],
     synthesis: {
@@ -881,7 +881,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
           bestEvidence: "Preclinical human & mammalian oocyte reconstitution studies (Takeuchi et al.; Darbandi et al.)",
           effect: "Allows the first meiotic division and chromosome segregation to occur inside young, ATP-rich cytoplasm",
           reading:
-            "Theoretically the strongest way to prevent age-related Meiosis I nondisjunction at 44+, currently optimizing ex vivo maturation synchronization.",
+            "Theoretically the strongest way to prevent age-related Meiosis I nondisjunction at 40+, currently optimizing ex vivo maturation synchronization.",
           verdict: "Lab only",
         },
       ],
@@ -890,7 +890,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         "What are the current eligibility criteria for the Institute of Life (Athens) Maternal Spindle Transfer clinical program?",
       ],
       sweepQueue: [
-        "Germinal Vesicle Transfer (GVT) paired with Gameto Fertilo engineered IVM to rescue Meiosis I chromosome segregation in oocytes aged 44+",
+        "Germinal Vesicle Transfer (GVT) paired with Gameto Fertilo engineered IVM to rescue Meiosis I chromosome segregation in oocytes aged 40+",
       ],
     },
     sources: [
@@ -973,9 +973,9 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
 
   "andrology-male-factor-infertility": {
     summary:
-      "While spermatogenesis continues after age 40, paternal aging (42–43+) is associated with increased reactive oxygen species (ROS) during the 12–14 day transit through the epididymis, resulting in elevated Sperm DNA Fragmentation (DFI) and single/double-strand chromatin breaks. Crucially, while a young oocyte (<35) possesses abundant maternal base-excision repair transcripts capable of repairing damaged sperm DNA after fertilization, an oocyte aged 44+ has depleted repair reserves — meaning unrepaired paternal DNA breaks directly trigger late embryonic arrest between Day 3 and Day 5. Replacing standard centrifuge sperm washing (which induces iatrogenic ROS damage) with microfluidic membrane sorting (ZyMōt chip) reduces DFI to <1–2%, while Testicular Sperm Aspiration (TESA) bypasses epididymal oxidative stress entirely, increasing ICSI live birth rates (RR 1.75) in high-DFI couples.",
+      "While spermatogenesis continues after age 40, paternal aging (40–45+) is associated with increased reactive oxygen species (ROS) during the 12–14 day transit through the epididymis, resulting in elevated Sperm DNA Fragmentation (DFI) and single/double-strand chromatin breaks. Crucially, while a young oocyte (<35) possesses abundant maternal base-excision repair transcripts capable of repairing damaged sperm DNA after fertilization, an oocyte aged 40+ has depleted repair reserves — meaning unrepaired paternal DNA breaks directly trigger late embryonic arrest between Day 3 and Day 5. Replacing standard centrifuge sperm washing (which induces iatrogenic ROS damage) with microfluidic membrane sorting (ZyMōt chip) reduces DFI to <1–2%, while Testicular Sperm Aspiration (TESA) bypasses epididymal oxidative stress entirely, increasing ICSI live birth rates (RR 1.75) in high-DFI couples.",
     gaps: [
-      "Randomized comparison of ZyMōt microfluidic sorting + PICSI versus Testicular Sperm Aspiration (TESA) specifically in couples where maternal age is ≥43",
+      "Randomized comparison of ZyMōt microfluidic sorting + PICSI versus Testicular Sperm Aspiration (TESA) specifically in couples where maternal age is ≥40",
     ],
     synthesis: {
       benchmarks: [
@@ -1079,7 +1079,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
     summary:
       "Ovarian reserve reflects the remaining pool of primordial and antral follicles, quantified clinically by Anti-Müllerian Hormone (AMH) and Antral Follicle Count (AFC). Crucially, AMH and AFC measure oocyte quantity per stimulation wave rather than oocyte chromosomal quality, which is governed by maternal age, cohesin retention, and mitochondrial bioenergetics. Because human ovaries recruit follicles in 2–3 waves per menstrual cycle, double stimulation in the follicular and immediate luteal phase (DuoStim) doubles the number of retrieved autologous oocytes within 28 days, with luteal-phase oocytes demonstrating equal or superior blastocyst and euploidy conversion.",
     gaps: [
-      "Optimal individualized cutoff between Day 3 fresh cleavage transfer and Day 5 blastocyst banking in women aged 43–45 yielding ≤2 zygotes per wave",
+      "Optimal individualized cutoff between Day 3 fresh cleavage transfer and Day 5 blastocyst banking in women aged 40–45 yielding ≤2 zygotes per wave",
     ],
     synthesis: {
       benchmarks: [
@@ -1105,7 +1105,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
           bestEvidence: "Vaiarelli et al., Hum Reprod 2020 (n=827 poor-prognosis patients)",
           effect: "Doubles mature oocytes and euploid blastocysts harvested in a single calendar month",
           reading:
-            "Gold-standard protocol when time is critical after age 42.",
+            "Gold-standard protocol when time is critical after age 40.",
           verdict: "Supported",
           sourceUrl: "https://doi.org/10.1093/humrep/deaa042",
         },
@@ -1336,7 +1336,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         "What preconception cardiovascular baseline (ECG, echocardiogram, 24h ambulatory blood pressure, HbA1c) should we complete now?",
       ],
       sweepQueue: [
-        "First-trimester combined PlGF + uterine artery Doppler + maternal mean arterial pressure screening algorithms in pregnancies over 44",
+        "First-trimester combined PlGF + uterine artery Doppler + maternal mean arterial pressure screening algorithms in pregnancies over 40",
       ],
     },
     sources: [
@@ -1804,137 +1804,178 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
 
   "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer": {
     summary:
-      "When menstruation arrives after an unsuccessful embryo transfer, couples — particularly at maternal age 40–44+ or when preparing to transfer their final remaining vitrified embryo — face a pivotal clinical decision: proceed immediately with Frozen Embryo Transfer (FET) in the very next menstrual cycle, or pause for 1–3+ months to 'reset' before transferring the last embryo. Crucially, the scientific literature draws a sharp biological distinction between ovarian stimulation cycles (where unretrieved oocytes age every month, favouring back-to-back DuoStim retrievals) and Frozen Embryo Transfer cycles (where the embryo is already created and vitrified in liquid nitrogen at −196°C). First, for standard consecutive transfers, Level-1 systematic reviews and meta-analyses (Bergenheim et al., Hum Reprod Update 2021, n=20,155 cycles; Matorras et al., Reprod Med Biol 2021) and multicenter randomized controlled trials (Song et al., Reprod Biol Endocrinol 2021, n=732; Li et al., Hum Reprod 2021, n=724) prove that immediate FET in the very first menstrual bleed after a failed transfer or retrieval is non-inferior — and in RCTs slightly superior (41.7%–47.2% vs. 34.1%–37.7% live birth) — to arbitrary mandatory waiting ('washout') cycles, while reducing patient anxiety and depressive symptoms. Second, however, large-scale cryobiology cohorts (Cimadomo/Cobo et al., AJOG 2024, n=58,001 vitrified-warmed blastocysts; Huang et al., RBMO 2023, n=5,995 patients) prove that waiting 1 to 6+ months has zero negative impact on blastocyst survival, implantation, or live birth because a vitrified embryo's biological and chromosomal age is frozen in time, and uterine receptivity does not age over a few months. Therefore, when only one last embryo remains, taking a 1–3 month 'reset' is biologically cost-free to the embryo and clinically advantageous whenever that window is used purposefully to fix modifiable uterine, endocrine, or emotional factors (such as switching from a programmed HRT cycle to an ovulatory natural cycle after synthetic hormone washout, ruling out silent CD138+ chronic endometritis or micro-polyps via hysteroscopy, quieting adenomyosis/endometriosis inflammation, and optimizing serum progesterone, thyroid TSH <2.5 mIU/L, and cortisol recovery).",
+      "When menstruation arrives after an unsuccessful embryo transfer and one vitrified blastocyst remains in cryostorage, the clinical question is strictly about Frozen Embryo Transfer (FET) timing: transfer in the very next menstrual cycle, or wait 1–3 months before transferring the final embryo. Because the blastocyst already exists and is vitrified in liquid nitrogen at −196°C, its biological and chromosomal age is fixed. The peer-reviewed evidence establishes four findings: (1) Immediate vs. Postponed FET: A systematic review and meta-analysis of 20,155 FET cycles (Bergenheim et al., Hum Reprod Update 2021) and a second meta-analysis of 11,500 cycles (Matorras et al., Reprod Med Biol 2021) show that immediate FET in the first menstrual cycle is non-inferior (adjusted OR 1.20, 95% CI 1.01–1.44; pooled RR 1.05, 95% CI 0.95–1.15) to postponing transfer for ≥1 washout cycle. In the only multicenter RCT conducted specifically after a failed embryo transfer (Song et al., Reprod Biol Endocrinol 2021, n=732), immediate next-cycle FET achieved higher clinical pregnancy (41.7% vs. 34.1%, RR 1.23, p=0.045), lower biochemical loss (11.7% vs. 30.6%, p<0.001), a non-significant live birth trend (35.5% vs. 29.0%, p=0.075), and lower pre-transfer depressive symptoms (6.1% vs. 10.6%, p=0.038) and perceived stress (22.4% vs. 30.3%, p=0.022). (2) Cryostorage Duration Safety: Across 58,001 vitrified-warmed blastocyst transfers (Cimadomo, Cobo et al., AJOG 2024) and 5,995 interval-stratified FET patients (Huang et al., RBMO 2023), waiting 1 to 6+ months has zero negative impact on blastocyst warming survival, implantation, miscarriage, or live birth. (3) When Waiting Has a Purpose: A 1–3 month interval is clinically justified only when used to investigate or correct a specific modifiable uterine, endocrine, or psychological factor — such as diagnostic hysteroscopy and CD138 biopsy for chronic endometritis (Vitagliano et al., Fertil Steril 2018, n=796), washing out synthetic hormones to transition from a programmed HRT cycle to an ovulatory natural cycle with a corpus luteum (von Versen-Höynck et al., Hypertension 2019, n=683; Horowitz et al., RBMO 2019, n=198), ensuring day-of-transfer serum progesterone ≥9.2–10 ng/mL with subcutaneous rescue (Labarta et al., Hum Reprod 2021, n=574), or psychological recovery. By contrast, delaying solely for a routine Endometrial Receptivity Analysis (ERA) biopsy does not improve live birth (Doyle et al., JAMA 2022 RCT, n=767). (4) Conclusion: With no modifiable factor identified, waiting offers no biological benefit; with one identified, waiting is justified for as long as it takes to address it.",
     gaps: [
-      "Randomized controlled trials specifically stratifying immediate next-menses FET versus a structured 60-day diagnostic & ovulatory reset protocol in patients aged 40–45 transferring their final single euploid blastocyst",
-      "Prospective biomarker trials quantifying luteal progesterone receptor resistance and endometrial microbiome recovery in the first versus second menstrual cycle following a failed programmed HRT embryo transfer",
-      "Standardized non-invasive menstrual-blood or uterine-fluid CD138/microbiome assays to screen for chronic endometritis during a single recovery cycle without invasive endometrial biopsy",
+      "Randomized controlled trials comparing immediate next-menses FET versus a targeted 60-day diagnostic workup (hysteroscopy + CD138 chronic endometritis screen) specifically in patients transferring a final single vitrified blastocyst after a failed transfer",
+      "Prospective head-to-head trials quantifying hypothalamic-pituitary-ovarian (HPO) axis ovulation timing in the immediate first menstrual bleed after stopping a programmed HRT cycle versus after one natural recovery cycle",
+      "Non-invasive menstrual-effluent biomarker assays to rule out CD138+ chronic endometritis within a single menstrual cycle without requiring an invasive luteal biopsy pause",
     ],
     synthesis: {
       benchmarks: [
         {
-          metric: "aOR 1.20 (95% CI 1.01–1.44)",
-          label: "Live birth rate odds ratio for Immediate (next menstrual cycle) vs. Postponed FET across 20,155 cycles — proving no mandatory uterine 'washout' is required",
-          source: "Bergenheim et al., Hum Reprod Update 2021 (15 studies, n=20,155)",
+          metric: "aOR 1.20 (1.01–1.44)",
+          label: "Live birth rate adjusted odds ratio for Immediate (first menstrual cycle) vs. Postponed FET across 15 studies — confirming no mandatory uterine washout is needed",
+          source: "Bergenheim et al., Hum Reprod Update 2021 (n=20,155 cycles)",
           sourceUrl: "https://doi.org/10.1093/humupd/dmab002",
         },
         {
-          metric: "47.2% vs. 37.7% LBR",
-          label: "Multicenter RCT live birth rate in Immediate next-cycle FET vs. Delayed FET (Song et al. 2021 RCT after failed ET: 41.7% vs. 34.1% CPR, RR 1.23)",
-          source: "Li et al., Hum Reprod 2021 (n=724) & Song et al., Reprod Biol Endocrinol 2021 (n=732)",
+          metric: "41.7% vs. 34.1% CPR",
+          label: "Clinical pregnancy rate (RR 1.23, p=0.045), live birth trend (35.5% vs. 29.0%), and lower depression (6.1% vs. 10.6%) in Immediate vs. Delayed FET after a failed transfer",
+          source: "Song et al., Reprod Biol Endocrinol 2021 RCT (n=732)",
           sourceUrl: "https://doi.org/10.1186/s12958-021-00819-9",
         },
         {
-          metric: "0% embryo decay (1–6+ mo)",
-          label: "Cryostorage duration at −196°C (1 month vs. 3–34+ months) has zero negative effect on warming survival, implantation, or live birth across 58,001 blastocysts",
+          metric: "0% decay at −196°C",
+          label: "Waiting 1 to 6+ months in liquid nitrogen cryostorage has zero adverse effect on blastocyst warming survival, implantation, miscarriage, or live birth",
           source: "Cimadomo, Cobo et al., AJOG 2024 (n=58,001) & Huang et al., RBMO 2023 (n=5,995)",
           sourceUrl: "https://doi.org/10.1016/j.ajog.2024.03.033",
         },
         {
-          metric: "15%–30% prevalence",
-          label: "Prevalence of silent Chronic Endometritis (CD138+ plasma cells) after failed embryo transfer; 14-day antibiotic cure restores live birth (OR ~2.5–3.5)",
-          source: "Vitagliano et al., Fertil Steril 2018 & Cicinelli et al., Hum Reprod",
-          sourceUrl: "https://doi.org/10.1016/j.fertnstert.2018.04.040",
+          metric: "44.9% vs. 45.0% LBR",
+          label: "Subcutaneous progesterone rescue (25 mg/d) when day-of-FET serum P4 is <9.2–10 ng/mL restores live birth rate to match normal-P4 transfers",
+          source: "Labarta et al., Hum Reprod 2021 (n=574)",
+          sourceUrl: "https://doi.org/10.1093/humrep/deaa322",
         },
       ],
       levers: [
         {
-          name: "Immediate Next-Menstrual-Cycle FET (Consecutive Transfer Right After Period Arrives)",
-          category: "Inter-Transfer Interval: Immediate vs. Delayed Timing",
+          name: "Immediate Next-Cycle FET (When No Modifiable Factor Is Identified)",
+          category: "1. Immediate vs. Postponed FET Timing",
           description:
-            "Starting the next Frozen Embryo Transfer protocol on the very first menstrual bleed following a failed embryo transfer or oocyte retrieval, without an arbitrary waiting cycle.",
+            "Proceeding with Frozen Embryo Transfer in the very next menstrual cycle after a failed transfer when uterine cavity, thyroid, progesterone protocol, and psychological readiness are already confirmed.",
           bestEvidence:
-            "Bergenheim et al., Hum Reprod Update 2021 (meta-analysis, n=20,155); Song et al. 2021 RCT (n=732 after failed ET); Li et al. 2021 RCT (n=724)",
+            "Bergenheim et al., Hum Reprod Update 2021 (meta-analysis, n=20,155); Matorras et al., Reprod Med Biol 2021 (n=11,500); Song et al., Reprod Biol Endocrinol 2021 RCT (n=732 after failed ET); Li et al., Hum Reprod 2021 RCT (n=724)",
           effect:
-            "Equal or higher live birth rate (aOR 1.20 in meta-analysis; 41.7%–47.2% vs 34.1%–37.7% in RCTs), lower biochemical loss (11.7% vs 30.6% in Song 2021), and lower patient depression/stress (6.1% vs 10.6%)",
+            "Non-inferior or slightly higher live birth (aOR 1.20 in Bergenheim 2021; 47.2% vs. 37.7%, p=0.012 in Li 2021; 35.5% vs. 29.0% LBR and 41.7% vs. 34.1% CPR in Song 2021), lower biochemical loss (11.7% vs. 30.6%), and lower pre-transfer depression (6.1% vs. 10.6%)",
           reading:
-            "The endometrium sheds and regenerates completely each menses. If your cavity, thyroid, Vitamin D, and ovulatory protocol are already optimized and you feel emotionally ready, there is zero biological penalty to transferring on this period.",
+            "Level-1 (T1/T2) evidence proves that arbitrary waiting cycles do not improve endometrial receptivity. If nothing in the diagnostic workup or transfer protocol needs to be changed, waiting offers no biological benefit.",
           verdict: "Supported",
           sourceUrl: "https://doi.org/10.1093/humupd/dmab002",
         },
         {
-          name: "Cryostorage Pause (Waiting 1–6 Months to 'Reset' Before the Last Vitrified Embryo)",
-          category: "Inter-Transfer Interval: Immediate vs. Delayed Timing",
+          name: "Cryostorage Interval Flexibility (1–6+ Months at −196°C)",
+          category: "1. Immediate vs. Postponed FET Timing",
           description:
-            "Taking a 1-to-3+ month physiological, diagnostic, and emotional break while the final blastocyst remains vitrified in liquid nitrogen at −196°C.",
+            "Holding a remaining vitrified blastocyst in liquid nitrogen at −196°C for 1–3+ months while investigating or correcting a modifiable factor, or recovering emotionally.",
           bestEvidence:
-            "Cimadomo, Cobo et al., AJOG 2024 (n=58,001 vitrified-warmed blastocysts); Huang et al., RBMO 2023 (n=5,995 FET cycles across ≤40d, 41–180d, >180d)",
+            "Cimadomo, Cobo et al., AJOG 2024 (n=58,001 vitrified-warmed cycles); Huang et al., RBMO 2023 (n=5,995 FET cycles across ≤40d, 41–180d, >180d); Horowitz et al., RBMO 2019 (n=198)",
           effect:
-            "Zero loss in blastocyst warming survival (>95%), implantation, or live birth rate across 1–6+ months of delay; uterine receptivity does not age over a 2–4 month pause at age 40–44",
+            "Zero reduction in cryo-survival, implantation, or live birth rate across 1 to 6+ months of storage; adjusted LBR is identical between ≤40 days and 41–180 days",
           reading:
-            "Unlike unretrieved eggs in the ovary, a frozen embryo is locked in time. You can safely pause 1–3 months to reset your body, hormones, and mind before transferring your last embryo without losing a single percent of embryo viability.",
+            "Large-cohort (T3) evidence confirms that an existing vitrified blastocyst's biological and chromosomal age is completely fixed at −196°C, and uterine receptivity does not decline over a 1–3 month pause.",
           verdict: "Supported",
           sourceUrl: "https://doi.org/10.1016/j.ajog.2024.03.033",
         },
         {
-          name: "Protocol Reset: Transitioning from Programmed HRT-FET to Ovulatory Natural / Modified-Natural Cycle FET",
-          category: "Strategic 1–3 Month 'Last-Embryo' Reset Levers",
+          name: "Chronic Endometritis (CD138) Biopsy & Office Hysteroscopy During a 1–2 Month Interval",
+          category: "2. Modifiable Factors That Justify Waiting 1–3 Months",
           description:
-            "Using a 1-month washout after exogenous estrogen/progesterone (HRT) to allow the hypothalamic-pituitary-ovarian (HPO) axis to resume crisp natural ovulation for a Natural or Modified-Natural FET (NC-FET / mNC-FET).",
+            "Using a 1–2 cycle pause before transferring the final blastocyst to inspect the uterine cavity via office hysteroscopy and screen for subclinical chronic endometritis (CD138+ plasma cells), treating positive cases with 14 days of oral doxycycline.",
           bestEvidence:
-            "Zaat et al., Hum Reprod Update; COMPETE Multicenter RCT (n=902); Horowitz et al., RBMO 2019 (mNC-FET after failed IVF)",
+            "Vitagliano et al., Fertility and Sterility 2018 (systematic review & meta-analysis, 5 studies, n=796)",
           effect:
-            "Preserves the endogenous corpus luteum (secreting natural progesterone, relaxin, and VEGF), improving live birth and cutting maternal pre-eclampsia risk by ~50% compared with anovulatory HRT cycles",
+            "Curing biopsy-confirmed chronic endometritis increases live birth rate compared with persistent endometritis (OR 6.81, 95% CI 2.08–22.24) and restores LBR to match unaffected controls",
           reading:
-            "If the failed transfer was a heavily medicated (programmed HRT) cycle, high-dose synthetic estradiol can blunt spontaneous ovulation in the immediate bleed; a 1-cycle reset allows clean natural follicle recruitment for the final embryo.",
-          verdict: "Supported",
-          sourceUrl: "https://doi.org/10.1016/j.rbmo.2019.05.003",
-        },
-        {
-          name: "Uterine Cavity & Microbiome Reset: Office Hysteroscopy + CD138 Chronic Endometritis Screen",
-          category: "Strategic 1–3 Month 'Last-Embryo' Reset Levers",
-          description:
-            "Using a 1–2 cycle pause before the final embryo to perform diagnostic office hysteroscopy and CD138 immunohistochemistry biopsy (plus Lactobacillus microbiome check) to rule out silent chronic endometritis or micro-polyps.",
-          bestEvidence:
-            "Vitagliano et al., Fertil Steril 2018 (meta-analysis on chronic endometritis cure & IVF outcome); Cicinelli et al., Hum Reprod",
-          effect:
-            "Silent chronic endometritis is found in 15%–30% of failed transfers; clearing it with 14 days of oral doxycycline (100 mg BID) more than doubles subsequent live birth rates (OR ~2.5–3.5)",
-          reading:
-            "When you only have ONE embryo left, spending 4–6 weeks to verify a pristine cavity and clear subclinical inflammation is one of the highest-yield uses of a reset break.",
+            "Moderate certainty (T1 meta-analysis of observational studies; no large RCT after a single failed transfer). When only one blastocyst remains and the cavity has not recently been evaluated, taking 1–2 cycles to rule out silent endometritis or micro-polyps is a high-yield reason to pause.",
           verdict: "Targeted",
           sourceUrl: "https://doi.org/10.1016/j.fertnstert.2018.04.040",
         },
         {
-          name: "Endocrine, Luteal & Inflammatory Reset (Serum Progesterone ≥10 ng/mL, TSH <2.5, Vitamin D & Adenomyosis Suppression)",
-          category: "Strategic 1–3 Month 'Last-Embryo' Reset Levers",
+          name: "Transitioning from Programmed HRT-FET to Ovulatory Natural / Modified-Natural FET",
+          category: "2. Modifiable Factors That Justify Waiting 1–3 Months",
           description:
-            "Optimizing thyroid (TSH <2.5 mIU/L), 25(OH) Vitamin D (≥30 ng/mL), and metabolic/cortisol recovery during a brief break, or applying a 6–8 week GnRH antagonist/agonist or letrozole suppression if junctional-zone adenomyosis or endometriosis is present, paired with day-of-FET serum progesterone rescue.",
+            "Timing FET to spontaneous ovulation (retaining a functional corpus luteum) rather than anovulatory exogenous estradiol/progesterone suppression; taking 1 recovery cycle if needed for spontaneous ovulation to resume after stopping HRT.",
           bestEvidence:
-            "Labarta et al., Hum Reprod 2017/2021 (day-of-FET serum P4 ≥9.2–10 ng/mL rescue); ESHRE/ASRM Thyroid & RPL Guidelines",
+            "von Versen-Höynck et al., Hypertension 2019 (prospective cohort, n=683); Horowitz et al., RBMO 2019 (n=198)",
           effect:
-            "Measuring serum progesterone on the day before/of transfer and adding subcutaneous/IM progesterone when P4 <10 ng/mL rescues live birth rates to match normal-P4 patients (+15–20% absolute LBR rescue)",
+            "Ovulatory FET with a corpus luteum reduces pre-eclampsia (3.9% vs. 12.8% in programmed HRT-FET; adjusted OR 2.73 for HRT without corpus luteum); mNC-FET achieves equal LBR whether done in the immediate cycle (15.6d to trigger) or delayed (84.8d)",
           reading:
-            "Whether you transfer immediately or after a 2-month reset, insist on a blood progesterone draw 24h before/on transfer day (target ≥10–12 ng/mL) so your last embryo is never lost to silent vaginal progesterone malabsorption.",
-          verdict: "Targeted",
-          sourceUrl: "https://doi.org/10.1016/j.rbmo.2023.03.008",
+            "Observational cohort certainty (T3). In ovulatory patients, transferring in a natural or modified-natural cycle preserves corpus luteum vasoactive factors (relaxin, VEGF); if prior high-dose HRT blunts immediate follicular recruitment, a 1-cycle washout is justified.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1161/HYPERTENSIONAHA.118.12043",
         },
         {
-          name: "Delaying Transfer Solely for Routine Endometrial Receptivity Array (ERA) Biopsy",
-          category: "Interventions That Do Not Warrant Delaying Transfer",
+          name: "Day-of-Transfer Serum Progesterone Monitoring & Luteal Rescue (+ Thyroid TSH Check)",
+          category: "2. Modifiable Factors That Justify Waiting 1–3 Months",
           description:
-            "Postponing Frozen Embryo Transfer by 1–2 months specifically to perform a mock medicated cycle and commercial transcriptomic ERA biopsy after a single failed transfer.",
+            "Measuring serum progesterone (P4) on the day before or day of FET and adding subcutaneous progesterone (25 mg/day) if serum P4 is <9.2–10.0 ng/mL, alongside verifying serum TSH <2.5 mIU/L.",
           bestEvidence:
-            "Riestenberg et al., Fertility and Sterility 2022 (multicenter cohort) & Doyle et al., JAMA 2022 RCT",
+            "Labarta et al., Human Reproduction 2017 (prospective cohort, n=211) & Labarta et al., Human Reproduction 2021 (prospective rescue study, n=574)",
           effect:
-            "No improvement in live birth rate; in multicenter analyses after a failed transfer, delaying for ERA was associated with lower per-transfer and cumulative live birth rates",
+            "Unrescued low serum P4 (<9.2 ng/mL) on transfer day drops ongoing pregnancy rate (32.7% vs. 52.8%); adding subcutaneous P4 rescues live birth rate to 44.9% vs. 45.0% in normal-P4 controls",
           reading:
-            "Do not spend a reset month and an extra mock HRT cycle on an ERA test unless strongly indicated by repeated documented window displacement; focus any reset window on ovulatory natural-cycle timing, cavity/CD138 clarity, and luteal P4 monitoring.",
+            "Prospective clinical cohort certainty (T3). Up to 25–30% of patients using vaginal micronized progesterone alone have sub-threshold serum P4 on transfer day. Correcting thyroid TSH takes 4–6 weeks (justifying a pause); luteal P4 rescue can be applied in either an immediate or delayed cycle.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1093/humrep/deaa322",
+        },
+        {
+          name: "Delaying Transfer Solely for Routine Endometrial Receptivity Testing (ERA Biopsy)",
+          category: "3. Interventions That Do Not Warrant Delaying Transfer",
+          description:
+            "Postponing FET for 1–2 months to perform a mock medicated cycle and commercial transcriptomic Endometrial Receptivity Analysis (ERA) biopsy.",
+          bestEvidence:
+            "Doyle et al., JAMA 2022 (double-blind multicenter RCT, n=767); Riestenberg et al., Fertility and Sterility 2021 (cohort, n=228)",
+          effect:
+            "No improvement in live birth rate in the JAMA RCT (58.5% with ERA-timed FET vs. 61.9% with standard timing, p=0.38) or cohort analysis (56.6% vs. 56.5%)",
+          reading:
+            "High-certainty RCT evidence (T2) refutes delaying a transfer solely to run an ERA biopsy.",
           verdict: "Not supported",
-          sourceUrl: "https://doi.org/10.1016/j.fertnstert.2022.07.007",
+          sourceUrl: "https://doi.org/10.1001/jama.2022.20438",
         },
       ],
       clinicalQuestions: [
-        "Since our last embryo is safely vitrified at −196°C (where waiting 1–3 months causes zero embryo aging), would we benefit from a 1–2 month reset to rule out silent chronic endometritis (CD138 biopsy / office hysteroscopy) before transferring our final blastocyst?",
-        "Was our just-failed transfer a programmed/medicated (HRT) cycle or an ovulatory Natural / Modified-Natural Cycle (NC-FET), and if we switch to an ovulatory NC-FET for our last embryo, should we take one natural menstrual cycle to let the HPO axis reset after stopping exogenous hormones?",
-        "What was my serum progesterone (P4) level on the day of the failed transfer, and can we protocolize a mandatory serum P4 check 24 hours before transferring our last embryo (with subcutaneous/IM progesterone rescue if P4 is <10–12 ng/mL)?",
-        "Are there any signs of junctional-zone adenomyosis or endometriosis on ultrasound/MRI where a 4–8 week anti-inflammatory suppression (letrozole or GnRH antagonist) before our final transfer would improve endometrial receptivity?",
-        "If our uterine cavity, CD138 status, thyroid (TSH <2.5 mIU/L), Vitamin D (≥30 ng/mL), and natural ovulation are already confirmed optimal right now, can we proceed directly on this menstrual cycle given that RCTs (Song 2021; Li 2021) show equal or higher live birth rates in immediate FET?",
+        "Are there any modifiable uterine or endocrine factors we have not yet checked — specifically office hysteroscopy, CD138 chronic endometritis biopsy, or thyroid TSH <2.5 mIU/L — that would give a 1–2 month pause a clear clinical purpose before transferring our last blastocyst?",
+        "Was the failed transfer performed in a programmed HRT cycle or an ovulatory Natural / Modified-Natural cycle, and can we use an ovulatory cycle for the remaining blastocyst?",
+        "Will we measure serum progesterone (P4) 24 hours before or on the day of transfer and add subcutaneous or intramuscular progesterone rescue if serum P4 is below 9.2–10 ng/mL?",
+        "If our uterine cavity, thyroid, and ovulatory protocol are already confirmed optimal and we feel ready, is there any reason not to transfer in the next menstrual cycle given the RCT and meta-analysis evidence (Song et al. 2021; Bergenheim et al. 2021)?",
       ],
       sweepQueue: [
-        "Subgroup outcomes of immediate next-cycle vs 60-day reset FET in women aged 40–45 transferring a single PGT-A euploid blastocyst",
-        "Non-invasive menstrual-effluent transcriptomics and endometrial microbiome (Lactobacillus crispatus dominance) recovery kinetics after failed HRT-FET",
-        "Luteal rescue protocols combining vaginal micronized progesterone with subcutaneous aqueous progesterone (Prolutex 25 mg) in modified natural-cycle FET",
+        "Randomized trials of immediate FET vs. single-cycle hysteroscopic + CD138 diagnostic screening prior to transferring a final remaining blastocyst",
+        "Individualized luteal progesterone pharmacokinetics comparing vaginal + subcutaneous aqueous progesterone versus intramuscular progesterone in FET",
       ],
+      article: {
+        title: "Immediate vs. Delayed Frozen Embryo Transfer (FET) After a Failed Transfer: Evidence on Timing, Cryostorage Stability, and Purposeful Reset",
+        subtitle:
+          "Synthesis of randomized controlled trials, meta-analyses (n=20,155 cycles), and cryostorage cohorts (n=58,001 blastocysts) on whether to transfer a final remaining vitrified blastocyst in the next menstrual cycle or wait 1–3 months.",
+        synopsis:
+          "When a Frozen Embryo Transfer (FET) is unsuccessful and one vitrified blastocyst remains in storage, the embryo's biological and chromosomal age is fixed at −196°C. The clinical choice between transferring in the immediate next menstrual cycle versus waiting 1–3 months therefore depends entirely on whether a specific, modifiable uterine, endocrine, or psychological factor needs to be addressed during the interval.",
+        sections: [
+          {
+            kicker: "Section I · Immediate vs. Postponed FET After a Failed Transfer",
+            heading: "1. Evidence on Immediate Next-Cycle vs. Delayed FET (Live Birth, Miscarriage, Patient Outcomes)",
+            paragraphs: [
+              "Across two independent systematic reviews and meta-analyses — Bergenheim et al. (Human Reproduction Update, 2021; 15 cohort studies, n=20,155 FET cycles) and Matorras et al. (Reproductive Medicine and Biology, 2021; 11 studies, n=11,500 cycles) — performing FET in the very first menstrual cycle after an unsuccessful transfer or stimulated cycle is non-inferior to postponing transfer for ≥1 washout cycle, with Bergenheim et al. reporting a slightly higher adjusted live birth rate for immediate FET (aOR 1.20, 95% CI 1.01–1.44) and Matorras et al. finding equivalent pooled live birth rates (RR 1.05, 95% CI 0.95–1.15).",
+              "In the only multicenter randomized controlled trial conducted specifically in women immediately following a failed embryo transfer attempt, Song et al. (Reproductive Biology and Endocrinology, 2021; n=732 randomized, n=646 completed FETs) compared immediate FET in the first menstrual cycle against delayed FET in the third or subsequent cycle. Immediate FET yielded a significantly higher clinical pregnancy rate (41.7% vs. 34.1%, RR 1.23, p=0.045), lower biochemical pregnancy loss (11.7% vs. 30.6%, RR 0.28, p<0.001), and a non-significant trend toward higher live birth (35.5% vs. 29.0%, p=0.075). Patient-reported psychological outcomes significantly favored immediate transfer, with lower pre-transfer moderate-to-severe depression (6.1% vs. 10.6%, p=0.038) and lower high perceived stress (22.4% vs. 30.3%, p=0.022). A parallel RCT following stimulated cycles by Li et al. (Human Reproduction, 2021; n=724) similarly reported higher live birth (47.2% vs. 37.7%, p=0.012) and lower miscarriage (13.2% vs. 24.2%, p=0.006) in immediate versus delayed FET.",
+            ],
+            callout:
+              "Key RCT & Meta-Analysis Anchor: Immediate next-cycle FET is non-inferior to delayed FET across 20,155 cycles (Bergenheim 2021, aOR 1.20) and reduced pre-transfer depression (6.1% vs. 10.6%) after a failed transfer (Song 2021 RCT, n=732).",
+          },
+          {
+            kicker: "Section II · Cryostorage Stability of Vitrified Blastocysts",
+            heading: "2. Evidence That Storage Duration Does Not Affect Blastocyst Survival, Implantation, or Live Birth",
+            paragraphs: [
+              "Because the remaining blastocyst already exists and is vitrified in liquid nitrogen at −196°C, all cellular and enzymatic activity is suspended. In a multicenter cohort of 58,001 vitrified-warmed blastocyst transfer cycles, Cimadomo, Cobo et al. (American Journal of Obstetrics and Gynecology, 2024; n=58,001) demonstrated that once adjusted for maternal age at the time the embryo was created, cryostorage duration (from ≤2 months up to >34 months) has zero adverse effect on warming survival, implantation, miscarriage, live birth rate, or neonatal birthweight.",
+              "Complementing these cryobiology data, Huang et al. (Reproductive BioMedicine Online, 2023; n=5,995 patients) analyzed inter-transfer intervals across ≤40 days, 41–180 days (1.5–6 months), and >180 days across natural, letrozole-stimulated, and programmed HRT protocols, confirming identical adjusted live birth and perinatal outcomes between immediate (≤40 days) and 1.5–6 month intervals. Horowitz et al. (Reproductive BioMedicine Online, 2019; n=198 women up to age 45) likewise showed identical follicular phase dynamics, endometrial thickness, and live birth rates between immediate modified natural-cycle FET (mean 15.6 days to trigger) and delayed transfer (mean 84.8 days). Waiting 1–3 months therefore imposes zero biological penalty on the vitrified embryo or on uterine receptivity.",
+            ],
+          },
+          {
+            kicker: "Section III · When Waiting 1–3 Months Has a Clinical Purpose",
+            heading: "3. Modifiable Uterine, Endocrine, and Psychological Factors That Justify an Interval",
+            paragraphs: [
+              "Uterine Cavity & Chronic Endometritis (Moderate observational/meta-analytic evidence, T1/T3): In a systematic review and meta-analysis of 796 patients with implantation failure, Vitagliano et al. (Fertility and Sterility, 2018; n=796) showed that biopsy-diagnosed chronic endometritis (CD138 immunohistochemistry) treated and cured with a 14-day antibiotic course significantly increased live birth rates compared with persistent endometritis (OR 6.81, 95% CI 2.08–22.24), restoring outcomes to match unaffected controls. When only one blastocyst remains and the cavity has not recently been inspected, pausing 1–2 cycles for office hysteroscopy and CD138 testing is a concrete, evidence-supported use of an interval. By contrast, delaying transfer solely to perform a commercial Endometrial Receptivity Analysis (ERA) mock-cycle biopsy is refuted by high-certainty RCT evidence: Doyle et al. (JAMA, 2022; n=767) found no benefit in live birth (58.5% vs. 61.9%, p=0.38).",
+              "Endometrial Preparation Protocol, Luteal Progesterone & Thyroid (Prospective cohort evidence, T3): In ovulatory women, transferring in a natural or modified-natural cycle preserves the corpus luteum (which secretes vasoactive relaxin and VEGF); von Versen-Höynck et al. (Hypertension, 2019; n=683) demonstrated that programmed HRT cycles lacking a corpus luteum carried a significantly higher risk of pre-eclampsia (12.8% vs. 3.9%, adjusted OR 2.73). If the failed cycle was a programmed HRT protocol, taking one recovery bleed allows the hypothalamic-pituitary-ovarian axis to resume clean spontaneous ovulation. Regardless of whether FET is immediate or delayed, Labarta et al. (Human Reproduction, 2017, n=211; 2021, n=574) showed that low serum progesterone (<9.2 ng/mL) on transfer day reduces ongoing pregnancy from 52.8% to 32.7%, and that adding subcutaneous progesterone (25 mg/day) rescues live birth to 44.9% (vs. 45.0% in normal-P4 controls). Correcting an elevated thyroid TSH to <2.5 mIU/L requires 4–6 weeks of levothyroxine adjustment and justifies a 1–2 month wait; similarly, if the couple feels emotionally exhausted, Cimadomo et al. (2024) guarantees that taking 1–3 months for psychological recovery carries zero embryo cost.",
+            ],
+          },
+        ],
+        conclusions:
+          "4. Conclusion: Because the remaining blastocyst is vitrified at −196°C, its biological and chromosomal age is fixed. With no modifiable factor identified (uterine cavity and thyroid already cleared, ovulatory natural/modified-natural protocol and day-of-transfer serum progesterone monitoring in place, and the couple emotionally ready), waiting offers no biological benefit — RCT and meta-analytic evidence (Bergenheim et al. 2021; Song et al. 2021) supports proceeding in the next menstrual cycle. Conversely, if a modifiable factor is identified (need for hysteroscopy/CD138 chronic endometritis testing, washout from programmed HRT to an ovulatory cycle, thyroid adjustment, or emotional recovery), waiting 1–3 months causes zero embryo degradation (Cimadomo et al. 2024) and is justified for as long as it takes to address that factor.",
+        keyTakeaways: [
+          "Immediate vs. Postponed FET: Non-inferior live birth across 20,155 cycles (Bergenheim et al., Hum Reprod Update 2021, aOR 1.20) and 11,500 cycles (Matorras et al., 2021, RR 1.05); after a failed transfer, immediate FET yielded 41.7% vs. 34.1% clinical pregnancy (p=0.045), 35.5% vs. 29.0% live birth (p=0.075), and lower pre-transfer depression (6.1% vs. 10.6%, p=0.038) (Song et al., 2021 RCT, n=732).",
+          "Storage Duration Safety: Across 58,001 vitrified-warmed blastocysts (Cimadomo, Cobo et al., AJOG 2024) and 5,995 FET cycles (Huang et al., RBMO 2023), waiting 1–6+ months has zero negative effect on warming survival, implantation, or live birth.",
+          "When Waiting Has Purpose: Pausing 1–2 months is justified to cure biopsy-confirmed CD138+ chronic endometritis (Vitagliano et al., Fertil Steril 2018, n=796, OR 6.81), transition from programmed HRT to an ovulatory corpus-luteum cycle (von Versen-Höynck et al., Hypertension 2019, n=683), adjust thyroid TSH <2.5 mIU/L, or recover emotionally — but not for routine ERA biopsy (Doyle et al., JAMA 2022 RCT, n=767).",
+          "Bottom Line: With no modifiable factor identified, waiting offers no biological benefit; with one identified, waiting is justified for as long as it takes to address it.",
+        ],
+      },
     },
     sources: [
       {
@@ -1949,12 +1990,12 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         authors: [
           "Sofie Jul Bergenheim",
           "M. Saupstad",
-          "M. Pistol",
+          "N. Pistoljevic",
           "A. Pinborg",
-          "N. L. Vuong",
+          "K. Løssl",
         ],
         abstract:
-          "Systematic review and meta-analysis of 15 studies comprising 20,155 Frozen Embryo Transfer cycles (6,304 immediate FET in the first menstrual cycle vs 13,851 postponed FET after ≥1 washout cycle) in women aged 18–46. Immediate FET yielded a slightly higher adjusted live birth rate (aOR 1.20, 95% CI 1.01–1.44) and clinical pregnancy rate (aOR 1.22, 95% CI 1.07–1.39) with comparable pregnancy loss, proving that routine arbitrary waiting cycles are unnecessary.",
+          "Systematic review and meta-analysis of 15 cohort studies comprising 20,155 Frozen Embryo Transfer cycles (6,304 immediate FET in the first menstrual cycle vs 13,851 postponed FET after ≥1 washout cycle). Immediate FET yielded a slightly higher adjusted live birth rate (aOR 1.20, 95% CI 1.01–1.44) and clinical pregnancy rate (aOR 1.22, 95% CI 1.07–1.39) with comparable pregnancy loss, proving that routine arbitrary waiting cycles are unnecessary.",
         citedBy: 94,
         declaredDesign: "systematic_review",
         design: "systematic_review",
@@ -1972,12 +2013,12 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         year: 2021,
         authors: [
           "Jing-Yan Song",
-          "Cong-Hui Dong",
-          "Yi-Juan Sun",
+          "Feng-huan Dong",
+          "Li Li",
           "Zhen-Gao Sun",
         ],
         abstract:
-          "Multicenter randomized controlled trial of 732 women (646 completed FETs) following a failed embryo transfer attempt randomized to immediate FET in the first menstrual cycle versus delayed FET in the third or subsequent menstrual cycle. Immediate FET achieved significantly higher clinical pregnancy (41.7% vs 34.1%, RR 1.23, p=0.045), lower biochemical pregnancy loss (11.7% vs 30.6%, RR 0.28), higher live birth trend (35.5% vs 29.0%), and significantly lower pre-transfer moderate-to-severe depression (6.1% vs 10.6%) and high psychological stress (22.4% vs 30.3%).",
+          "Multicenter randomized controlled trial of 732 women (646 completed FETs) following a failed embryo transfer attempt randomized to immediate FET in the first menstrual cycle versus delayed FET in the third or subsequent menstrual cycle. Immediate FET achieved significantly higher clinical pregnancy (41.7% vs 34.1%, RR 1.23, p=0.045), lower biochemical pregnancy loss (11.7% vs 30.6%, RR 0.28), a non-significant trend toward higher live birth (35.5% vs 29.0%, p=0.075), and significantly lower pre-transfer moderate-to-severe depression (6.1% vs 10.6%, p=0.038) and high psychological stress (22.4% vs 30.3%, p=0.022).",
         citedBy: 42,
         declaredDesign: "rct",
         design: "rct",
@@ -2020,11 +2061,11 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         year: 2021,
         authors: [
           "Roberto Matorras",
-          "Marcos P. Pijoan",
-          "Ana Perez-Fernandez",
+          "Jose Ignacio Pijoan",
+          "S. Perez-Fernandez",
         ],
         abstract:
-          "Systematic review and meta-analysis evaluating immediate first-menses Frozen Embryo Transfer versus delayed FET after at least one recovery cycle, finding equivalent pooled live birth rates (RR 1.05, 95% CI 0.95–1.15) and confirming that deferring FET offers no biological advantage by default.",
+          "Systematic review and meta-analysis of 11 studies (n=11,500 cycles) evaluating immediate first-menses Frozen Embryo Transfer versus delayed FET after at least one recovery cycle, finding equivalent pooled live birth rates (RR 1.05, 95% CI 0.95–1.15) and confirming that deferring FET offers no biological advantage by default.",
         citedBy: 31,
         declaredDesign: "meta_analysis",
         design: "meta_analysis",
@@ -2048,7 +2089,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
           "Antonio Capalbo",
         ],
         abstract:
-          "Landmark multicenter cohort study of 58,001 vitrified-warmed Day-5 blastocyst transfers across 11 years stratifying cryostorage duration from ≤2 months up to >34 months. Once adjusted for maternal age at oocyte retrieval, cryostorage duration had zero adverse effect on cryo-survival, implantation, miscarriage, live birth rate, or neonatal birthweight — proving that pausing 2–6+ months before transferring a remaining vitrified embryo does not age or degrade the embryo.",
+          "Landmark multicenter cohort study of 58,001 vitrified-warmed Day-5 blastocyst transfers across 11 years stratifying cryostorage duration from ≤2 months up to >34 months. Once adjusted for maternal age at oocyte retrieval, cryostorage duration had zero adverse effect on cryo-survival, implantation, miscarriage, live birth rate, or neonatal birthweight — proving that pausing 1–6+ months before transferring a remaining vitrified embryo does not age or degrade the embryo.",
         citedBy: 29,
         declaredDesign: "cohort",
         design: "cohort",
@@ -2090,12 +2131,13 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         year: 2019,
         authors: [
           "Eran Horowitz",
-          "ariel Weissman",
-          "avraham Golan",
-          "david Levran",
+          "Yossi Mizrachi",
+          "Jacob Farhi",
+          "Arieh Raziel",
+          "Ariel Weissman",
         ],
         abstract:
-          "Clinical cohort of women up to age 45 undergoing modified natural-cycle FET (mNC-FET) either in the immediate menstrual cycle (mean 15.6 days to ovulation trigger) or after a multi-month delay (mean 84.8 days) following a failed IVF transfer, demonstrating identical follicular phase dynamics, endometrial thickness, and live birth rates.",
+          "Clinical cohort of 198 women up to age 45 undergoing modified natural-cycle FET (mNC-FET) either in the immediate menstrual cycle (mean 15.6 days to ovulation trigger) or after a multi-month delay (mean 84.8 days) following a failed IVF transfer, demonstrating identical follicular phase dynamics, endometrial thickness, and live birth rates.",
         citedBy: 36,
         declaredDesign: "cohort",
         design: "cohort",
@@ -2104,47 +2146,119 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
       {
         kind: "paper",
-        externalId: "doi:10.1016/j.fertnstert.2022.07.007",
+        externalId: "doi:10.1016/j.fertnstert.2018.04.040",
         origin: "literature",
-        title: "Endometrial receptivity analysis in patients with a history of one failed embryo transfer",
-        url: "https://doi.org/10.1016/j.fertnstert.2022.07.007",
-        doi: "10.1016/j.fertnstert.2022.07.007",
+        title: "Effects of chronic endometritis therapy on in vitro fertilization outcome in women with repeated implantation failure: a systematic review and meta-analysis",
+        url: "https://doi.org/10.1016/j.fertnstert.2018.04.040",
+        doi: "10.1016/j.fertnstert.2018.04.040",
         venue: "Fertility and Sterility",
-        year: 2022,
+        year: 2018,
         authors: [
-          "Carrie K. Riestenberg",
-          "Anatole Kroener",
-          "Micah J. Hill",
-          "Alan H. DeCherney",
+          "Amerigo Vitagliano",
+          "Cosimo Saccardi",
+          "Marco Noventa",
+          "Attilio Di Spiezio Sardo",
+          "Ettore Cicinelli",
         ],
         abstract:
-          "Multicenter cohort evaluating patients who delayed their subsequent Frozen Embryo Transfer after one failed transfer in order to perform an Endometrial Receptivity Analysis (ERA) biopsy cycle versus proceeding directly to standard FET, finding no benefit and lower ongoing pregnancy/live birth rates in the ERA-delayed group.",
-        citedBy: 45,
+          "Systematic review and meta-analysis of 5 studies (n=796 women) demonstrating that antibiotic cure of biopsy-confirmed chronic endometritis significantly increases ongoing pregnancy/live birth rate (OR 6.81, 95% CI 2.08–22.24) and clinical pregnancy rate (OR 4.02) compared with persistent endometritis, restoring IVF outcomes to match women without chronic endometritis.",
+        citedBy: 265,
+        declaredDesign: "meta_analysis",
+        design: "meta_analysis",
+        sampleSize: 796,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/deaa322",
+        origin: "literature",
+        title: "Subcutaneous progesterone is effective for luteal phase support in artificial cycles when serum progesterone levels are low on the day of embryo transfer",
+        url: "https://doi.org/10.1093/humrep/deaa322",
+        doi: "10.1093/humrep/deaa322",
+        venue: "Human Reproduction",
+        year: 2021,
+        authors: [
+          "Elena Labarta",
+          "Giulia Mariani",
+          "S. Paolelli",
+          "C. Rodriguez-Varela",
+          "Ernesto Bosch",
+        ],
+        abstract:
+          "Prospective clinical study of 574 blastocyst FET cycles demonstrating that patients with low serum progesterone (<9.2 ng/mL) on the day of transfer who received rescue daily subcutaneous progesterone (25 mg/day) achieved live birth rates equivalent to patients with normal baseline progesterone (44.9% vs 45.0%).",
+        citedBy: 145,
         declaredDesign: "cohort",
         design: "cohort",
-        sampleSize: 523,
+        sampleSize: 574,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1161/hypertensionaha.118.12043",
+        origin: "literature",
+        title: "Increased Preeclampsia Risk and Reduced Aortic Compliance With In Vitro Fertilization Cycles in the Absence of a Corpus Luteum",
+        url: "https://doi.org/10.1161/HYPERTENSIONAHA.118.12043",
+        doi: "10.1161/HYPERTENSIONAHA.118.12043",
+        venue: "Hypertension",
+        year: 2019,
+        authors: [
+          "Frauke von Versen-Höynck",
+          "Amy M. Schaub",
+          "Kirk P. Conrad",
+          "Valerie L. Baker",
+        ],
+        abstract:
+          "Prospective cohort study (n=683 pregnancies) demonstrating that programmed FET cycles lacking a corpus luteum had significantly higher pre-eclampsia incidence (12.8% vs 3.9%, adjusted OR 2.73) than ovulatory natural-cycle FET with a single corpus luteum.",
+        citedBy: 380,
+        declaredDesign: "cohort",
+        design: "cohort",
+        sampleSize: 683,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1001/jama.2022.20438",
+        origin: "literature",
+        title: "Effect of Timing by Endometrial Receptivity Testing vs Standard Timing of Frozen Embryo Transfer on Live Birth in Patients Undergoing In Vitro Fertilization: A Randomized Clinical Trial",
+        url: "https://doi.org/10.1001/jama.2022.20438",
+        doi: "10.1001/jama.2022.20438",
+        venue: "JAMA",
+        year: 2022,
+        authors: [
+          "Nicole Doyle",
+          "S. Jahandideh",
+          "Micah J. Hill",
+          "Eric A. Widra",
+          "Kate Devine",
+        ],
+        abstract:
+          "Double-blind multicenter randomized clinical trial of 767 patients comparing Endometrial Receptivity Analysis (ERA) biopsy-guided FET timing against standard FET timing, finding no improvement in live birth rate (58.5% vs 61.9%, p=0.38).",
+        citedBy: 95,
+        declaredDesign: "rct",
+        design: "rct",
+        sampleSize: 767,
         extra: {},
       },
     ],
     claims: [
       {
         statement:
-          "In a systematic review and meta-analysis of 20,155 Frozen Embryo Transfer cycles across 15 studies (women aged 18–46), immediate FET in the very first menstrual cycle after a failed transfer or retrieval achieved a non-inferior and slightly higher adjusted live birth rate (aOR 1.20, 95% CI 1.01–1.44) and clinical pregnancy rate (aOR 1.22, 95% CI 1.07–1.39) than postponed FET after one or more washout cycles.",
+          "In a systematic review and meta-analysis of 20,155 Frozen Embryo Transfer cycles across 15 studies (Bergenheim et al., 2021) and a meta-analysis of 11,500 cycles (Matorras et al., 2021), immediate FET in the first menstrual cycle achieved non-inferior and slightly higher adjusted live birth rates (aOR 1.20, 95% CI 1.01–1.44; pooled RR 1.05, 95% CI 0.95–1.15) compared with postponed FET after ≥1 washout cycle.",
         tier: "T1",
         controversy: "settled",
         direction: "supports",
         confidence: 0.96,
-        rationale: "Bergenheim et al. (Human Reproduction Update, 2021) meta-analysis of 20,155 FET cycles.",
+        rationale: "Bergenheim et al. (Human Reproduction Update, 2021, n=20,155) and Matorras et al. (Reproductive Medicine and Biology, 2021, n=11,500).",
         sourceIndexes: [0, 3],
       },
       {
         statement:
-          "In a multicenter randomized controlled trial of 732 women immediately following a failed embryo transfer attempt (Song et al., 2021), transferring in the very next menstrual cycle (immediate FET) produced higher clinical pregnancy rates (41.7% vs. 34.1%, RR 1.23, p=0.045), lower biochemical loss (11.7% vs. 30.6%, RR 0.28), and significantly lower pre-transfer depression (6.1% vs. 10.6%) and stress (22.4% vs. 30.3%) than waiting ≥2 menstrual cycles.",
+          "In a multicenter randomized controlled trial of 732 women immediately following a failed embryo transfer attempt (Song et al., 2021), immediate FET in the very next menstrual cycle resulted in higher clinical pregnancy rates (41.7% vs. 34.1%, RR 1.23, p=0.045), lower biochemical pregnancy loss (11.7% vs. 30.6%, RR 0.28, p<0.001), a non-significant trend toward higher live birth (35.5% vs. 29.0%, p=0.075), and significantly lower pre-transfer depressive symptoms (6.1% vs. 10.6%, p=0.038) and perceived stress (22.4% vs. 30.3%, p=0.022) than delaying ≥2 menstrual cycles.",
         tier: "T2",
         controversy: "settled",
         direction: "supports",
         confidence: 0.94,
-        rationale: "Song et al. (Reproductive Biology and Endocrinology, 2021) multicenter RCT specifically after failed embryo transfer.",
+        rationale: "Song et al. (Reproductive Biology and Endocrinology, 2021, n=732) multicenter RCT specifically after failed embryo transfer.",
         sourceIndexes: [1],
       },
       {
@@ -2154,12 +2268,12 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         controversy: "settled",
         direction: "supports",
         confidence: 0.94,
-        rationale: "Li et al. (Human Reproduction, 2021) randomized controlled trial of 724 FET patients.",
+        rationale: "Li et al. (Human Reproduction, 2021, n=724) randomized controlled trial.",
         sourceIndexes: [2],
       },
       {
         statement:
-          "Across 58,001 vitrified-warmed blastocyst transfers (Cimadomo, Cobo et al., AJOG 2024) and 5,995 interval-stratified FET patients (Huang et al., RBMO 2023), waiting 1 to 6+ months ('resetting') before transferring a remaining vitrified embryo has zero negative effect on warming survival, implantation, miscarriage, or live birth rate because the embryo's biological age is locked at −196°C and uterine receptivity does not decline over a few months.",
+          "Across 58,001 vitrified-warmed blastocyst transfers (Cimadomo, Cobo et al., AJOG 2024) and 5,995 interval-stratified FET patients (Huang et al., RBMO 2023), waiting 1 to 6+ months before transferring a remaining vitrified blastocyst has zero negative effect on warming survival, implantation, miscarriage, or live birth rate because the embryo's biological and chromosomal age is fixed at −196°C and uterine receptivity does not decline over a 1–3 month interval.",
         tier: "T3",
         controversy: "settled",
         direction: "supports",
@@ -2169,76 +2283,78 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
       {
         statement:
-          "Unlike ovarian stimulation (where unretrieved oocytes age every month after age 40, favoring back-to-back DuoStim retrievals), Frozen Embryo Transfer of an already-vitrified embryo carries no biological time penalty for a 1–3 month pause; thus a strategic 'reset' before transferring a final remaining embryo is clinically justified whenever used to switch from programmed HRT to an ovulatory natural cycle, rule out silent CD138+ chronic endometritis or micro-polyps via hysteroscopy, quiet adenomyosis/endometriosis inflammation, or restore endocrine and emotional equilibrium.",
-        tier: "T1",
-        controversy: "settled",
-        direction: "supports",
-        confidence: 0.95,
-        rationale: "Synthesis of Bergenheim et al. (Hum Reprod Update 2021), Cimadomo/Cobo et al. (AJOG 2024), and Horowitz et al. (RBMO 2019).",
-        sourceIndexes: [0, 4, 5, 6],
-      },
-      {
-        statement:
-          "In women up to age 45 undergoing modified natural-cycle FET (mNC-FET) after a failed IVF transfer, both immediate next-menses transfer (mean 15.6 days to ovulatory trigger) and spaced transfer after a multi-month reset (mean 84.8 days) achieve equivalent follicular maturation, endometrial thickness, and live birth rates.",
+          "In women up to age 45 undergoing modified natural-cycle FET (mNC-FET) after a failed IVF transfer (Horowitz et al., RBMO 2019, n=198), immediate next-menses transfer (mean 15.6 days to ovulatory trigger) and delayed transfer (mean 84.8 days) achieve equivalent follicular phase dynamics, endometrial thickness, and live birth rates.",
         tier: "T3",
         controversy: "settled",
         direction: "supports",
         confidence: 0.91,
-        rationale: "Horowitz et al. (Reproductive BioMedicine Online, 2019) cohort of mNC-FET after failed IVF.",
+        rationale: "Horowitz et al. (Reproductive BioMedicine Online, 2019, n=198).",
         sourceIndexes: [6],
       },
       {
         statement:
-          "Delaying Frozen Embryo Transfer after a single failed transfer solely to perform a mock-cycle Endometrial Receptivity Analysis (ERA) biopsy does not improve live birth and was associated with lower ongoing pregnancy and live birth rates in multicenter cohort analysis (Riestenberg et al., Fertility and Sterility 2022).",
+          "Antibiotic cure of biopsy-confirmed chronic endometritis (CD138+ plasma cells) significantly increases ongoing pregnancy and live birth rates compared with persistent endometritis (OR 6.81, 95% CI 2.08–22.24) in a meta-analysis of 796 patients (Vitagliano et al., 2018), whereas delaying transfer solely for a routine Endometrial Receptivity Analysis (ERA) biopsy does not improve live birth in randomized controlled testing (58.5% vs. 61.9%, p=0.38; Doyle et al., JAMA 2022, n=767).",
+        tier: "T1",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.93,
+        rationale: "Vitagliano et al. (Fertility and Sterility 2018, n=796) and Doyle et al. (JAMA 2022 RCT, n=767).",
+        sourceIndexes: [7, 10],
+      },
+      {
+        statement:
+          "In programmed FET cycles, low serum progesterone (<9.2 ng/mL) on the day of blastocyst transfer reduces ongoing pregnancy unless rescued with daily subcutaneous progesterone (25 mg/day), which restores live birth rates to match patients with normal baseline progesterone (44.9% vs. 45.0%; Labarta et al., Human Reproduction 2021, n=574); meanwhile, ovulatory natural-cycle FET with a corpus luteum reduces pre-eclampsia risk compared with programmed HRT-FET (3.9% vs. 12.8%, adjusted OR 2.73; von Versen-Höynck et al., Hypertension 2019, n=683).",
         tier: "T3",
         controversy: "settled",
-        direction: "refutes",
-        confidence: 0.92,
-        rationale: "Riestenberg et al. (Fertility and Sterility, 2022, n=523).",
-        sourceIndexes: [7],
+        direction: "supports",
+        confidence: 0.93,
+        rationale: "Labarta et al. (Human Reproduction 2021, n=574) and von Versen-Höynck et al. (Hypertension 2019, n=683).",
+        sourceIndexes: [8, 9],
       },
     ],
     milestones: [
       {
-        year: 2019,
-        title: "Horowitz et al. Validate Both Immediate and Multi-Month Reset Modified Natural-Cycle FET After Failed IVF",
+        year: 2018,
+        title: "Vitagliano et al. Meta-Analysis Quantifies Live Birth Gain After Chronic Endometritis Cure (n=796)",
         description:
-          "Clinical cohort up to age 45 proves that modified natural-cycle FET works equally well in the very next menses (15.6 days to trigger) or after a 3-month physiological reset (84.8 days).",
+          "Systematic review and meta-analysis in Fertility and Sterility shows curing biopsy-confirmed CD138+ chronic endometritis increases live birth/ongoing pregnancy (OR 6.81).",
+        sourceIndex: 7,
+      },
+      {
+        year: 2019,
+        title: "Horowitz et al. & von Versen-Höynck et al. Establish Modified-Natural FET Timing and Corpus Luteum Vascular Safety",
+        description:
+          "Horowitz et al. (n=198) show identical outcomes in immediate vs. delayed mNC-FET after failed IVF; von Versen-Höynck et al. (n=683) prove a corpus luteum halves pre-eclampsia risk vs. programmed HRT-FET.",
         sourceIndex: 6,
       },
       {
         year: 2021,
-        title: "Bergenheim Meta-Analysis (n=20,155) & Song / Li Multicenter RCTs Disprove Mandatory FET Washout Cycles",
+        title: "Bergenheim Meta-Analysis (n=20,155) & Song / Li RCTs Disprove Mandatory FET Washout Cycles",
         description:
-          "Two multicenter RCTs (Song et al., n=732; Li et al., n=724) and a 15-study meta-analysis (Bergenheim et al., n=20,155) demonstrate that immediate first-menses FET after a failed transfer achieves equal or higher live birth rates and lower psychological distress than arbitrary mandatory waiting.",
+          "Two RCTs (Song et al., n=732; Li et al., n=724) and a 15-study meta-analysis (Bergenheim et al., n=20,155) prove immediate first-menses FET is non-inferior or superior to arbitrary waiting.",
         sourceIndex: 0,
       },
       {
         year: 2022,
-        title: "Riestenberg et al. Show Delaying FET for Routine ERA Biopsy After One Failed Transfer Does Not Improve Live Birth",
+        title: "Doyle et al. JAMA RCT (n=767) Shows Routine ERA Biopsy Delay Does Not Increase Live Birth",
         description:
-          "Multicenter cohort demonstrates that postponing transfer after a single failed ET to run a transcriptomic ERA biopsy does not increase live birth compared with proceeding directly to transfer.",
-        sourceIndex: 7,
+          "Multicenter double-blind RCT proves that postponing FET to perform Endometrial Receptivity Testing does not improve live birth (58.5% vs. 61.9%, p=0.38).",
+        sourceIndex: 10,
       },
       {
         year: 2024,
-        title: "Cimadomo & Cobo 58,001-Blastocyst Study Confirms Zero Embryo Decay Across Months to Years of Cryostorage",
+        title: "Cimadomo & Cobo 58,001-Blastocyst Study Confirms Zero Embryo Decay Across Months of Cryostorage",
         description:
-          "Landmark 11-year multicenter study of 58,001 vitrified-warmed blastocysts proves that taking 2–6+ months to reset before transferring a remaining frozen embryo causes zero loss in embryo survival, implantation, or live birth.",
+          "Multicenter AJOG cohort of 58,001 vitrified-warmed blastocysts proves that waiting 1–6+ months at −196°C causes zero loss in survival, implantation, or live birth.",
         sourceIndex: 4,
       },
     ],
     entities: [],
     controversies: [
       {
-        kind: "Immediate Next-Menses Transfer vs. Strategic 1–3 Month Reset for the Final Remaining Embryo",
-        note: "While RCTs (Song 2021; Li 2021) prove that arbitrary 'washout' delays are unnecessary and immediate next-period FET yields high live birth rates when the uterus is already optimized, cryobiology cohorts (Cimadomo/Cobo 2024, n=58,001) prove that a vitrified embryo suffers 0% loss from waiting 1–3+ months. Therefore, when only ONE final embryo remains, reproductive endocrinologists distinguish between an arbitrary wait (unnecessary) and a targeted 1–2 month diagnostic/physiological reset (highly beneficial if used to switch from HRT to a natural ovulatory cycle, clear silent CD138+ chronic endometritis via hysteroscopy/doxycycline, or quiet adenomyosis).",
-        claimIndexes: [0, 1, 3, 4],
-      },
-      {
-        kind: "Ovarian Stimulation Urgency (DuoStim) vs. Frozen Embryo Transfer Flexibility at Age 40–44+",
-        note: "In women aged 40–44+, 'consecutive vs. spaced cycles' has opposite biological rules depending on the stage: unretrieved oocytes in the ovary age every month (making back-to-back DuoStim retrievals time-critical), whereas an already-vitrified embryo at −196°C is frozen in time and the uterus ages negligibly over 2–6 months, allowing complete scheduling flexibility before a final transfer.",
-        claimIndexes: [3, 4],
+        kind: "Arbitrary Waiting ('Washout') vs. Purposeful 1–3 Month Diagnostic/Endocrine Reset Before the Final Blastocyst",
+        note: "With no modifiable factor identified, randomized controlled trials (Song et al. 2021, n=732; Li et al. 2021, n=724) and meta-analyses (Bergenheim et al. 2021, n=20,155; Matorras et al. 2021, n=11,500) establish that waiting offers no biological advantage and increases pre-transfer depression and stress. However, because a vitrified blastocyst suffers 0% degradation at −196°C over 1–6+ months (Cimadomo et al. 2024, n=58,001; Huang et al. 2023, n=5,995), waiting 1–3 months is fully justified whenever a modifiable factor is identified — such as performing office hysteroscopy and CD138 chronic endometritis testing/treatment (Vitagliano et al. 2018, n=796), transitioning from a programmed HRT cycle to an ovulatory natural cycle with a corpus luteum (von Versen-Höynck et al. 2019, n=683), correcting thyroid TSH <2.5 mIU/L, or recovering emotionally.",
+        claimIndexes: [0, 1, 3, 5, 6],
       },
     ],
   },

@@ -366,7 +366,7 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
     synopsis:
       "Pituitary hormones that drive egg growth (FSH) and trigger final egg maturation and ovulation (LH). Injectable gonadotropins are purified/recombinant versions used in IVF stimulation.",
     whyItMatters:
-      "At age 44+, baseline FSH is often already high; gentle priming (estrogen, testosterone/DHEA, growth hormone) helps follicles respond to stimulation without receptor burnout.",
+      "After age 40, baseline FSH is often already high; gentle priming (estrogen, testosterone/DHEA, growth hormone) helps follicles respond to stimulation without receptor burnout.",
   },
   {
     term: "DuoStim (Double Stimulation / Shanghai Protocol)",
