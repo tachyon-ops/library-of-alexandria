@@ -6,6 +6,7 @@ export {
   FallbackLlm,
   GeminiLlm,
   modelsFromEnv,
+  OpenAiCompatibleLlm,
   providerFromEnv,
   type Citation,
   type Llm,

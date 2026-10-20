@@ -690,20 +690,24 @@ export async function claimNextJob(sql: Sql): Promise<Job | null> {
   const [row] = await sql<Job[]>`
     UPDATE jobs SET status = 'running', locked_at = now(), attempts = attempts + 1
     WHERE id = (
-      SELECT id FROM jobs WHERE status = 'queued' AND run_after <= now()
+      SELECT j.id FROM jobs j
+      LEFT JOIN topics t ON t.id = j.topic_id
+      WHERE j.status = 'queued' AND j.run_after <= now()
       ORDER BY
-        COALESCE((payload->>'autoSpawned')::boolean, false) ASC,
-        CASE kind
+        COALESCE((j.payload->>'autoSpawned')::boolean, false) ASC,
+        COALESCE(t.depth, 0) ASC,
+        CASE j.kind
           WHEN 'harvest' THEN 0
           WHEN 'scan'    THEN 1
-          WHEN 'extract' THEN 2
-          WHEN 'review'  THEN 3
+          WHEN 'review'  THEN 2
+          WHEN 'extract' THEN 3
           WHEN 'plan'    THEN 4
           ELSE 5
         END,
-        run_after,
-        id
-      FOR UPDATE SKIP LOCKED LIMIT 1
+        COALESCE((j.payload->>'read')::int, 0) DESC,
+        j.run_after,
+        j.id
+      FOR UPDATE OF j SKIP LOCKED LIMIT 1
     )
     RETURNING id, kind, topic_id, payload, attempts`;
   return row ?? null;
