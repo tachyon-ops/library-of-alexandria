@@ -48,11 +48,14 @@ const GEMINI_FALLBACKS = [
   "gemini-3.6-flash",
   "gemini-3.7-flash",
   "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-flash-latest",
+  "gemini-2.5-flash-lite",
   "gemini-3-flash-preview",
-  "gemini-3.8-flash",
+  "gemini-3.1-flash-lite-preview",
+  "gemini-flash-latest",
+  "gemini-flash-lite-latest",
+  "gemini-2.5-pro",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
 ];
 
 export function providerFromEnv(env = process.env): LlmProvider {
@@ -86,15 +89,100 @@ export function createLlm(onUsage: (u: Usage) => Promise<void> | void = () => {}
     ? new ClaudeLlm(modelsFromEnv(env, "anthropic"), onUsage, new Anthropic({ apiKey: anthropicKey, maxRetries: 3 }))
     : null;
 
-  if (provider === "anthropic" && claudeLlm) {
-    return geminiLlm ? new FallbackLlm(claudeLlm, geminiLlm) : claudeLlm;
+  const extraProviders: Llm[] = [];
+  if (env.GROQ_API_KEY?.trim()) {
+    extraProviders.push(
+      new OpenAiCompatibleLlm(
+        {
+          name: "Groq",
+          endpoint: "https://api.groq.com/openai/v1/chat/completions",
+          apiKey: env.GROQ_API_KEY.trim(),
+          models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+        },
+        onUsage,
+      ),
+    );
   }
-  if (provider === "gemini" && geminiLlm) {
-    return claudeLlm ? new FallbackLlm(geminiLlm, claudeLlm) : geminiLlm;
+  if (env.CEREBRAS_API_KEY?.trim()) {
+    extraProviders.push(
+      new OpenAiCompatibleLlm(
+        {
+          name: "Cerebras",
+          endpoint: "https://api.cerebras.ai/v1/chat/completions",
+          apiKey: env.CEREBRAS_API_KEY.trim(),
+          models: ["llama-3.3-70b", "llama3.1-8b"],
+        },
+        onUsage,
+      ),
+    );
   }
-  if (claudeLlm) return claudeLlm;
-  if (geminiLlm) return geminiLlm;
-  return new GeminiLlm(modelsFromEnv(env, "gemini"), onUsage, geminiKey);
+  if (env.MISTRAL_API_KEY?.trim()) {
+    extraProviders.push(
+      new OpenAiCompatibleLlm(
+        {
+          name: "Mistral",
+          endpoint: "https://api.mistral.ai/v1/chat/completions",
+          apiKey: env.MISTRAL_API_KEY.trim(),
+          models: ["mistral-small-latest", "mistral-large-latest"],
+        },
+        onUsage,
+      ),
+    );
+  }
+  if (env.OPENROUTER_API_KEY?.trim()) {
+    extraProviders.push(
+      new OpenAiCompatibleLlm(
+        {
+          name: "OpenRouter",
+          endpoint: "https://openrouter.ai/api/v1/chat/completions",
+          apiKey: env.OPENROUTER_API_KEY.trim(),
+          models: ["meta-llama/llama-3.3-70b-instruct:free", "google/gemma-3-27b-it:free"],
+        },
+        onUsage,
+      ),
+    );
+  }
+  if (env.OPENAI_API_KEY?.trim()) {
+    extraProviders.push(
+      new OpenAiCompatibleLlm(
+        {
+          name: "OpenAI",
+          endpoint: "https://api.openai.com/v1/chat/completions",
+          apiKey: env.OPENAI_API_KEY.trim(),
+          models: ["gpt-4o-mini", "gpt-4o"],
+        },
+        onUsage,
+      ),
+    );
+  }
+  if (env.GITHUB_MODELS_TOKEN?.trim()) {
+    extraProviders.push(
+      new OpenAiCompatibleLlm(
+        {
+          name: "GitHubModels",
+          endpoint: "https://models.github.ai/inference/chat/completions",
+          apiKey: env.GITHUB_MODELS_TOKEN.trim(),
+          models: ["openai/gpt-4o-mini", "meta/Llama-3.3-70B-Instruct"],
+        },
+        onUsage,
+      ),
+    );
+  }
+
+  const ordered: Llm[] = [];
+  if (provider === "anthropic") {
+    if (claudeLlm) ordered.push(claudeLlm);
+    if (geminiLlm) ordered.push(geminiLlm);
+  } else {
+    if (geminiLlm) ordered.push(geminiLlm);
+    if (claudeLlm) ordered.push(claudeLlm);
+  }
+  ordered.push(...extraProviders);
+
+  if (ordered.length === 0) {
+    return new GeminiLlm(modelsFromEnv(env, "gemini"), onUsage, geminiKey);
+  }
+  return ordered.reduce((acc, next) => new FallbackLlm(acc, next));
 }
 
 /** Fallback wrapper that switches from primary to secondary provider upon transient rate limit or quota errors. */
@@ -107,14 +195,21 @@ export class FallbackLlm implements Llm {
   async structured<T>(args: { role: Role; system: string; prompt: string; schema: z.ZodType<T>; maxTokens?: number }): Promise<T> {
     try {
       return await this.primary.structured(args);
-    } catch (err) {
-      if (this.isRateLimitOrTransient(err)) {
+    } catch (primaryErr) {
+      if (this.isRateLimitOrTransient(primaryErr)) {
         console.warn(
-          `[FallbackLlm] Primary provider hit transient/quota error (${err instanceof Error ? err.message : String(err)}). Falling back to secondary provider.`,
+          `[FallbackLlm] Primary provider hit transient/quota error (${primaryErr instanceof Error ? primaryErr.message : String(primaryErr)}). Falling back to secondary provider.`,
         );
-        return await this.secondary.structured(args);
+        try {
+          return await this.secondary.structured(args);
+        } catch (secErr) {
+          console.warn(
+            `[FallbackLlm] Secondary provider also failed (${secErr instanceof Error ? secErr.message : String(secErr)}).`,
+          );
+          throw this.isRateLimitOrTransient(secErr) ? secErr : primaryErr;
+        }
       }
-      throw err;
+      throw primaryErr;
     }
   }
 
@@ -227,6 +322,7 @@ interface GeminiResponse {
 /** Gemini API implementation: JSON Schema structured output and Google Search grounding. */
 export class GeminiLlm implements Llm {
   private static lastCallTime = 0;
+  private unavailableModels = new Set<string>();
 
   constructor(
     private models: Record<Role, string> = modelsFromEnv(process.env, "gemini"),
@@ -237,7 +333,7 @@ export class GeminiLlm implements Llm {
 
   private async pace(): Promise<void> {
     if (process.env.NODE_ENV === "test" || process.env.VITEST) return;
-    const minIntervalMs = 3000;
+    const minIntervalMs = 1500;
     const now = Date.now();
     const elapsed = now - GeminiLlm.lastCallTime;
     if (elapsed < minIntervalMs) {
@@ -318,8 +414,14 @@ export class GeminiLlm implements Llm {
 
   private async callWithFallback(primary: string, body: Record<string, unknown>): Promise<{ data: GeminiResponse; usedModel: string }> {
     if (!this.apiKey) throw new Error("GEMINI_API_KEY (or AI_API_KEY) is not set");
-    const candidates = [primary, ...GEMINI_FALLBACKS.filter((m) => m !== primary)];
+    const allCandidates = [primary, ...GEMINI_FALLBACKS.filter((m) => m !== primary)];
+    let candidates = allCandidates.filter((m) => !this.unavailableModels.has(m));
+    if (candidates.length === 0) {
+      this.unavailableModels.clear();
+      candidates = allCandidates;
+    }
     let lastError: unknown;
+    let lastRateLimitError: unknown;
     for (let i = 0; i < candidates.length; i++) {
       const model = candidates[i]!;
       await this.pace();
@@ -331,16 +433,129 @@ export class GeminiLlm implements Llm {
       });
       if (res.ok) return { data: (await res.json()) as GeminiResponse, usedModel: model };
       const text = (await res.text()).slice(0, 400);
-      lastError = new Error(`Gemini ${res.status}: ${text}`);
+      const err = new Error(`Gemini ${res.status}: ${text}`);
+      lastError = err;
+      if (res.status === 404) {
+        this.unavailableModels.add(model);
+        GeminiLlm.lastCallTime = 0;
+        continue;
+      }
       if (res.status === 429) {
-        if (!process.env.NODE_ENV && !process.env.VITEST) {
-          const delay = Math.min(3000 * (i + 1), 15000);
-          await sleep(delay);
+        lastRateLimitError = err;
+        if (/quota|free_tier_requests|per_day|perday/i.test(text)) {
+          this.unavailableModels.add(model);
+          GeminiLlm.lastCallTime = 0;
         }
-      } else if (res.status !== 503 && res.status !== 404) {
-        throw lastError;
+      } else if (res.status !== 503) {
+        throw err;
       }
     }
-    throw lastError;
+    throw lastRateLimitError ?? lastError;
+  }
+}
+
+interface OpenAiChatResponse {
+  choices?: {
+    finish_reason?: string;
+    message?: { content?: string | null };
+  }[];
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  };
+}
+
+/** OpenAI-compatible Chat Completions implementation (Groq, Cerebras, Mistral, OpenRouter, OpenAI, GitHub Models). */
+export class OpenAiCompatibleLlm implements Llm {
+  private unavailableModels = new Set<string>();
+
+  constructor(
+    private config: { name: string; endpoint: string; apiKey: string; models: string[] },
+    private onUsage: (u: Usage) => Promise<void> | void = () => {},
+    private fetchImpl: typeof fetch = fetch,
+  ) {}
+
+  async structured<T>(args: { role: Role; system: string; prompt: string; schema: z.ZodType<T>; maxTokens?: number }): Promise<T> {
+    if (!this.config.apiKey) throw new Error(`${this.config.name} API key is not set`);
+    const jsonSchema = { ...(z.toJSONSchema(args.schema) as Record<string, unknown>) };
+    delete jsonSchema.$schema;
+
+    let candidates = this.config.models.filter((m) => !this.unavailableModels.has(m));
+    if (candidates.length === 0) {
+      this.unavailableModels.clear();
+      candidates = [...this.config.models];
+    }
+
+    let lastError: unknown;
+    let lastRateLimitError: unknown;
+
+    for (const model of candidates) {
+      const res = await this.fetchImpl(this.config.endpoint, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: Math.min(args.maxTokens ?? 4096, 4096),
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content: `${args.system}\n\nRespond ONLY with a single valid JSON object conforming to this JSON Schema:\n${JSON.stringify(jsonSchema)}`,
+            },
+            { role: "user", content: args.prompt },
+          ],
+        }),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as OpenAiChatResponse;
+        const choice = data.choices?.[0];
+        await this.onUsage({
+          role: args.role,
+          model: `${this.config.name.toLowerCase()}/${model}`,
+          inputTokens: data.usage?.prompt_tokens ?? 0,
+          outputTokens: data.usage?.completion_tokens ?? 0,
+          webSearches: 0,
+        });
+        if (choice?.finish_reason === "length") {
+          throw new Error(`${args.role}: output cut off at max_tokens`);
+        }
+        const raw = (choice?.message?.content ?? "")
+          .replace(/^```(?:json)?\s*/i, "")
+          .replace(/\s*```$/i, "")
+          .trim();
+        if (!raw) throw new Error(`${args.role}: no structured output returned`);
+        return args.schema.parse(JSON.parse(raw));
+      }
+
+      const text = (await res.text()).slice(0, 400);
+      const err = new Error(`${this.config.name} ${res.status}: ${text}`);
+      lastError = err;
+      if (res.status === 401 || res.status === 403) {
+        for (const m of this.config.models) this.unavailableModels.add(m);
+        throw err;
+      }
+      if (res.status === 404) {
+        this.unavailableModels.add(model);
+        continue;
+      }
+      if (res.status === 429) {
+        lastRateLimitError = err;
+        this.unavailableModels.add(model);
+        continue;
+      }
+      if (res.status !== 503 && res.status !== 529) {
+        throw err;
+      }
+    }
+
+    throw lastRateLimitError ?? lastError;
+  }
+
+  async webResearch(): Promise<{ text: string; citations: Citation[] }> {
+    return { text: "", citations: [] };
   }
 }

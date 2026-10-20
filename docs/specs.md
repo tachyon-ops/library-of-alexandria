@@ -49,11 +49,11 @@ Entry point: `requestResearch(topicId, autoDepth)` sets the topic to `queued` an
 | --------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `plan`    | topic, ancestors, children                                                                 | scout                                                                          | topic status `researching`; new child topics (≤ 6, none with an existing title, only while depth < 6) | `harvest {literature, trials}`; `scan {task}` per web task (≤ 4); `plan` for new and idle children while `autoDepth > 0`     |
 | `harvest` | payload queries                                                                            | each literature query × literature adapters; each trial query × trial adapters | sources, topic links                                                                                  | `extract`                                                                                                                    |
-| `extract` | up to 10 unread sources, ordered by citations per year plus a boost for the last two years | reader                                                                         | source designs, claims, milestones; marks the batch extracted                                         | `extract {read}` while unread remain and fewer than `MAX_SOURCES_PER_TOPIC` were read this run; otherwise `review`           |
+| `extract` | up to `READER_BATCH` (default 20) unread sources, ordered by citations per year plus a boost for the last two years | reader                                                                         | source designs, claims, milestones; marks the batch extracted                                         | `extract {read}` while unread remain and fewer than `MAX_SOURCES_PER_TOPIC` were read this run; otherwise `review`           |
 | `scan`    | payload task                                                                               | web research, then structured extraction                                       | entities whose source URLs were returned by the search                                                | none                                                                                                                         |
 | `review`  | non-superseded claims, entities                                                            | skeptic                                                                        | merges, recomputed tiers, controversy labels, controversies, summary, gaps; topic status `ready`      | none                                                                                                                         |
 
-Queue rules: claimed with `FOR UPDATE SKIP LOCKED` in topic-completion priority order (`harvest` → `scan` → `extract` → `review` → user-requested `plan` → auto-spawned child `plan`); on error retried after 30 s × 2^attempts, at most 3 attempts, then `failed` and topic `error`; jobs `running` for more than 15 minutes are requeued at worker start; the worker pauses 10 minutes when `MAX_LLM_CALLS_PER_DAY` calls were logged in the last 24 hours.
+Queue rules: claimed with `FOR UPDATE OF j SKIP LOCKED` prioritizing user-requested topics ahead of `autoSpawned` child branches, shallower topic `depth` first, stage priority (`harvest` → `scan` → `review` → `extract` → `plan`), and descending `extract` batch progress (`payload.read` DESC so a started topic finishes all batches and synthesis before the next topic starts); on error retried after 30 s × 2^attempts, at most 3 attempts, then `failed` and topic `error`; jobs `running` for more than 15 minutes are requeued at worker start; the worker pauses 10 minutes when `MAX_LLM_CALLS_PER_DAY` calls were logged in the last 24 hours.
 
 Invariants:
 
@@ -78,16 +78,16 @@ All requests go through `getJson`: 20 s timeout, two retries on 429, 5xx or time
 
 ## 6. Agent roles
 
-All roles use the `Llm` interface (`ClaudeLlm` for Anthropic, `GeminiLlm` for Gemini); JSON outputs use structured outputs with the zod schemas exported by each file.
+All roles use the `Llm` interface (`ClaudeLlm` for Anthropic, `GeminiLlm` for Gemini, and `OpenAiCompatibleLlm` for Groq, Cerebras, Mistral, OpenRouter, OpenAI, and GitHub Models chained via `FallbackLlm`); JSON outputs use structured outputs with the zod schemas exported by each file.
 
 | Role    | Input limit                                                                         | Output contract                                                                                                        |
 | ------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | scout   | topic, path, existing children                                                      | ≤ 6 subtopics; ≤ 8 literature queries (including frontier angles); ≤ 3 trial queries; ≤ 4 web tasks                    |
-| reader  | ≤ 10 sources, abstracts clipped to 2,400 characters                                 | per-source relevance, design and sample size; claims citing source indexes; milestones with years in 1001 to next year |
+| reader  | ≤ `READER_BATCH` (default 20) sources, abstracts clipped to 2,400 characters        | per-source relevance, design and sample size; claims citing source indexes; milestones with years in 1001 to next year |
 | web     | one task, ≤ `MAX_WEB_SEARCHES_PER_JOB` searches, notes clipped to 20,000 characters | entities with key/value attributes and cited URLs                                                                      |
 | skeptic | all claims as `[index] (tier, label, source count, years) statement`, entity names  | summary, gaps, merges, relabels, controversies                                                                         |
 
-Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic fallback across `gemini-3.7-flash`, `gemini-3-flash-preview`, `gemini-flash-latest`, `gemini-3.1-flash-lite`, `gemini-3.1-flash-lite-preview`, `gemini-flash-lite-latest`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, and `gemini-3.8-flash` on 429/503/404); each overridable by environment variable.
+Default models: Anthropic uses scout/web `claude-sonnet-5-5`, reader `claude-haiku-5-5`, skeptic `claude-opus-5-5`; Gemini uses `gemini-3.6-flash` (with automatic in-memory dead/quota-exhausted model caching and fallback across `gemini-3.7-flash`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-3-flash-preview`, `gemini-3.1-flash-lite-preview`, `gemini-flash-latest`, `gemini-flash-lite-latest`, `gemini-2.5-pro`, `gemini-2.0-flash`, and `gemini-2.0-flash-lite`, followed by any configured `OpenAiCompatibleLlm` providers on 429/503); each overridable by environment variable.
 
 ## 7. Front
 
@@ -107,11 +107,13 @@ Every page shares a masthead (`The search for the elixir of youth — what the r
 | `DATABASE_URL`                                              | none        | Postgres connection                                       |
 | `LLM_PROVIDER`                                              | auto-detect | `anthropic` or `gemini`                                   |
 | `AI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`         | none        | API key for the chosen provider                           |
+| `GROQ_API_KEY`, `CEREBRAS_API_KEY`, `MISTRAL_API_KEY`, `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `GITHUB_MODELS_TOKEN` | none | optional OpenAI-compatible fallback keys chained on 429   |
 | `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC` | see §6      | model per role                                            |
 | `CONTACT_EMAIL`                                             | none        | polite-pool contact for sources                           |
 | `MAX_LLM_CALLS_PER_DAY`                                     | 400         | worker pauses (or exits in drain mode) when reached       |
 | `MAX_WEB_SEARCHES_PER_JOB`                                  | 8           | per web task                                              |
 | `SOURCES_PER_QUERY`                                         | 10          | results per adapter per query                             |
+| `READER_BATCH`                                              | 20          | abstracts read per `extract` batch                        |
 | `MAX_SOURCES_PER_TOPIC`                                     | 60          | abstracts read per research run                           |
 | `AUTO_EXPAND_DEPTH`                                         | 1           | levels of branches researched automatically               |
 | `WORKER_POLL_MS`                                            | 3000        | idle poll interval                                        |
@@ -120,7 +122,7 @@ Every page shares a masthead (`The search for the elixir of youth — what the r
 
 ## 9. Non-functional requirements
 
-- **Cost:** at the defaults one topic uses at most 1 scout call, 6 reader calls, 8 web calls (4 tasks, each a search call and an extraction call) and 1 skeptic call, plus at most 32 web searches.
+- **Cost:** at the defaults one topic uses at most 1 scout call, 3 reader calls (20 sources per batch up to 60), 8 web calls (4 tasks, each a search call and an extraction call) and 1 skeptic call, plus at most 32 web searches.
 - **Privacy:** briefs and abstracts are sent to the Claude API and stored locally; logs carry counts and slugs, not content.
 - **Security:** no authentication; local or private-network use only. All stored text is rendered as text. Source and web content enters prompts only inside `<source>` or `<web>` tags.
 - **Reliability:** a crashed worker loses no work beyond the job in flight; several workers can run at once.
