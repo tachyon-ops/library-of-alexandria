@@ -97,7 +97,7 @@ export function createLlm(onUsage: (u: Usage) => Promise<void> | void = () => {}
           name: "Groq",
           endpoint: "https://api.groq.com/openai/v1/chat/completions",
           apiKey: env.GROQ_API_KEY.trim(),
-          models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+          models: ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b"],
         },
         onUsage,
       ),
@@ -498,8 +498,11 @@ export class OpenAiCompatibleLlm implements Llm {
         },
         body: JSON.stringify({
           model,
-          max_tokens: Math.min(args.maxTokens ?? 4096, 4096),
-          response_format: { type: "json_object" },
+          max_tokens: Math.min(args.maxTokens ?? 8000, 8000),
+          response_format: {
+            type: "json_schema",
+            json_schema: { name: "response", strict: false, schema: jsonSchema },
+          },
           messages: [
             {
               role: "system",
@@ -521,14 +524,23 @@ export class OpenAiCompatibleLlm implements Llm {
           webSearches: 0,
         });
         if (choice?.finish_reason === "length") {
-          throw new Error(`${args.role}: output cut off at max_tokens`);
+          lastError = new Error(`${args.role}: output cut off at max_tokens`);
+          continue;
         }
         const raw = (choice?.message?.content ?? "")
           .replace(/^```(?:json)?\s*/i, "")
           .replace(/\s*```$/i, "")
           .trim();
-        if (!raw) throw new Error(`${args.role}: no structured output returned`);
-        return args.schema.parse(JSON.parse(raw));
+        if (!raw) {
+          lastError = new Error(`${args.role}: no structured output returned`);
+          continue;
+        }
+        try {
+          return args.schema.parse(JSON.parse(raw));
+        } catch (parseErr) {
+          lastError = parseErr;
+          continue;
+        }
       }
 
       const text = (await res.text()).slice(0, 400);
