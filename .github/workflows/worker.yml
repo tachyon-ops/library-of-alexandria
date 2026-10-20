@@ -9,6 +9,10 @@ concurrency:
   group: research-worker
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  models: read
+
 jobs:
   drain:
     name: Drain Postgres job queue
@@ -20,6 +24,12 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       AI_API_KEY: ${{ secrets.AI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
       MODEL_SCOUT: ${{ secrets.MODEL_SCOUT }}
       MODEL_READER: ${{ secrets.MODEL_READER }}

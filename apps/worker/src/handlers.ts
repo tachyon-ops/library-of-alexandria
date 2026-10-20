@@ -29,7 +29,7 @@ export function configFromEnv(env = process.env): Config {
   const n = (v: string | undefined, d: number) => (v && Number.isFinite(Number(v)) ? Number(v) : d);
   return {
     sourcesPerQuery: n(env.SOURCES_PER_QUERY, 10),
-    readerBatch: 10,
+    readerBatch: n(env.READER_BATCH, 20),
     maxSourcesPerTopic: n(env.MAX_SOURCES_PER_TOPIC, 60),
     maxWebSearchesPerJob: n(env.MAX_WEB_SEARCHES_PER_JOB, 8),
     autoExpandDepth: n(env.AUTO_EXPAND_DEPTH, 1),
@@ -43,6 +43,7 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
   const ancestors = await repo.getAncestors(d.sql, topic.id);
   const path = ancestors.map((a) => a.title);
   const ctx = { topic: { title: topic.title, brief: topic.brief }, path };
+  const autoFlag = job.payload.autoSpawned ? { autoSpawned: true } : {};
 
   switch (job.kind) {
     case "plan": {
@@ -51,8 +52,8 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
       const plan = await planTopic(d.llm, { ...ctx, existingChildren: children.map((c) => c.title) });
       // Enqueue harvest and scan for the current topic first so its own sources are collected before child branches.
       const litQueries = plan.queries.literature.length > 0 ? plan.queries.literature : [topic.title];
-      await repo.enqueueJob(d.sql, "harvest", topic.id, { literature: litQueries, trials: plan.queries.trials });
-      for (const task of plan.queries.web) await repo.enqueueJob(d.sql, "scan", topic.id, { task });
+      await repo.enqueueJob(d.sql, "harvest", topic.id, { literature: litQueries, trials: plan.queries.trials, ...autoFlag });
+      for (const task of plan.queries.web) await repo.enqueueJob(d.sql, "scan", topic.id, { task, ...autoFlag });
 
       const autoDepth = Number(job.payload.autoDepth ?? 0);
       const branchTitles = [...children.map((c) => c.title)];
@@ -110,7 +111,7 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
       if (runs.length > 0 && failures.length === runs.length) throw new Error(`every source failed:\n${failures.join("\n")}`);
       if (failures.length) d.log(`harvest ${topic.slug}: ${failures.length} source errors\n  ${failures.join("\n  ")}`);
       d.log(`harvest ${topic.slug}: ${stored} source links`);
-      await repo.enqueueJob(d.sql, "extract", topic.id);
+      await repo.enqueueJob(d.sql, "extract", topic.id, { ...autoFlag });
       return;
     }
 
@@ -156,7 +157,7 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
       const readThisRun = Number(job.payload.read ?? 0) + batch.length;
       const remaining = await repo.countUnreadSources(d.sql, topic.id);
       const more = remaining > 0 && batch.length > 0 && readThisRun < d.config.maxSourcesPerTopic;
-      await repo.enqueueJob(d.sql, more ? "extract" : "review", topic.id, more ? { read: readThisRun } : {});
+      await repo.enqueueJob(d.sql, more ? "extract" : "review", topic.id, more ? { read: readThisRun, ...autoFlag } : { ...autoFlag });
       return;
     }
 

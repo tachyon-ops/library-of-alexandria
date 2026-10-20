@@ -5,6 +5,7 @@ import {
   FallbackLlm,
   GeminiLlm,
   modelsFromEnv,
+  OpenAiCompatibleLlm,
   PlanSchema,
   providerFromEnv,
   ReadingSchema,
@@ -203,6 +204,69 @@ describe("agent validation", () => {
 
     const web = await fallbackLlm.webResearch({ role: "web", system: "s", prompt: "p", maxSearches: 2 });
     expect(web.text).toBe("Secondary search result");
+  });
+
+  it("runs OpenAiCompatibleLlm structured output and preserves primary 429 if secondary fails with 401", async () => {
+    const usage: Usage[] = [];
+    const fakeOaiFetch: typeof fetch = async () =>
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              finish_reason: "stop",
+              message: {
+                content:
+                  "```json\n" +
+                  JSON.stringify({
+                    subtopics: [],
+                    literatureQueries: ["groq fallback query"],
+                    trialQueries: [],
+                    webQueries: [],
+                    frontierAngles: [],
+                  }) +
+                  "\n```",
+              },
+            },
+          ],
+          usage: { prompt_tokens: 18, completion_tokens: 11 },
+        }),
+      );
+    const groq = new OpenAiCompatibleLlm(
+      {
+        name: "Groq",
+        endpoint: "https://api.groq.com/openai/v1/chat/completions",
+        apiKey: "gsk-test",
+        models: ["llama-3.3-70b-versatile"],
+      },
+      (u) => {
+        usage.push(u);
+      },
+      fakeOaiFetch,
+    );
+    const plan = await groq.structured({ role: "scout", system: "s", prompt: "p", schema: PlanSchema });
+    expect(plan.literatureQueries).toEqual(["groq fallback query"]);
+    expect(usage[0]?.model).toBe("groq/llama-3.3-70b-versatile");
+
+    const unauthorizedSecondary = new OpenAiCompatibleLlm(
+      {
+        name: "GitHubModels",
+        endpoint: "https://models.github.ai/inference/chat/completions",
+        apiKey: "bad-token",
+        models: ["openai/gpt-4o-mini"],
+      },
+      () => {},
+      async () => new Response("Unauthorized", { status: 401 }),
+    );
+    const rateLimitedPrimary: Llm = {
+      async structured() {
+        throw new Error("Gemini 429: Quota exceeded");
+      },
+      async webResearch() {
+        return { text: "", citations: [] };
+      },
+    };
+    const chained = new FallbackLlm(rateLimitedPrimary, unauthorizedSecondary);
+    await expect(chained.structured({ role: "scout", system: "s", prompt: "p", schema: PlanSchema })).rejects.toThrow(/Gemini 429/);
   });
 });
 
