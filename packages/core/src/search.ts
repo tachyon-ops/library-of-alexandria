@@ -999,17 +999,20 @@ export function inferBranchProposals(
       ? treeNodes.find((n) => n.id === existingNode.parentId) ?? null
       : null;
 
-    let parentNode: SearchTreeNode | null = existingParent;
-    if (!parentNode) {
-      for (const candidateSlug of facet.parentSlugs) {
-        const found = eligibleNodes.find(
-          (n) => n.slug === candidateSlug || n.slug.includes(candidateSlug),
-        );
-        if (found) {
-          parentNode = found;
-          break;
-        }
+    let parentNode: SearchTreeNode | null = null;
+    for (const candidateSlug of facet.parentSlugs) {
+      const found = eligibleNodes.find(
+        (n) =>
+          n.id !== existingNode?.id &&
+          (n.slug === candidateSlug || n.slug.includes(candidateSlug)),
+      );
+      if (found) {
+        parentNode = found;
+        break;
       }
+    }
+    if (!parentNode) {
+      parentNode = existingParent;
     }
     if (!parentNode && eligibleNodes.length > 0) {
       const fallback = buildSingleBranchProposal(facet.title, eligibleNodes, treeNodes, matchedTopics);
@@ -1068,6 +1071,234 @@ export function inferBranchProposal(
 ): SuggestedBranch {
   return inferBranchProposals(query, treeNodes, matchedTopics)[0]!;
 }
+
+/**
+ * Foundational structural trunks of the Tree of Knowledge whose canonical position
+ * is fixed by the taxonomy skeleton and should never be reparented automatically.
+ */
+const PROTECTED_TAXONOMY_SLUGS = new Set([
+  "applied-sciences-medicine-longevity",
+  "life-sciences-biology-biomedicine",
+  "physical-sciences-chemistry-cosmology",
+  "formal-sciences-mathematics-logic-statistics",
+  "economics-financial-markets-quantitative-finance",
+  "reproductive-medicine-human-fertility",
+  "geroscience-longevity-cellular-rejuvenation",
+  "neuroscience-cognition-brain-aging",
+  "physics-and-cosmology",
+  "mathematics-and-theoretical-foundations",
+  "probability-statistics-stochastic-processes",
+  "computer-science-artificial-intelligence",
+  "ovarian-reserve-oocyte-cryopreservation",
+  "assisted-reproductive-technology-gamete-donation",
+  "endometrial-receptivity-implantation-biology",
+  "andrology-male-factor-infertility",
+  "translational-geroprotective-reproductive-biology",
+  "maternal-perinatal-epidemiology-advanced-age",
+  "classical-mechanics-analytical-dynamics",
+  "quantum-mechanics-many-body-theory",
+  "particle-physics-and-standard-model",
+  "relativity-gravitation-spacetime-physics",
+  "quantum-gravity-string-theory-holography",
+  "modified-emergent-and-frontier-gravity-theories",
+  "differential-geometry-topology-manifolds",
+  "algebra-lie-groups-representation-theory",
+  "functional-analysis-pde-operator-theory",
+  "stochastic-calculus-sdes-random-matrices",
+  "statistical-inference-bayesian-econometrics",
+  "asset-pricing-market-microstructure",
+  "derivatives-volatility-quantitative-strategies",
+  "econophysics-complex-systems-tail-risk",
+]);
+
+export interface TaxonomyReassessment {
+  topicId: string;
+  currentParentId: string | null;
+  recommendedParentId: string | null;
+  recommendedParentTitle: string | null;
+  recommendedParentSlug: string | null;
+  shouldMove: boolean;
+  reason: string;
+  crossLinks: Array<{
+    linkedTopicId: string;
+    linkedTopicSlug: string;
+    linkedTopicTitle: string;
+    relation: string;
+    note: string;
+  }>;
+}
+
+/**
+ * Continuously re-assesses a topic's canonical taxonomy placement and cross-discipline links
+ * against the live Tree of Knowledge using its title, brief, summary, and harvested evidence.
+ */
+export function reassessTopicTaxonomy(
+  topic: {
+    id: string;
+    slug: string;
+    title: string;
+    brief: string | null;
+    parentId: string | null;
+    depth: number;
+    summary?: string | null;
+  },
+  treeNodes: SearchTreeNode[],
+  extraEvidenceText = "",
+): TaxonomyReassessment {
+  const currentParent = topic.parentId
+    ? treeNodes.find((n) => n.id === topic.parentId) ?? null
+    : null;
+
+  // Collect all descendants of `topic.id` so we never introduce a cycle
+  const descendantIds = new Set<string>([topic.id]);
+  let added = true;
+  while (added) {
+    added = false;
+    for (const n of treeNodes) {
+      if (n.parentId && descendantIds.has(n.parentId) && !descendantIds.has(n.id)) {
+        descendantIds.add(n.id);
+        added = true;
+      }
+    }
+  }
+
+  const eligibleParents = treeNodes.filter(
+    (n) => !descendantIds.has(n.id) && n.depth < 5,
+  );
+
+  const combinedText = [topic.title, topic.brief ?? "", topic.summary ?? "", extraEvidenceText]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\b([a-z0-9]+)\s+end\s+([a-z0-9]+)\b/gi, "$1 and $2");
+  const lowerText = combinedText.toLowerCase();
+  const terms = extractSearchTerms(combinedText);
+  const termSet = new Set(terms);
+  const emptySet = new Set<string>();
+
+  // Discover cross-discipline links across other branches in the tree
+  const scoredPeers = treeNodes
+    .filter(
+      (n) =>
+        n.id !== topic.id &&
+        n.id !== topic.parentId &&
+        !descendantIds.has(n.id) &&
+        n.depth >= 1,
+    )
+    .map((n) => ({
+      node: n,
+      score: scoreNodeForQuery(n, lowerText, terms, emptySet),
+    }))
+    .filter((x) => x.score >= 8)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  const crossLinks = scoredPeers.map(({ node }) => ({
+    linkedTopicId: node.id,
+    linkedTopicSlug: node.slug,
+    linkedTopicTitle: node.title,
+    relation: "intersects",
+    note: `Shared mechanisms, study designs, or quantitative benchmarks between ${topic.title} and ${node.title}.`,
+  }));
+
+  // Protected structural trunks stay where they are, while still receiving cross-discipline links
+  const isProtectedTrunk =
+    PROTECTED_TAXONOMY_SLUGS.has(topic.slug) ||
+    Array.from(PROTECTED_TAXONOMY_SLUGS).some((s) => topic.slug.endsWith(`-${s}`));
+
+  if (isProtectedTrunk || eligibleParents.length === 0) {
+    return {
+      topicId: topic.id,
+      currentParentId: topic.parentId,
+      recommendedParentId: topic.parentId,
+      recommendedParentTitle: currentParent?.title ?? null,
+      recommendedParentSlug: currentParent?.slug ?? null,
+      shouldMove: false,
+      reason: "Protected canonical taxonomy trunk.",
+      crossLinks,
+    };
+  }
+
+  // 1. Check canonical scientific facets first
+  for (const facet of CANONICAL_TOPIC_FACETS) {
+    const slugMatches = topic.slug === facet.slug || topic.slug.endsWith(`-${facet.slug}`);
+    if (!slugMatches && !facet.matches(lowerText, termSet)) continue;
+
+    for (const candidateSlug of facet.parentSlugs) {
+      const canonicalParent = eligibleParents.find(
+        (n) => n.slug === candidateSlug || n.slug.includes(candidateSlug),
+      );
+      if (canonicalParent) {
+        const shouldMove = topic.parentId !== canonicalParent.id;
+        return {
+          topicId: topic.id,
+          currentParentId: topic.parentId,
+          recommendedParentId: canonicalParent.id,
+          recommendedParentTitle: canonicalParent.title,
+          recommendedParentSlug: canonicalParent.slug,
+          shouldMove,
+          reason: shouldMove
+            ? `Re-routed from ${currentParent?.title ?? "root"} to canonical parent ${canonicalParent.title}.`
+            : `Verified under canonical parent ${canonicalParent.title}.`,
+          crossLinks,
+        };
+      }
+    }
+  }
+
+  // 2. Score all eligible parent disciplines using title + brief + harvested evidence
+  const currentScore = currentParent
+    ? scoreNodeForQuery(currentParent, lowerText, terms, emptySet)
+    : 0;
+
+  let bestCandidate: SearchTreeNode | null = null;
+  let bestScore = 0;
+  for (const candidate of eligibleParents) {
+    const s = scoreNodeForQuery(candidate, lowerText, terms, emptySet);
+    if (s > bestScore) {
+      bestScore = s;
+      bestCandidate = candidate;
+    }
+  }
+
+  if (!bestCandidate || bestCandidate.id === topic.parentId) {
+    return {
+      topicId: topic.id,
+      currentParentId: topic.parentId,
+      recommendedParentId: topic.parentId,
+      recommendedParentTitle: currentParent?.title ?? null,
+      recommendedParentSlug: currentParent?.slug ?? null,
+      shouldMove: false,
+      reason: `Current placement under ${currentParent?.title ?? "root"} remains optimal.`,
+      crossLinks,
+    };
+  }
+
+  const isOrphanRoot = topic.parentId === null && bestScore >= 5;
+  const currentParentUnrelated = currentScore === 0 && bestScore >= 6;
+  const isMoreSpecificChildOfCurrent =
+    bestCandidate.parentId === topic.parentId && bestScore >= currentScore + 5;
+  const isStrongerAcrossTree = bestScore >= currentScore + 10;
+
+  const shouldMove =
+    isOrphanRoot ||
+    currentParentUnrelated ||
+    isMoreSpecificChildOfCurrent ||
+    isStrongerAcrossTree;
+
+  return {
+    topicId: topic.id,
+    currentParentId: topic.parentId,
+    recommendedParentId: shouldMove ? bestCandidate.id : topic.parentId,
+    recommendedParentTitle: shouldMove ? bestCandidate.title : (currentParent?.title ?? null),
+    recommendedParentSlug: shouldMove ? bestCandidate.slug : (currentParent?.slug ?? null),
+    shouldMove,
+    reason: shouldMove
+      ? `Re-routed from ${currentParent?.title ?? "root"} to ${bestCandidate.title} (taxonomy score ${bestScore} vs ${currentScore}).`
+      : `Current placement under ${currentParent?.title ?? "root"} retained (score ${currentScore} vs ${bestScore}).`,
+    crossLinks,
+  };
+}
+
 
 /**
  * Synthesises a grounded, cited briefing from library search results and

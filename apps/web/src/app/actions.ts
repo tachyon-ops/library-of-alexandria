@@ -1,12 +1,13 @@
 "use server";
 
-import { inferBranchProposals, type SearchTreeNode, type Topic } from "@lib/core";
+import { inferBranchProposals, reassessTopicTaxonomy, type SearchTreeNode, type Topic } from "@lib/core";
 import {
   createTopic,
   getChildren,
   getTopic,
   linkTopics,
   listTree,
+  moveTopic,
   requestResearch,
   searchLibrary,
   setTopicSummaryIfEmpty,
@@ -98,6 +99,14 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
         topic.id,
         `${proposal.title} is a canonical scientific branch${parentPrefix} investigating ${proposal.brief.charAt(0).toLowerCase()}${proposal.brief.slice(1)}`,
       );
+    } else {
+      const assessment = reassessTopicTaxonomy(topic, treeNodes);
+      if (assessment.shouldMove && assessment.recommendedParentId !== topic.parentId) {
+        topic = await moveTopic(db, topic.id, assessment.recommendedParentId);
+      }
+      for (const link of assessment.crossLinks) {
+        await linkTopics(db, topic.id, link.linkedTopicId, link.relation, link.note);
+      }
     }
 
     organisedTopics.push(topic);
@@ -145,10 +154,30 @@ export async function startTopic(formData: FormData): Promise<void> {
 export async function researchTopic(formData: FormData): Promise<void> {
   const id = String(formData.get("topicId") ?? "");
   const depth = formData.get("withBranches") === "on" ? autoDepth() : 0;
-  const topic = id ? await getTopic(sql(), id) : null;
+  const db = sql();
+  const topic = id ? await getTopic(db, id) : null;
   if (!topic) return;
-  await requestResearch(sql(), topic.id, depth);
+
+  const rawTree = await listTree(db);
+  const treeNodes: SearchTreeNode[] = rawTree.map((r) => ({
+    id: r.id,
+    parentId: r.parentId,
+    slug: r.slug,
+    title: normaliseTopicTitle(r.title),
+    brief: r.brief,
+    depth: r.depth,
+  }));
+  const assessment = reassessTopicTaxonomy(topic, treeNodes);
+  if (assessment.shouldMove && assessment.recommendedParentId !== topic.parentId) {
+    await moveTopic(db, topic.id, assessment.recommendedParentId);
+  }
+  for (const link of assessment.crossLinks) {
+    await linkTopics(db, topic.id, link.linkedTopicId, link.relation, link.note);
+  }
+
+  await requestResearch(db, topic.id, depth);
   await triggerRemoteWorker();
   revalidatePath("/", "layout");
 }
+
 
