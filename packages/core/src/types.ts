@@ -63,6 +63,7 @@ export interface TopicArticleSection {
   kicker?: string;
   heading: string;
   paragraphs: string[];
+  bullets?: string[];
   callout?: string;
 }
 
