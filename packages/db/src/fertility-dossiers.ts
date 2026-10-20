@@ -2239,11 +2239,59 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         sampleSize: 767,
         extra: {},
       },
+      {
+        kind: "paper",
+        externalId: "doi:10.1016/S0140-6736(16)00258-0",
+        origin: "literature",
+        title: "Hysteroscopy in recurrent in-vitro fertilisation failure (TROPHY): a multicentre, randomised controlled trial",
+        url: "https://doi.org/10.1016/S0140-6736(16)00258-0",
+        doi: "10.1016/S0140-6736(16)00258-0",
+        venue: "The Lancet",
+        year: 2016,
+        authors: [
+          "Tarek El-Toukhy",
+          "Rudi Campo",
+          "Yacoub Khalaf",
+          "Christos Venetis",
+          "Stephan Gordts",
+        ],
+        abstract:
+          "Multicentre randomised controlled trial (TROPHY) across 8 European hospitals involving 702 women with a normal transvaginal ultrasound uterine cavity and prior failed IVF transfers, randomized to outpatient hysteroscopy in the month before starting the next treatment cycle versus immediate transfer cycle without hysteroscopy. Live birth rates were identical in both groups (29% vs 29%, RR 1.0, 95% CI 0.79–1.25, p=0.96).",
+        citedBy: 310,
+        declaredDesign: "rct",
+        design: "rct",
+        sampleSize: 702,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/dew120",
+        origin: "literature",
+        title: "Cryo-thawed embryo transfer: natural versus artificial cycle. A non-inferiority trial (ANTARCTICA trial)",
+        url: "https://doi.org/10.1093/humrep/dew120",
+        doi: "10.1093/humrep/dew120",
+        venue: "Human Reproduction",
+        year: 2016,
+        authors: [
+          "Eva R. Groenewoud",
+          "Astrid E.P. Cantineau",
+          "Ben J. Kollen",
+          "Nick S. Macklon",
+          "Ben J. Cohlen",
+        ],
+        abstract:
+          "Multicentre non-inferiority randomized controlled trial (ANTARCTICA) of 959 ovulatory women comparing modified natural-cycle FET with hCG trigger against artificial programmed hormone replacement therapy (HRT) FET, finding no statistically significant difference in live birth rates between the two endometrial preparation regimens.",
+        citedBy: 240,
+        declaredDesign: "rct",
+        design: "rct",
+        sampleSize: 959,
+        extra: {},
+      },
     ],
     claims: [
       {
         statement:
-          "In a systematic review and meta-analysis of 20,155 Frozen Embryo Transfer cycles across 15 studies (Bergenheim et al., 2021) and a meta-analysis of 11,500 cycles (Matorras et al., 2021), immediate FET in the first menstrual cycle achieved non-inferior and slightly higher adjusted live birth rates (aOR 1.20, 95% CI 1.01–1.44; pooled RR 1.05, 95% CI 0.95–1.15) compared with postponed FET after ≥1 washout cycle.",
+          "Across two independent systematic reviews and meta-analyses — Bergenheim et al. (Human Reproduction Update 2021, 15 studies, n=20,155 FET cycles) and Matorras et al. (Reproductive Medicine and Biology 2021, 11 studies, n=11,500 cycles) — immediate FET in the first menstrual cycle is at least non-inferior to postponing transfer for ≥1 washout cycle (aOR 1.20, 95% CI 1.01–1.44; pooled RR 1.05, 95% CI 0.95–1.15), establishing that routine arbitrary waiting offers no biological advantage.",
         tier: "T1",
         controversy: "settled",
         direction: "supports",
@@ -2253,23 +2301,13 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
       {
         statement:
-          "In a multicenter randomized controlled trial of 732 women immediately following a failed embryo transfer attempt (Song et al., 2021), immediate FET in the very next menstrual cycle resulted in higher clinical pregnancy rates (41.7% vs. 34.1%, RR 1.23, p=0.045), lower biochemical pregnancy loss (11.7% vs. 30.6%, RR 0.28, p<0.001), a non-significant trend toward higher live birth (35.5% vs. 29.0%, p=0.075), and significantly lower pre-transfer depressive symptoms (6.1% vs. 10.6%, p=0.038) and perceived stress (22.4% vs. 30.3%, p=0.022) than delaying ≥2 menstrual cycles.",
+          "Whether immediate next-cycle FET actively outperforms delayed FET in live birth rate or is strictly equivalent is debated across trials: Li et al. (Human Reproduction 2021 RCT, n=724) reported significantly higher live birth with immediate FET (47.2% vs. 37.7%, p=0.012), whereas in Song et al. (Reproductive Biology and Endocrinology 2021 RCT after a failed transfer, n=732) the live birth difference was not statistically significant (35.5% vs. 29.0%, p=0.075) despite higher clinical pregnancy (41.7% vs. 34.1%, p=0.045) and lower pre-transfer depression (6.1% vs. 10.6%, p=0.038), and Matorras et al. (2021, n=11,500, RR 1.05) found strict equivalence.",
         tier: "T2",
-        controversy: "settled",
+        controversy: "debated",
         direction: "supports",
-        confidence: 0.94,
-        rationale: "Song et al. (Reproductive Biology and Endocrinology, 2021, n=732) multicenter RCT specifically after failed embryo transfer.",
-        sourceIndexes: [1],
-      },
-      {
-        statement:
-          "In a randomized controlled trial of 724 patients (Li et al., Human Reproduction 2021, NCT03201783), immediate FET in the first menstrual cycle resulted in a significantly higher live birth rate (47.2% vs. 37.7%, p=0.012) and lower miscarriage rate (13.2% vs. 24.2%, p=0.006) compared with delayed FET.",
-        tier: "T2",
-        controversy: "settled",
-        direction: "supports",
-        confidence: 0.94,
-        rationale: "Li et al. (Human Reproduction, 2021, n=724) randomized controlled trial.",
-        sourceIndexes: [2],
+        confidence: 0.92,
+        rationale: "Song et al. (2021 RCT after failed ET, n=732), Li et al. (2021 RCT, n=724), and Matorras et al. (2021 meta-analysis, n=11,500).",
+        sourceIndexes: [1, 2, 3],
       },
       {
         statement:
@@ -2283,7 +2321,7 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
       {
         statement:
-          "In women up to age 45 undergoing modified natural-cycle FET (mNC-FET) after a failed IVF transfer (Horowitz et al., RBMO 2019, n=198), immediate next-menses transfer (mean 15.6 days to ovulatory trigger) and delayed transfer (mean 84.8 days) achieve equivalent follicular phase dynamics, endometrial thickness, and live birth rates.",
+          "In women up to age 45 undergoing modified natural-cycle FET (mNC-FET) after a failed IVF transfer (Horowitz et al., RBMO 2019, n=198), immediate next-menses transfer (mean 15.6 days to ovulatory trigger) and delayed transfer (mean 84.8 days) achieve identical follicular phase dynamics, endometrial thickness, and live birth rates.",
         tier: "T3",
         controversy: "settled",
         direction: "supports",
@@ -2293,23 +2331,33 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
       {
         statement:
-          "Antibiotic cure of biopsy-confirmed chronic endometritis (CD138+ plasma cells) significantly increases ongoing pregnancy and live birth rates compared with persistent endometritis (OR 6.81, 95% CI 2.08–22.24) in a meta-analysis of 796 patients (Vitagliano et al., 2018), whereas delaying transfer solely for a routine Endometrial Receptivity Analysis (ERA) biopsy does not improve live birth in randomized controlled testing (58.5% vs. 61.9%, p=0.38; Doyle et al., JAMA 2022, n=767).",
+          "Whether to pause 1–2 cycles for routine office hysteroscopy and CD138 chronic endometritis biopsy after a failed transfer when transvaginal ultrasound is normal is debated: Vitagliano et al. (Fertility and Sterility 2018 meta-analysis, n=796) showed that antibiotic cure of biopsy-confirmed chronic endometritis increases live birth compared with persistent endometritis (OR 6.81, 95% CI 2.08–22.24), whereas the multicenter TROPHY RCT (El-Toukhy et al., The Lancet 2016, n=702) found that routine outpatient hysteroscopy in women with a normal ultrasound cavity did not improve live birth (29% vs. 29%, RR 1.0, p=0.96).",
         tier: "T1",
-        controversy: "settled",
-        direction: "supports",
-        confidence: 0.93,
-        rationale: "Vitagliano et al. (Fertility and Sterility 2018, n=796) and Doyle et al. (JAMA 2022 RCT, n=767).",
-        sourceIndexes: [7, 10],
+        controversy: "debated",
+        direction: "mixed",
+        confidence: 0.91,
+        rationale: "Vitagliano et al. (Fertility and Sterility 2018 meta-analysis, n=796) vs. El-Toukhy et al. (The Lancet 2016 TROPHY RCT, n=702).",
+        sourceIndexes: [7, 11],
       },
       {
         statement:
-          "In programmed FET cycles, low serum progesterone (<9.2 ng/mL) on the day of blastocyst transfer reduces ongoing pregnancy unless rescued with daily subcutaneous progesterone (25 mg/day), which restores live birth rates to match patients with normal baseline progesterone (44.9% vs. 45.0%; Labarta et al., Human Reproduction 2021, n=574); meanwhile, ovulatory natural-cycle FET with a corpus luteum reduces pre-eclampsia risk compared with programmed HRT-FET (3.9% vs. 12.8%, adjusted OR 2.73; von Versen-Höynck et al., Hypertension 2019, n=683).",
-        tier: "T3",
-        controversy: "settled",
+          "While randomized trials show comparable live birth rates between modified natural-cycle FET and programmed HRT-FET (Groenewoud et al., ANTARCTICA RCT, Human Reproduction 2016, n=959), prospective cohorts show that programmed HRT-FET lacking a corpus luteum increases pre-eclampsia risk (12.8% vs. 3.9%, aOR 2.73; von Versen-Höynck et al., Hypertension 2019, n=683) and drops ongoing pregnancy when transfer-day serum progesterone is <9.2 ng/mL unless rescued with daily subcutaneous progesterone (44.9% vs. 45.0% LBR; Labarta et al., Human Reproduction 2021, n=574).",
+        tier: "T2",
+        controversy: "debated",
         direction: "supports",
         confidence: 0.93,
-        rationale: "Labarta et al. (Human Reproduction 2021, n=574) and von Versen-Höynck et al. (Hypertension 2019, n=683).",
-        sourceIndexes: [8, 9],
+        rationale: "Groenewoud et al. (Human Reproduction 2016 RCT, n=959), von Versen-Höynck et al. (Hypertension 2019, n=683), and Labarta et al. (Human Reproduction 2021, n=574).",
+        sourceIndexes: [8, 9, 12],
+      },
+      {
+        statement:
+          "Postponing FET for 1–2 months to perform a mock-cycle Endometrial Receptivity Analysis (ERA) biopsy does not improve live birth in double-blind randomized controlled testing (58.5% with ERA-timed FET vs. 61.9% with standard timing, p=0.38; Doyle et al., JAMA 2022, n=767), refuting earlier observational claims for routine transcriptomic window-of-implantation testing.",
+        tier: "T2",
+        controversy: "contested",
+        direction: "refutes",
+        confidence: 0.95,
+        rationale: "Doyle et al. (JAMA 2022 double-blind multicenter RCT, n=767).",
+        sourceIndexes: [10],
       },
     ],
     milestones: [
@@ -2352,9 +2400,24 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
     entities: [],
     controversies: [
       {
-        kind: "Arbitrary Waiting ('Washout') vs. Purposeful 1–3 Month Diagnostic/Endocrine Reset Before the Final Blastocyst",
-        note: "With no modifiable factor identified, randomized controlled trials (Song et al. 2021, n=732; Li et al. 2021, n=724) and meta-analyses (Bergenheim et al. 2021, n=20,155; Matorras et al. 2021, n=11,500) establish that waiting offers no biological advantage and increases pre-transfer depression and stress. However, because a vitrified blastocyst suffers 0% degradation at −196°C over 1–6+ months (Cimadomo et al. 2024, n=58,001; Huang et al. 2023, n=5,995), waiting 1–3 months is fully justified whenever a modifiable factor is identified — such as performing office hysteroscopy and CD138 chronic endometritis testing/treatment (Vitagliano et al. 2018, n=796), transitioning from a programmed HRT cycle to an ovulatory natural cycle with a corpus luteum (von Versen-Höynck et al. 2019, n=683), correcting thyroid TSH <2.5 mIU/L, or recovering emotionally.",
-        claimIndexes: [0, 1, 3, 5, 6],
+        kind: "debated",
+        note: "1. Immediate FET Superiority vs. Strict Equivalence (Does Immediate Transfer Outperform Waiting, or Are They Equal?): Li et al. (Human Reproduction 2021 RCT, n=724) reported a statistically significant +9.5% higher live birth rate with immediate first-cycle FET (47.2% vs. 37.7%, p=0.012), and Bergenheim et al. (Human Reproduction Update 2021 meta-analysis, n=20,155) found a borderline adjusted live birth advantage (aOR 1.20, 95% CI 1.01–1.44). Conversely, in Song et al. (Reproductive Biology and Endocrinology 2021 RCT after a failed transfer, n=732), the live birth difference did not reach statistical significance (35.5% vs. 29.0%, p=0.075, despite higher clinical pregnancy 41.7% vs. 34.1% and lower pre-transfer depression 6.1% vs. 10.6%), while Matorras et al. (Reproductive Medicine and Biology 2021 meta-analysis, n=11,500, RR 1.05, 95% CI 0.95–1.15), Huang et al. (RBMO 2023, n=5,995), and Horowitz et al. (RBMO 2019, n=198) found strictly identical live birth rates — arguing that apparent superiority in observational cohorts reflects selection bias (better-prognosis patients proceeding immediately) rather than a transient biological boost.",
+        claimIndexes: [0, 1, 2, 3],
+      },
+      {
+        kind: "debated",
+        note: "2. Routine Hysteroscopy & CD138 Chronic Endometritis Biopsy After a Failed Transfer vs. TROPHY Trial Null Findings: Vitagliano et al. (Fertility and Sterility 2018 meta-analysis, n=796) demonstrated that antibiotic cure of biopsy-confirmed CD138+ chronic endometritis increases live birth/ongoing pregnancy compared with persistent endometritis (OR 6.81, 95% CI 2.08–22.24), leading many clinicians to recommend a 1–2 cycle diagnostic pause when only one final blastocyst remains. Against routine invasive testing, the multicenter TROPHY RCT (El-Toukhy et al., The Lancet 2016, n=702) proved that outpatient hysteroscopy after failed IVF in women with a normal ultrasound cavity does not increase live birth (29% vs. 29%, RR 1.0, p=0.96), and pathologists disagree on the diagnostic cutoff for CD138 positivity (≥1 vs. ≥5 plasma cells per 10 HPF) in the absence of a large randomized antibiotic trial after a single failed transfer.",
+        claimIndexes: [4],
+      },
+      {
+        kind: "debated",
+        note: "3. Natural / Modified-Natural Cycle vs. Programmed HRT-FET (Live Birth Equivalence in RCTs vs. Maternal Vascular Risk & Progesterone Rescue): The multicenter ANTARCTICA RCT (Groenewoud et al., Human Reproduction 2016, n=959) found no significant difference in live birth rates between modified natural-cycle FET and programmed HRT-FET. However, prospective vascular cohorts (von Versen-Höynck et al., Hypertension 2019, n=683) demonstrate that programmed HRT cycles lacking a corpus luteum more than triple maternal pre-eclampsia risk (12.8% vs. 3.9%, aOR 2.73), and pharmacokinetic cohorts (Labarta et al., Human Reproduction 2021, n=574) show that 25–30% of HRT patients on vaginal progesterone alone have low transfer-day serum P4 (<9.2 ng/mL) requiring daily subcutaneous progesterone rescue (restoring LBR to 44.9% vs. 45.0%).",
+        claimIndexes: [5],
+      },
+      {
+        kind: "contested",
+        note: "4. Commercial Endometrial Receptivity Analysis (ERA) Mock-Cycle Delay vs. Double-Blind RCT Refutation: Commercial proponents and early observational cohorts claimed that ~25–30% of IVF patients have a displaced window of implantation requiring a 1–2 month pause for a mock HRT cycle and transcriptomic ERA biopsy. That hypothesis was refuted by a double-blind multicenter RCT (Doyle et al., JAMA 2022, n=767), which found no improvement in live birth with ERA-guided timing compared with standard FET timing (58.5% vs. 61.9%, p=0.38).",
+        claimIndexes: [6],
       },
     ],
   },

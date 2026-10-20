@@ -695,10 +695,10 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
 
     // Verify FET inter-transfer interval & last-embryo reset dossier
     const fetInterval = ALL_SEED_DOSSIERS["inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer"]!;
-    expect(fetInterval.sources).toHaveLength(11);
+    expect(fetInterval.sources).toHaveLength(13);
     expect(fetInterval.claims).toHaveLength(7);
     expect(fetInterval.milestones).toHaveLength(5);
-    expect(fetInterval.controversies).toHaveLength(1);
+    expect(fetInterval.controversies).toHaveLength(4);
     expect(fetInterval.summary).toContain("58,001");
     expect(fetInterval.summary.toLowerCase()).not.toContain("duostim");
     expect(fetInterval.summary).not.toMatch(/\b40[–-]44/);
