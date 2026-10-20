@@ -100,6 +100,33 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
       "Even when the outer trophectoderm shows mosaic chromosome errors, the inner cell mass can sometimes self-correct and form a chromosomally normal baby.",
   },
   {
+    term: "Gardner Blastocyst Grading (Expansion 1–6, ICM A–C, TE A–C: AA, AB, BA, BB, BC)",
+    aliases: ["gardner", "4aa", "5aa", "3aa", "4ab", "4ba", "4bb", "3bb", "5bb", "4bc", "aa/bb", "bb/aa"],
+    domain: "Clinical Embryology",
+    synopsis:
+      "The standard three-part blastocyst scoring system (e.g., 4AA or 4BB): a number from 1 to 6 for cavity expansion and hatching, a first letter (A, B, or C) for the Inner Cell Mass (fetus-forming cells), and a second letter (A, B, or C) for the Trophectoderm (placenta-forming cells).",
+    whyItMatters:
+      "AA, AB, BA, and BB blastocysts all have high implantation potential; however, morphological grade only weakly predicts chromosomal euploidy in women over 40, where a 4BB euploid embryo outperforms a 4AA aneuploid embryo, and trophectoderm grade correlates slightly more strongly with implantation than ICM grade.",
+  },
+  {
+    term: "Pronuclear Scoring (2PN, 1PN, 0PN & 3PN Fertilisation Check)",
+    aliases: ["2pn", "1pn", "0pn", "3pn", "pronucleus", "pronuclei", "pronuclear", "1pn/2pn", "2pn/1pn"],
+    domain: "Clinical Embryology",
+    synopsis:
+      "The fertilisation check performed 16–18 hours after ICSI or IVF to count pronuclei inside the zygote: 2PN (two pronuclei, one maternal and one paternal) is normal fertilisation; 1PN has a single visible pronucleus; 0PN has none visible at check; and 3PN is triploid (three pronuclei).",
+    whyItMatters:
+      "While 3PN zygotes are chromosomally triploid and excluded from transfer, 30–50% of 1PN and 0PN zygotes that reach the blastocyst stage (especially after conventional IVF or asynchronous pronuclear fading) are actually normal biparental diploids that can be rescued via SNP-based PGT-A and produce healthy live births.",
+  },
+  {
+    term: "Oocyte Nuclear Maturity & Morphology (MII, MI, GV & Istanbul Consensus)",
+    aliases: ["gv", "polar body", "perivitelline", "ooplasm", "zona pellucida", "dysmorphisms"],
+    domain: "Clinical Embryology",
+    synopsis:
+      "Assessment of retrieved oocytes before insemination: nuclear maturity classifies eggs as Metaphase II (MII, mature with extruded first polar body, ready for ICSI), Metaphase I (MI, immature without polar body), or Germinal Vesicle (GV, arrested in Prophase I), alongside cytoplasmic and extracytoplasmic morphology.",
+    whyItMatters:
+      "Only MII oocytes can be fertilized immediately, though immature GV/MI oocytes can sometimes be rescued via engineered Ovarian Support Cell IVM; most mild cytoplasmic variations do not prevent healthy live birth, whereas giant oocytes and smooth endoplasmic reticulum (SER) discs carry specific clinical cautions.",
+  },
+  {
     term: "Euploid",
     aliases: ["euploidy"],
     domain: "Genetics",

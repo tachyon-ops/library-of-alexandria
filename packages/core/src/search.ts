@@ -106,6 +106,8 @@ export interface SuggestedBranch {
   parentTitle: string | null;
   parentSlug: string | null;
   reason: string;
+  existingTopicId?: string | null;
+  existingTopicSlug?: string | null;
 }
 
 export interface SearchSynthesis {
@@ -117,6 +119,7 @@ export interface SearchSynthesis {
   matchedLevers: MatchedSynthesisLever[];
   matchedBenchmarks: MatchedSynthesisBenchmark[];
   suggestedBranch: SuggestedBranch;
+  suggestedBranches: SuggestedBranch[];
 }
 
 const STOPWORDS = new Set([
@@ -147,8 +150,12 @@ const STOPWORDS = new Set([
   "but",
   "by",
   "can",
+  "compare",
+  "comparing",
   "could",
   "did",
+  "difference",
+  "differences",
   "do",
   "does",
   "doing",
@@ -157,7 +164,10 @@ const STOPWORDS = new Set([
   "each",
   "effect",
   "effects",
+  "end",
   "evidence",
+  "exist",
+  "exists",
   "explain",
   "find",
   "findings",
@@ -181,12 +191,16 @@ const STOPWORDS = new Set([
   "it",
   "its",
   "just",
+  "kind",
+  "kinds",
   "know",
   "library",
   "like",
   "look",
   "looking",
   "me",
+  "method",
+  "methods",
   "more",
   "most",
   "my",
@@ -246,14 +260,20 @@ const STOPWORDS = new Set([
   "too",
   "topic",
   "topics",
+  "type",
+  "types",
   "under",
   "until",
   "up",
   "use",
   "using",
   "very",
+  "vs",
+  "versus",
   "want",
   "was",
+  "way",
+  "ways",
   "we",
   "were",
   "what",
@@ -277,12 +297,14 @@ const ACRONYM_CASE: Record<string, string> = {
   ivf: "IVF",
   icsi: "ICSI",
   ivg: "IVG",
+  ivm: "IVM",
   prp: "PRP",
   "pgt-a": "PGT-A",
   "pgt-m": "PGT-M",
   "pgt-sr": "PGT-SR",
   pgt: "PGT",
   amh: "AMH",
+  afc: "AFC",
   fsh: "FSH",
   lh: "LH",
   dna: "DNA",
@@ -301,15 +323,42 @@ const ACRONYM_CASE: Record<string, string> = {
   dor: "DOR",
   poi: "POI",
   mrt: "MRT",
+  mst: "MST",
+  pnt: "PNT",
   hla: "HLA",
+  kir: "KIR",
   nk: "NK",
   "sflt-1": "sFlt-1",
   plgf: "PlGF",
   gnrh: "GnRH",
   hcg: "hCG",
   tese: "TESE",
+  tesa: "TESA",
+  dfi: "DFI",
   zimot: "ZyMōt",
   zymot: "ZyMōt",
+  "1pn": "1PN",
+  "2pn": "2PN",
+  "0pn": "0PN",
+  "3pn": "3PN",
+  "1pn/2pn": "1PN/2PN",
+  "2pn/1pn": "2PN/1PN",
+  "bb/aa": "BB/AA",
+  "aa/bb": "AA/BB",
+  aa: "AA",
+  ab: "AB",
+  ba: "BA",
+  bb: "BB",
+  bc: "BC",
+  cc: "CC",
+  mii: "MII",
+  mi: "MI",
+  gv: "GV",
+  icm: "ICM",
+  te: "TE",
+  ser: "SER",
+  eshre: "ESHRE",
+  asrm: "ASRM",
   crispr: "CRISPR",
   ai: "AI",
   mond: "MOND",
@@ -401,30 +450,56 @@ export function extractSearchTerms(query: string): string[] {
 }
 
 /**
+ * Strips conversational question scaffolding anywhere in a string and normalises
+ * informal conjunctions so titles reflect canonical academic nomenclature.
+ */
+function stripConversationalScaffolding(raw: string): string {
+  return raw
+    .trim()
+    .replace(/[?!.]+$/g, "")
+    // Fix common conversational typo "X end Y" -> "X and Y"
+    .replace(/\b([a-z0-9]+)\s+end\s+([a-z0-9]+)\b/gi, "$1 and $2")
+    // Strip inline or leading question scaffolding such as "-what grading methods are there for"
+    .replace(
+      /(?:^|[-–—,:;]\s*|\s+)(?:what\s+(?:is|are)\s+the\s+(?:evidence|methods|options|criteria|systems|protocols|studies|findings)\s+(?:on|for|about|in|of)|what\s+(?:[a-z]+\s+){0,2}(?:methods|systems|criteria|protocols|options|treatments|approaches)\s+(?:are\s+there|exist|do\s+we\s+have)\s+(?:for|on|in|to|of)|what\s+(?:is|are|does|do)|how\s+(?:does|do|to|can|is|are)|are\s+there\s+(?:any\s+)?(?:articles|papers|studies|methods|treatments)\s+(?:on|about|for|in)|tell\s+me\s+about|search\s+for|find\s+(?:articles|papers|studies)\s+(?:on|about|for)|can\s+you\s+explain|evidence\s+(?:on|for|of)|papers\s+(?:on|about))\s+/gi,
+      " ",
+    )
+    .replace(/\b(?:are\s+there\s+for|are\s+there|do\s+we\s+have\s+for|exist\s+for)\b/gi, " ")
+    .replace(/\s*[-–—]+\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
  * Formats a user search query or natural-language question into a clean
  * canonical scientific branch title.
  */
 export function suggestTopicTitle(query: string): string {
-  const trimmed = query
-    .trim()
-    .replace(/[?!.]+$/g, "")
-    .replace(
-      /^(what\s+is\s+the\s+evidence\s+(on|for|about)|what\s+(is|are|does|do)|how\s+(does|do|to|can)|are\s+there\s+(any\s+)?(articles|papers|studies)\s+(on|about|for)|tell\s+me\s+about|search\s+for|find\s+(articles|papers|studies)\s+(on|about|for)|can\s+you\s+explain|evidence\s+(on|for|of)|papers\s+(on|about))\s+/i,
-      "",
-    )
-    .trim();
-
-  const base = trimmed || query.trim() || "New Research Inquiry";
+  const cleaned = stripConversationalScaffolding(query);
+  const base = cleaned || query.trim().replace(/[?!.]+$/g, "") || "New Research Inquiry";
   const words = base.split(/\s+/);
   const smallWords = new Set(["a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of", "on", "or", "the", "to", "vs", "with"]);
 
   return words
     .map((word, idx) => {
-      const lower = word.toLowerCase();
+      const cleanWord = word.replace(/^[-–—,:;]+|[-–—,:;]+$/g, "");
+      if (!cleanWord) return "";
+      const lower = cleanWord.toLowerCase();
       if (ACRONYM_CASE[lower]) return ACRONYM_CASE[lower]!;
+      // Handle slash-joined tokens such as BB/AA or 1PN/2PN
+      if (cleanWord.includes("/")) {
+        return cleanWord
+          .split("/")
+          .map((part) => {
+            const pLower = part.toLowerCase();
+            return ACRONYM_CASE[pLower] ?? (part.charAt(0).toUpperCase() + part.slice(1));
+          })
+          .join("/");
+      }
       if (idx > 0 && smallWords.has(lower)) return lower;
-      return word.charAt(0).toUpperCase() + word.slice(1);
+      return cleanWord.charAt(0).toUpperCase() + cleanWord.slice(1);
     })
+    .filter(Boolean)
     .join(" ")
     .slice(0, 90);
 }
@@ -519,12 +594,24 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
     keywords: ["microeconomics", "game theory", "nash", "auction", "mechanism design", "adverse selection", "moral hazard", "prospect theory", "general equilibrium"],
   },
   {
+    slugSubstring: "oocyte-nuclear-maturity-and-morphological-grading",
+    keywords: ["oocyte grading", "oocyte morphology", "mii", "germinal vesicle", "polar body", "perivitelline", "zona pellucida", "ooplasm", "dysmorphism", "cumulus-oocyte"],
+  },
+  {
+    slugSubstring: "zygote-pronuclear-scoring-2pn-1pn-3pn-fertilisation",
+    keywords: ["1pn", "2pn", "0pn", "3pn", "pronuclear", "pronuclei", "pronucleus", "zygote", "fertilisation check", "fertilization check", "digyny", "polyspermy"],
+  },
+  {
+    slugSubstring: "blastocyst-morphological-grading-gardner-criteria-morphokinetics",
+    keywords: ["gardner", "bb/aa", "aa/bb", "4aa", "4bb", "5aa", "3bb", "blastocyst grading", "embryo grading", "inner cell mass", "trophectoderm", "morphokinetics", "time-lapse"],
+  },
+  {
     slugSubstring: "ovarian-reserve-oocyte-cryopreservation",
-    keywords: ["vitrified", "vitrification", "cryopreservation", "egg freezing", "oocyte", "thaw", "warming", "amh", "follicle", "euploid", "aneuploidy"],
+    keywords: ["vitrified", "vitrification", "cryopreservation", "egg freezing", "oocyte", "oocytes", "thaw", "warming", "amh", "follicle", "euploid", "aneuploidy", "duostim"],
   },
   {
     slugSubstring: "endometrial-receptivity-implantation-biology",
-    keywords: ["endometrial", "endometrium", "uterine", "implantation", "fet", "luteal", "progesterone", "era", "adenomyosis", "endometriosis", "endo", "scratch", "hysteroscopy"],
+    keywords: ["endometrial", "endometrium", "uterine", "implantation", "fet", "luteal", "progesterone", "era", "adenomyosis", "endometriosis", "scratch", "hysteroscopy"],
   },
   {
     slugSubstring: "andrology-male-factor-infertility",
@@ -532,7 +619,7 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
   },
   {
     slugSubstring: "assisted-reproductive-technology-gamete-donation",
-    keywords: ["donor", "donation", "recipient", "oocyte donation", "spain", "portugal", "czech", "greece", "anonymity", "clinic", "immunology", "kir", "hla"],
+    keywords: ["donor", "donation", "recipient", "oocyte donation", "spain", "portugal", "czech", "greece", "anonymity", "clinic", "immunology", "kir", "hla", "blastocyst", "embryo", "embryos", "gardner", "1pn", "2pn", "grading"],
   },
   {
     slugSubstring: "translational-geroprotective-reproductive-biology",
@@ -548,20 +635,221 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
   },
 ];
 
-/**
- * Recommends the best parent topic in the Tree of Knowledge under which to spawn
- * a new sub-branch for the given query.
- */
-export function inferBranchProposal(
-  query: string,
-  treeNodes: SearchTreeNode[],
-  matchedTopics: SearchTopicMatch[] = [],
-): SuggestedBranch {
-  const title = suggestTopicTitle(query);
-  const cleanQuery = query.trim() || title;
-  const brief = `Synthesise the peer-reviewed record on ${cleanQuery}: systematic reviews, randomised clinical trials, large cohort studies, quantitative effect sizes, safety signals, and active trials.`;
+interface CanonicalFacetSpec {
+  slug: string;
+  title: string;
+  brief: string;
+  parentSlugs: string[];
+  matches: (qLower: string, terms: Set<string>) => boolean;
+}
 
-  const eligibleNodes = treeNodes.filter((n) => n.depth < 5);
+/**
+ * Canonical scientific sub-disciplines that AI maps multi-faceted inquiries onto
+ * so user questions are decomposed into clean, formal taxonomy branches rather than
+ * raw conversational strings.
+ */
+const CANONICAL_TOPIC_FACETS: CanonicalFacetSpec[] = [
+  {
+    slug: "blastocyst-morphological-grading-gardner-criteria-morphokinetics",
+    title: "Blastocyst Morphological Grading (Gardner AA/BB System) & Embryo Morphokinetics",
+    brief:
+      "Gardner & Schoolcraft blastocyst scoring (expansion stages 1–6, Inner Cell Mass grades A–C, Trophectoderm grades A–C: AA, AB, BA, BB, BC, CC), Day 3 cleavage compaction, time-lapse morphokinetic intervals, euploidy correlation, and live-birth outcomes.",
+    parentSlugs: [
+      "assisted-reproductive-technology-gamete-donation",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(bb\/aa|aa\/bb|4aa|5aa|3aa|4ab|4ba|4bb|3bb|5bb|gardner|morphokinetic|morphokinetics|time-lapse|inner cell mass|trophectoderm)\b/.test(q) ||
+      ((terms.has("bb") || terms.has("aa")) && (terms.has("grading") || terms.has("embryo") || terms.has("embryos") || terms.has("blastocyst"))) ||
+      ((terms.has("embryo") || terms.has("embryos") || terms.has("blastocyst") || terms.has("blastocysts")) &&
+        (terms.has("grading") || terms.has("grade") || terms.has("grades") || terms.has("morphology") || terms.has("scoring"))),
+  },
+  {
+    slug: "zygote-pronuclear-scoring-2pn-1pn-3pn-fertilisation",
+    title: "Zygote Pronuclear Scoring (2PN, 1PN, 0PN & 3PN) & Fertilisation Ploidy Assessment",
+    brief:
+      "ESHRE/Istanbul fertilisation check at 16–18 hours post-insemination, normal diploid 2PN2PB zygotes, monopronuclear (1PN) and appronuclear (0PN) biparental diploid rescue via PGT-A/SNP haplotyping, and tripronuclear (3PN) polyspermy/digyny exclusion.",
+    parentSlugs: [
+      "assisted-reproductive-technology-gamete-donation",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(1pn|2pn|0pn|3pn|pronuclear|pronuclei|pronucleus|zygote\s+grading|zygote\s+scoring|fertilis[a-z]+\s+check|fertiliz[a-z]+\s+check)\b/.test(q) ||
+      terms.has("1pn") ||
+      terms.has("2pn") ||
+      terms.has("0pn") ||
+      terms.has("3pn") ||
+      terms.has("pronuclear"),
+  },
+  {
+    slug: "oocyte-nuclear-maturity-and-morphological-grading",
+    title: "Oocyte Nuclear Maturity (MII/MI/GV) & Morphological Grading",
+    brief:
+      "Istanbul consensus oocyte assessment, Metaphase II (MII) vs Metaphase I (MI) and Germinal Vesicle (GV) nuclear maturity, polar body integrity, perivitelline space, zona pellucida birefringence, smooth endoplasmic reticulum (SER) aggregates, and cytoplasmic dysmorphisms.",
+    parentSlugs: [
+      "ovarian-reserve-oocyte-cryopreservation",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(oocyte\s+grading|oocytes?\s+morphology|egg\s+grading|polar\s+body|germinal\s+vesicle|perivitelline|ooplasm|zona\s+pellucida|metaphase\s+ii)\b/.test(q) ||
+      ((terms.has("oocyte") || terms.has("oocytes") || terms.has("egg") || terms.has("eggs") || terms.has("mii") || terms.has("gv")) &&
+        (terms.has("grading") || terms.has("grade") || terms.has("grades") || terms.has("morphology") || terms.has("maturity") || terms.has("scoring") || terms.has("quality"))),
+  },
+  {
+    slug: "mitochondrial-replacement-therapy-ooplasmic-transfer",
+    title: "Mitochondrial Replacement Therapy & Ooplasmic Transfer",
+    brief:
+      "Maternal spindle transfer (MST), pronuclear transfer (PNT), germinal vesicle transfer, autologous mitochondrial injection, heteroplasmy drift, and clinical trials preserving 100% parental nuclear DNA.",
+    parentSlugs: [
+      "translational-geroprotective-reproductive-biology",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q) => /\b(spindle\s+transfer|pronuclear\s+transfer|mitochondrial\s+replacement|ooplasmic\s+transfer|\bmst\b|\bpnt\b|\bmrt\b)\b/.test(q),
+  },
+  {
+    slug: "in-vitro-gametogenesis-pluripotent-stem-cell-reprogramming",
+    title: "In Vitro Gametogenesis & Pluripotent Stem Cell Reprogramming",
+    brief:
+      "Reconstitution of human oogenesis from induced pluripotent stem cells (iPSCs), primordial germ cell specification, meiotic checkpoints, and iPSC-derived ovarian support cells (engineered IVM).",
+    parentSlugs: [
+      "translational-geroprotective-reproductive-biology",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q) => /\b(in\s+vitro\s+gametogenesis|\bivg\b|ovarian\s+support\s+cell|gameto|fertilo)\b/.test(q),
+  },
+  {
+    slug: "mtor-pathway-modulation-follicular-longevity",
+    title: "mTOR Pathway Modulation & Follicular Longevity",
+    brief:
+      "Mechanistic and clinical studies of mTORC1 inhibition (rapamycin VIBRANT trial), NAD+/NMN sirtuin spindle stabilization, and spermidine mitophagy activation in ovarian aging.",
+    parentSlugs: [
+      "translational-geroprotective-reproductive-biology",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      // Trigger only when part of a multi-concept query or question so single custom topic titles stay direct
+      (terms.has("rapamycin") || terms.has("mtor") || terms.has("nmn") || terms.has("spermidine") || terms.has("coq10")) &&
+      (/[,?;]|(\band\b)|(\bvs\b)|(\bwhat\b)|(\bhow\b)/.test(q) && terms.size >= 4),
+  },
+  {
+    slug: "intraovarian-platelet-rich-plasma-stem-cell-biologics",
+    title: "Intraovarian Platelet-Rich Plasma & Stem Cell Biologics",
+    brief:
+      "Hippo pathway in vitro activation (IVA), paracrine angiogenic signaling, autologous PRP, extracellular vesicles, and clinical evaluation of intraovarian biologics.",
+    parentSlugs: [
+      "translational-geroprotective-reproductive-biology",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      (terms.has("prp") || /\b(platelet-rich\s+plasma|ovarian\s+rejuvenation|in\s+vitro\s+activation)\b/.test(q)) &&
+      (/[,?;]|(\band\b)|(\bvs\b)|(\bwhat\b)|(\bhow\b)/.test(q) && terms.size >= 3),
+  },
+  {
+    slug: "sperm-chromatin-integrity-dna-fragmentation-diagnostics",
+    title: "Sperm Chromatin Integrity & DNA Fragmentation Diagnostics",
+    brief:
+      "Oxidative and apoptotic mechanisms of sperm DNA damage, microfluidic chip sorting (ZyMōt), testicular sperm bypass (TESA/TESE), and comparative diagnostic accuracy of TUNEL, SCSA, SCD, and Comet assays.",
+    parentSlugs: [
+      "andrology-male-factor-infertility",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(dna\s+fragmentation|\bdfi\b|zymot|zimot|microfluidic\s+sperm|testicular\s+sperm|\btesa\b|\btese\b)\b/.test(q) ||
+      (terms.has("sperm") && (terms.has("fragmentation") || terms.has("chromatin") || terms.has("zymot"))),
+  },
+  {
+    slug: "paternal-age-effects-on-gamete-embryo-offspring-health",
+    title: "Paternal Age Effects on Gamete, Embryo & Offspring Health",
+    brief:
+      "Epidemiological and molecular effects of paternal age across the lifespan on blastocyst development, de novo germline mutations, and offspring health.",
+    parentSlugs: [
+      "andrology-male-factor-infertility",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q) => /\b(paternal\s+age|male\s+age|older\s+father)\b/.test(q),
+  },
+  {
+    slug: "mond-modified-newtonian-dynamics-and-galactic-rotation",
+    title: "Modified Newtonian Dynamics (MOND), Relativistic Extensions & Galactic Dynamics",
+    brief:
+      "Milgrom's acceleration threshold a0 ≈ 1.2×10^-10 m/s^2, zero-parameter Baryonic Tully–Fisher and Radial Acceleration Relations across SPARC galaxies, the External Field Effect, and AeST relativistic field theory.",
+    parentSlugs: [
+      "modified-emergent-and-frontier-gravity-theories",
+      "relativity-gravitation-spacetime-physics",
+      "physics-and-cosmology",
+    ],
+    matches: (q, terms) =>
+      (terms.has("mond") || terms.has("milgrom") || terms.has("btfr")) &&
+      (/[,?;]|(\band\b)|(\bvs\b)|(\bversus\b)|(\bwhat\b)|(\bhow\b)/.test(q) && terms.size >= 4),
+  },
+  {
+    slug: "quantised-inertia-horizon-mechanics-and-unruh-radiation",
+    title: "Quantised Inertia (MiHsC), Horizon Mechanics, Unruh Radiation & Anti-Gravity Propulsion",
+    brief:
+      "Mike McCulloch's Hubble-scale Casimir/Rindler horizon model of inertia, Unruh radiation damping, zero-parameter galaxy rotation and wide-binary predictions, and laboratory horizon-drive/anti-gravity thrust bounds.",
+    parentSlugs: [
+      "modified-emergent-and-frontier-gravity-theories",
+      "relativity-gravitation-spacetime-physics",
+      "physics-and-cosmology",
+    ],
+    matches: (q, terms) =>
+      (/\b(quantised\s+inertia|quantized\s+inertia|mihsc|unruh)\b/.test(q) || terms.has("mihsc")) &&
+      (/[,?;]|(\band\b)|(\bvs\b)|(\bversus\b)|(\bwhat\b)|(\bhow\b)/.test(q) && terms.size >= 4),
+  },
+  {
+    slug: "dark-matter-adhoc-epistemology-and-gr-breakdown-limits",
+    title: "Dark Matter Ad-Hoc Parameters vs. General Relativity Breakdown at Galactic & Wide-Binary Scales",
+    brief:
+      "Epistemic audit of per-galaxy ΛCDM halo parameter fitting and 40-year WIMP direct-detection nulls versus the empirical breakdown of General Relativity in galactic rotation curves and Gaia DR3 wide binary star systems.",
+    parentSlugs: [
+      "modified-emergent-and-frontier-gravity-theories",
+      "relativity-gravitation-spacetime-physics",
+      "physics-and-cosmology",
+    ],
+    matches: (q) =>
+      /\b(dark\s+matter|wide\s+binar(?:y|ies)|wimp)\b/.test(q) &&
+      /[,?;]|(\band\b)|(\bvs\b)|(\bversus\b)|(\bwhat\b)|(\bhow\b)/.test(q),
+  },
+];
+
+function scoreNodeForQuery(
+  node: SearchTreeNode,
+  queryLower: string,
+  terms: string[],
+  matchedTopicIds: Set<string>,
+): number {
+  const hay = `${node.title} ${node.brief ?? ""} ${node.slug}`.toLowerCase();
+  let score = 0;
+  for (const term of terms) {
+    if (term.length < 3 && !ACRONYM_CASE[term]) continue;
+    if (hay.includes(term)) score += 3;
+  }
+  for (const hint of DOMAIN_HINTS) {
+    if (node.slug.includes(hint.slugSubstring)) {
+      for (const kw of hint.keywords) {
+        if (queryLower.includes(kw)) score += 5;
+      }
+    }
+  }
+  if (matchedTopicIds.has(node.id) && score > 0) {
+    score += 4;
+  }
+  if (score > 0 && node.depth >= 1 && node.depth <= 3) {
+    score += 1;
+  }
+  return score;
+}
+
+function buildSingleBranchProposal(
+  clause: string,
+  eligibleNodes: SearchTreeNode[],
+  allTreeNodes: SearchTreeNode[],
+  matchedTopics: SearchTopicMatch[],
+): SuggestedBranch {
+  const title = suggestTopicTitle(clause);
+  const cleanClause = stripConversationalScaffolding(clause) || title;
+  const brief = `Synthesise the peer-reviewed record on ${cleanClause}: systematic reviews, randomised clinical trials, large cohort studies, quantitative effect sizes, safety signals, and active trials.`;
+
   if (eligibleNodes.length === 0) {
     return {
       title,
@@ -570,51 +858,60 @@ export function inferBranchProposal(
       parentTitle: null,
       parentSlug: null,
       reason: "Creates a new root discipline in the Tree of Knowledge.",
+      existingTopicId: null,
+      existingTopicSlug: null,
     };
   }
 
-  const terms = extractSearchTerms(query);
-  const queryLower = cleanQuery.toLowerCase();
+  const terms = extractSearchTerms(clause);
+  const queryLower = cleanClause.toLowerCase();
+  const matchedTopicIds = new Set(matchedTopics.map((m) => m.id));
 
-  // 1. If a matched topic from search is eligible, prefer it as the parent branch.
-  for (const matched of matchedTopics) {
-    const eligible = eligibleNodes.find((n) => n.id === matched.id);
-    if (eligible) {
-      return {
-        title,
-        brief,
-        parentId: eligible.id,
-        parentTitle: eligible.title,
-        parentSlug: eligible.slug,
-        reason: `Closest matching discipline in the archive (${eligible.title}).`,
-      };
-    }
+  // Check if an existing node in the tree already has virtually the same title
+  const existingExact = allTreeNodes.find(
+    (n) => n.title.toLowerCase() === title.toLowerCase(),
+  );
+  if (existingExact) {
+    const parent = allTreeNodes.find((n) => n.id === existingExact.parentId) ?? null;
+    return {
+      title: existingExact.title,
+      brief: existingExact.brief ?? brief,
+      parentId: parent?.id ?? existingExact.parentId,
+      parentTitle: parent?.title ?? null,
+      parentSlug: parent?.slug ?? null,
+      reason: `Canonical branch already present in the Tree of Knowledge${parent ? ` under ${parent.title}` : ""}.`,
+      existingTopicId: existingExact.id,
+      existingTopicSlug: existingExact.slug,
+    };
   }
 
-  // 2. Score all eligible tree nodes by keyword & domain hint overlap.
   let bestNode: SearchTreeNode | null = null;
   let bestScore = 0;
 
   for (const node of eligibleNodes) {
-    const hay = `${node.title} ${node.brief ?? ""} ${node.slug}`.toLowerCase();
-    let score = 0;
-    for (const term of terms) {
-      if (hay.includes(term)) score += 3;
-    }
-    for (const hint of DOMAIN_HINTS) {
-      if (node.slug.includes(hint.slugSubstring)) {
-        for (const kw of hint.keywords) {
-          if (queryLower.includes(kw)) score += 4;
-        }
-      }
-    }
-    // Slight preference for depth 1-2 specialist disciplines over umbrella trunks when tied
-    if (score > 0 && node.depth >= 1 && node.depth <= 3) {
-      score += 1;
-    }
+    const score = scoreNodeForQuery(node, queryLower, terms, matchedTopicIds);
     if (score > bestScore) {
       bestScore = score;
       bestNode = node;
+    }
+  }
+
+  // If no domain hint or multi-term overlap matched, fall back to a matched topic from search
+  if (!bestNode) {
+    for (const matched of matchedTopics) {
+      const eligible = eligibleNodes.find((n) => n.id === matched.id);
+      if (eligible) {
+        return {
+          title,
+          brief,
+          parentId: eligible.id,
+          parentTitle: eligible.title,
+          parentSlug: eligible.slug,
+          reason: `Placed by AI under ${eligible.title} based on archive proximity.`,
+          existingTopicId: null,
+          existingTopicSlug: null,
+        };
+      }
     }
   }
 
@@ -625,11 +922,12 @@ export function inferBranchProposal(
       parentId: bestNode.id,
       parentTitle: bestNode.title,
       parentSlug: bestNode.slug,
-      reason: `Placed under ${bestNode.title} based on domain taxonomy match.`,
+      reason: `Placed by AI under ${bestNode.title} based on scientific domain taxonomy.`,
+      existingTopicId: null,
+      existingTopicSlug: null,
     };
   }
 
-  // 3. Fallback to the primary fertility/medicine discipline or first root node.
   const fallback =
     eligibleNodes.find((n) => n.slug.includes("reproductive-medicine-human-fertility")) ??
     eligibleNodes.find((n) => n.depth === 0) ??
@@ -641,13 +939,139 @@ export function inferBranchProposal(
     parentId: fallback.id,
     parentTitle: fallback.title,
     parentSlug: fallback.slug,
-    reason: `Placed under ${fallback.title} (can be changed before launching).`,
+    reason: `Placed by AI under ${fallback.title}.`,
+    existingTopicId: null,
+    existingTopicSlug: null,
   };
 }
 
 /**
+ * Splits a multi-clause or multi-subject question into distinct scientific sub-inquiries
+ * when the question asks about 2 to 4 separate mechanisms, methods, or topics.
+ */
+function splitCompoundInquiryClauses(query: string): string[] {
+  const cleaned = stripConversationalScaffolding(query);
+  if (!cleaned) return [];
+
+  // Only split if the user clearly wrote a compound question with commas, semicolons, or "vs"/"versus"
+  const hasExplicitSeparators = /[,;]|\b(?:vs\.?|versus)\b/i.test(cleaned);
+  if (!hasExplicitSeparators) return [cleaned];
+
+  const rawParts = cleaned
+    .split(/\s*(?:;|,|\bvs\.?\b|\bversus\b|\band\b)\s*/i)
+    .map((p) => p.trim())
+    .filter((p) => extractSearchTerms(p).length >= 1 && p.length >= 3);
+
+  if (rawParts.length < 2 || rawParts.length > 5) return [cleaned];
+  return rawParts.slice(0, 4);
+}
+
+/**
+ * AI Tree Organiser: decomposes a user question or research inquiry into 1, 2, 3, or more
+ * canonical scientific branches and determines the exact parent discipline in the Tree of
+ * Knowledge for each branch.
+ */
+export function inferBranchProposals(
+  query: string,
+  treeNodes: SearchTreeNode[],
+  matchedTopics: SearchTopicMatch[] = [],
+): SuggestedBranch[] {
+  const eligibleNodes = treeNodes.filter((n) => n.depth < 5);
+  const normalizedQuery = query
+    .trim()
+    .replace(/\b([a-z0-9]+)\s+end\s+([a-z0-9]+)\b/gi, "$1 and $2");
+  const qLower = normalizedQuery.toLowerCase();
+  const termSet = new Set(extractSearchTerms(normalizedQuery));
+
+  const proposals: SuggestedBranch[] = [];
+  const usedTitles = new Set<string>();
+
+  // 1. Check canonical scientific facets first (supports spawning 2, 3, or more topics from one question)
+  for (const facet of CANONICAL_TOPIC_FACETS) {
+    if (!facet.matches(qLower, termSet)) continue;
+    if (usedTitles.has(facet.title.toLowerCase())) continue;
+    usedTitles.add(facet.title.toLowerCase());
+
+    const existingNode = treeNodes.find(
+      (n) => n.slug === facet.slug || n.slug.endsWith(`-${facet.slug}`) || n.title.toLowerCase() === facet.title.toLowerCase(),
+    );
+    const existingParent = existingNode?.parentId
+      ? treeNodes.find((n) => n.id === existingNode.parentId) ?? null
+      : null;
+
+    let parentNode: SearchTreeNode | null = existingParent;
+    if (!parentNode) {
+      for (const candidateSlug of facet.parentSlugs) {
+        const found = eligibleNodes.find(
+          (n) => n.slug === candidateSlug || n.slug.includes(candidateSlug),
+        );
+        if (found) {
+          parentNode = found;
+          break;
+        }
+      }
+    }
+    if (!parentNode && eligibleNodes.length > 0) {
+      const fallback = buildSingleBranchProposal(facet.title, eligibleNodes, treeNodes, matchedTopics);
+      parentNode = eligibleNodes.find((n) => n.id === fallback.parentId) ?? eligibleNodes[0]!;
+    }
+
+    proposals.push({
+      title: existingNode?.title ?? facet.title,
+      brief: existingNode?.brief ?? facet.brief,
+      parentId: parentNode?.id ?? null,
+      parentTitle: parentNode?.title ?? null,
+      parentSlug: parentNode?.slug ?? null,
+      reason: existingNode
+        ? `Canonical discipline already organised under ${parentNode?.title ?? "the Tree of Knowledge"}.`
+        : `Organised by AI under ${parentNode?.title ?? "the Tree of Knowledge"} using canonical scientific taxonomy.`,
+      existingTopicId: existingNode?.id ?? null,
+      existingTopicSlug: existingNode?.slug ?? null,
+    });
+
+    if (proposals.length >= 4) break;
+  }
+
+  if (proposals.length > 0) {
+    return proposals;
+  }
+
+  // 2. General multi-clause decomposition for compound questions outside pre-indexed facets
+  const clauses = splitCompoundInquiryClauses(normalizedQuery);
+  if (clauses.length >= 2) {
+    for (const clause of clauses) {
+      const proposal = buildSingleBranchProposal(clause, eligibleNodes, treeNodes, matchedTopics);
+      const key = proposal.title.toLowerCase();
+      if (!usedTitles.has(key)) {
+        usedTitles.add(key);
+        proposals.push(proposal);
+      }
+      if (proposals.length >= 4) break;
+    }
+    if (proposals.length >= 2) {
+      return proposals;
+    }
+  }
+
+  // 3. Single canonical branch placement
+  return [buildSingleBranchProposal(normalizedQuery, eligibleNodes, treeNodes, matchedTopics)];
+}
+
+/**
+ * Recommends the primary parent topic in the Tree of Knowledge under which to spawn
+ * a sub-branch for the given query. For multi-branch inquiries, see `inferBranchProposals`.
+ */
+export function inferBranchProposal(
+  query: string,
+  treeNodes: SearchTreeNode[],
+  matchedTopics: SearchTopicMatch[] = [],
+): SuggestedBranch {
+  return inferBranchProposals(query, treeNodes, matchedTopics)[0]!;
+}
+
+/**
  * Synthesises a grounded, cited briefing from library search results and
- * recommends where a new research branch can be spawned.
+ * recommends how the AI organises 1, 2, 3, or more research branches in the tree.
  */
 export function synthesizeSearchBriefing(
   query: string,
@@ -655,7 +1079,8 @@ export function synthesizeSearchBriefing(
   treeNodes: SearchTreeNode[],
 ): SearchSynthesis {
   const terms = results.terms.length > 0 ? results.terms : extractSearchTerms(query);
-  const suggestedBranch = inferBranchProposal(query, treeNodes, results.topics);
+  const suggestedBranches = inferBranchProposals(query, treeNodes, results.topics);
+  const suggestedBranch = suggestedBranches[0]!;
 
   const sortedClaims = [...results.claims].sort(
     (a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || b.confidence - a.confidence,
@@ -714,12 +1139,13 @@ export function synthesizeSearchBriefing(
       bestTier: null,
       headline: `No graded findings or indexed papers match "${query.trim()}" in the archive yet.`,
       paragraphs: [
-        `The library does not yet hold extracted findings, clinical trials, or peer-reviewed papers matching these terms. You can launch an autonomous research branch below under ${suggestedBranch.parentTitle ?? "the Tree of Knowledge"} to dispatch the scout, literature harvesters, reader, and skeptic agents on this question.`,
+        `The library does not yet hold extracted findings, clinical trials, or peer-reviewed papers matching these terms. The AI has organised this inquiry into ${suggestedBranches.length === 1 ? `a canonical scientific branch under ${suggestedBranch.parentTitle ?? "the Tree of Knowledge"}` : `${suggestedBranches.length} canonical scientific branches across the Tree of Knowledge`} so autonomous scout, literature harvester, reader, and skeptic workers can investigate it.`,
       ],
       citations: [],
       matchedLevers: [],
       matchedBenchmarks: [],
       suggestedBranch,
+      suggestedBranches,
     };
   }
 
@@ -748,7 +1174,7 @@ export function synthesizeSearchBriefing(
   const headline =
     coverageStatus === "strong"
       ? `Synthesised from the library archive (${headlineParts.join(" · ")}).`
-      : `Partial coverage in the library (${headlineParts.join(" · ")}) — you can also spawn a dedicated sub-branch below.`;
+      : `Partial coverage in the library (${headlineParts.join(" · ")}) — AI has also organised ${suggestedBranches.length === 1 ? "a dedicated sub-branch" : `${suggestedBranches.length} dedicated sub-branches`} below.`;
 
   const paragraphs: string[] = [];
 
@@ -825,5 +1251,6 @@ export function synthesizeSearchBriefing(
     matchedLevers: matchedLevers.slice(0, 4),
     matchedBenchmarks: matchedBenchmarks.slice(0, 4),
     suggestedBranch,
+    suggestedBranches,
   };
 }
