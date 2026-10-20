@@ -16,6 +16,7 @@ import {
   type TopicLinkView,
 } from "@lib/db";
 import {
+  buildDynamicFieldArticle,
   CONTROVERSY_LABELS,
   TIER_LABELS,
   TIERS,
@@ -28,6 +29,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { researchTopic } from "@/app/actions";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { FieldResearchArticle } from "@/components/FieldResearchArticle";
 import { NewTopicForm } from "@/components/NewTopicForm";
 import { Tree } from "@/components/Tree";
 import { loadTree, normaliseTopicTitle, sql } from "@/lib/data";
@@ -217,6 +219,22 @@ export default async function TopicPage({
     .map((s) => treeNodeBySlug.get(s))
     .filter((n): n is { slug: string; title: string; parentTitle: string | null } => Boolean(n));
 
+  const monograph = buildDynamicFieldArticle({
+    title: displayTitle,
+    brief: briefText,
+    status: topic.status,
+    summary: topic.summary,
+    gaps: topic.gaps ?? [],
+    synthesis,
+    ancestors: ancestors.map((a) => ({ title: normaliseTopicTitle(a.title), slug: a.slug })),
+    children: children.map((c) => ({ title: normaliseTopicTitle(c.title), slug: c.slug, brief: c.brief })),
+    claims: claims ?? [],
+    sources,
+    milestones: validMilestones,
+    debates: validDebates,
+    entities: safeEntities,
+  });
+
   return (
     <main className="topic-layout">
       <AutoRefresh active={busy} />
@@ -364,6 +382,12 @@ export default async function TopicPage({
             showNotes={!hasIntermediateSections}
           />
         </section>
+
+        <FieldResearchArticle
+          monograph={monograph}
+          sourcesCount={sources.length}
+          claimsCount={(claims ?? []).length}
+        />
 
         {benchmarks.length > 0 && (
           <section className="benchmarks-section" aria-label="Baseline probability benchmarks">
