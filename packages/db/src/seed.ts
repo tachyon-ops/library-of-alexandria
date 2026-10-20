@@ -7,7 +7,7 @@ import { PHYSICS_CLASSICAL_DOSSIERS } from "./physics-classical-dossiers";
 import { PHYSICS_FRONTIER_GRAVITY_DOSSIERS } from "./physics-frontier-gravity-dossiers";
 import { PHYSICS_GRAVITY_STRING_DOSSIERS } from "./physics-gravity-string-dossiers";
 import { PHYSICS_QUANTUM_DOSSIERS } from "./physics-quantum-dossiers";
-import { ensureSeedTopic, getTopicBySlug, linkTopics, type SeedDossier, seedTopicDossier } from "./repo";
+import { ensureSeedTopic, getTopicBySlug, isSeedComplete, linkTopics, type SeedDossier, seedTopicDossier } from "./repo";
 
 export const ALL_SEED_DOSSIERS: Record<string, SeedDossier> = {
   ...FERTILITY_SEED_DOSSIERS,
@@ -1061,7 +1061,26 @@ async function ensureNode(sql: Sql, node: SeedNode, parentId: string | null, dep
   }
 }
 
+function collectSeedSlugs(nodes: SeedNode[], out: string[] = []): string[] {
+  for (const n of nodes) {
+    out.push(n.slug);
+    if (n.children) collectSeedSlugs(n.children, out);
+  }
+  return out;
+}
+
 export async function seed(sql: Sql): Promise<void> {
+  const allSlugs = collectSeedSlugs(ENCYCLOPAEDIC_TRUNKS);
+  const dossierEntries = Object.entries(ALL_SEED_DOSSIERS);
+  const complete = await isSeedComplete(sql, {
+    slugs: allSlugs,
+    minLinks: CROSS_DISCIPLINE_LINKS.length,
+    dossierSlugs: dossierEntries.map(([slug]) => slug),
+    dossierMinClaims: dossierEntries.reduce((sum, [, d]) => sum + d.claims.length, 0),
+    dossierMinSources: dossierEntries.reduce((sum, [, d]) => sum + d.sources.length, 0),
+  });
+  if (complete) return;
+
   for (const trunk of ENCYCLOPAEDIC_TRUNKS) {
     await ensureNode(sql, trunk, null, 0);
   }
@@ -1072,7 +1091,7 @@ export async function seed(sql: Sql): Promise<void> {
       await linkTopics(sql, a.id, b.id, link.relation, link.note);
     }
   }
-  for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
+  for (const [slug, dossier] of dossierEntries) {
     const topic = await getTopicBySlug(sql, slug);
     if (topic) {
       await seedTopicDossier(sql, topic.id, dossier, { populateTopicFields: false });

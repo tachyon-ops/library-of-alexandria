@@ -691,7 +691,19 @@ export async function claimNextJob(sql: Sql): Promise<Job | null> {
     UPDATE jobs SET status = 'running', locked_at = now(), attempts = attempts + 1
     WHERE id = (
       SELECT id FROM jobs WHERE status = 'queued' AND run_after <= now()
-      ORDER BY run_after, id FOR UPDATE SKIP LOCKED LIMIT 1
+      ORDER BY
+        CASE kind
+          WHEN 'harvest' THEN 0
+          WHEN 'scan'    THEN 1
+          WHEN 'extract' THEN 2
+          WHEN 'review'  THEN 3
+          WHEN 'plan'    THEN 4
+          ELSE 5
+        END,
+        COALESCE((payload->>'autoSpawned')::boolean, false) ASC,
+        run_after,
+        id
+      FOR UPDATE SKIP LOCKED LIMIT 1
     )
     RETURNING id, kind, topic_id, payload, attempts`;
   return row ?? null;
@@ -753,12 +765,19 @@ export async function recentJobs(sql: Sql, topicId: string, limit = 12) {
 }
 
 /** Starts (or restarts) research on a topic: the web app's "Research" button and the scout both call this. */
-export async function requestResearch(sql: Sql, topicId: string, autoDepth: number): Promise<void> {
+export async function requestResearch(
+  sql: Sql,
+  topicId: string,
+  autoDepth: number,
+  options: { autoSpawned?: boolean } = {},
+): Promise<void> {
   await setTopicStatus(sql, topicId, "queued");
   await sql`
     UPDATE jobs SET status = 'cancelled'
     WHERE topic_id = ${topicId} AND status IN ('failed', 'queued')`;
-  await enqueueJob(sql, "plan", topicId, { autoDepth });
+  const payload: Record<string, unknown> = { autoDepth };
+  if (options.autoSpawned) payload.autoSpawned = true;
+  await enqueueJob(sql, "plan", topicId, payload);
 }
 
 /* ----------------------------------------------------------------- usage */
@@ -1008,6 +1027,61 @@ export async function ensureSeedTopic(
 }
 
 /**
+ * Fast single-query check to verify whether all canonical encyclopaedic trunks,
+ * cross-discipline links, and curated dossiers are already present in the database,
+ * avoiding ~1,900 sequential network round-trips on every worker startup.
+ */
+export async function isSeedComplete(
+  sql: Sql,
+  expectation: {
+    slugs: string[];
+    minLinks: number;
+    dossierSlugs: string[];
+    dossierMinClaims: number;
+    dossierMinSources: number;
+  },
+): Promise<boolean> {
+  if (expectation.slugs.length === 0) return false;
+  const [row] = await sql<{
+    matchedSlugs: number;
+    totalLinks: number;
+    readyDossiers: number;
+    dossierClaims: number;
+    dossierSources: number;
+  }[]>`
+    SELECT
+      (SELECT count(*)::int FROM topics WHERE slug = ANY(${expectation.slugs}::text[])) AS matched_slugs,
+      (SELECT count(*)::int FROM topic_links) AS total_links,
+      (
+        SELECT count(*)::int
+        FROM topics t
+        WHERE t.slug = ANY(${expectation.dossierSlugs}::text[])
+          AND EXISTS (SELECT 1 FROM claims c WHERE c.topic_id = t.id)
+          AND EXISTS (SELECT 1 FROM topic_sources ts WHERE ts.topic_id = t.id)
+      ) AS ready_dossiers,
+      (
+        SELECT count(*)::int
+        FROM claims c
+        JOIN topics t ON t.id = c.topic_id
+        WHERE t.slug = ANY(${expectation.dossierSlugs}::text[])
+      ) AS dossier_claims,
+      (
+        SELECT count(*)::int
+        FROM topic_sources ts
+        JOIN topics t ON t.id = ts.topic_id
+        WHERE t.slug = ANY(${expectation.dossierSlugs}::text[])
+      ) AS dossier_sources`;
+  if (!row) return false;
+  return (
+    row.matchedSlugs >= expectation.slugs.length &&
+    row.totalLinks >= expectation.minLinks &&
+    row.readyDossiers >= expectation.dossierSlugs.length &&
+    row.dossierClaims >= expectation.dossierMinClaims &&
+    row.dossierSources >= expectation.dossierMinSources
+  );
+}
+
+/**
  * Additively populates a topic with curated peer-reviewed sources, graded claims,
  * synthesis ledger, milestones, entities, and controversies using strict
  * CREATE IF NOT EXISTS / ON CONFLICT DO NOTHING semantics. Never overwrites or deletes existing rows.
@@ -1018,6 +1092,33 @@ export async function seedTopicDossier(
   dossier: SeedDossier,
   options: { populateTopicFields?: boolean } = {},
 ): Promise<void> {
+  const [counts] = await sql<{
+    sources: number;
+    claims: number;
+    milestones: number;
+    entities: number;
+    controversies: number;
+    hasSummary: boolean;
+  }[]>`
+    SELECT
+      (SELECT count(*)::int FROM topic_sources WHERE topic_id = ${topicId}) AS sources,
+      (SELECT count(*)::int FROM claims WHERE topic_id = ${topicId}) AS claims,
+      (SELECT count(*)::int FROM milestones WHERE topic_id = ${topicId}) AS milestones,
+      (SELECT count(*)::int FROM entities WHERE topic_id = ${topicId}) AS entities,
+      (SELECT count(*)::int FROM controversies WHERE topic_id = ${topicId}) AS controversies,
+      (SELECT summary IS NOT NULL FROM topics WHERE id = ${topicId}) AS has_summary`;
+  if (
+    counts &&
+    counts.sources >= dossier.sources.length &&
+    counts.claims >= dossier.claims.length &&
+    counts.milestones >= dossier.milestones.length &&
+    counts.entities >= dossier.entities.length &&
+    counts.controversies >= dossier.controversies.length &&
+    (options.populateTopicFields === false || counts.hasSummary)
+  ) {
+    return;
+  }
+
   const sourceIds: string[] = [];
   for (const r of dossier.sources) {
     const normDoi = r.doi ? r.doi.toLowerCase().trim() : null;

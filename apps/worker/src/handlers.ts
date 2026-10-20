@@ -1,5 +1,5 @@
 import { planTopic, readSources, reviewTopic, scanWeb, type Llm } from "@lib/agents";
-import { normaliseDesign, tierForClaim, type StudyDesign } from "@lib/core";
+import { normaliseDesign, reassessTopicTaxonomy, tierForClaim, type StudyDesign } from "@lib/core";
 import type { SourceAdapter } from "@lib/crawlers";
 import * as repo from "@lib/db";
 import type { Job, Sql } from "@lib/db";
@@ -68,12 +68,12 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
             child.id,
             `${s.title} is a sub-discipline of ${topic.title} examining ${s.brief.charAt(0).toLowerCase()}${s.brief.slice(1)}`,
           );
-          if (autoDepth > 0) await repo.requestResearch(d.sql, child.id, autoDepth - 1);
+          if (autoDepth > 0) await repo.requestResearch(d.sql, child.id, autoDepth - 1, { autoSpawned: true });
         }
       }
       // Seeded children that were never researched follow the same rule.
       if (autoDepth > 0) {
-        for (const c of children) if (c.status === "idle") await repo.requestResearch(d.sql, c.id, autoDepth - 1);
+        for (const c of children) if (c.status === "idle") await repo.requestResearch(d.sql, c.id, autoDepth - 1, { autoSpawned: true });
       }
       if (!topic.summary) {
         const baseOverview = topic.brief
@@ -83,6 +83,7 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
           branchTitles.length > 0 ? ` Core sub-disciplines include ${branchTitles.slice(0, 6).join("; ")}.` : "";
         await repo.setTopicSummaryIfEmpty(d.sql, topic.id, `${baseOverview}${subLine}`);
       }
+      await reassessAndApplyTaxonomy(d, topic, branchTitles.join(" "));
       d.log(`plan ${topic.slug}: ${plan.subtopics.length} branches, ${litQueries.length} lit / ${plan.queries.trials.length} trial / ${plan.queries.web.length} web`);
       return;
     }
@@ -155,7 +156,7 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
       const readThisRun = Number(job.payload.read ?? 0) + batch.length;
       const remaining = await repo.countUnreadSources(d.sql, topic.id);
       const more = remaining > 0 && batch.length > 0 && readThisRun < d.config.maxSourcesPerTopic;
-      await repo.enqueueJob(d.sql, more ? "extract" : "review", topic.id, more ? { read: readThisRun } : {}, more ? 0 : 5);
+      await repo.enqueueJob(d.sql, more ? "extract" : "review", topic.id, more ? { read: readThisRun } : {});
       return;
     }
 
@@ -194,8 +195,39 @@ export async function runJob(d: Deps, job: Job): Promise<void> {
         review.controversies.map((c) => ({ kind: c.kind, note: c.note, claimIds: c.claimIndexes.map((i) => claims[i]!.id) })),
       );
       await repo.saveTopicReview(d.sql, topic.id, review.summary, review.gaps, review.synthesis);
+      const evidenceSignal = [
+        review.summary,
+        ...claims.slice(0, 12).map((c) => c.statement),
+        ...(review.synthesis?.levers ?? []).map((l) => `${l.name} ${l.description}`),
+      ].join(" ");
+      await reassessAndApplyTaxonomy(d, { ...topic, summary: review.summary }, evidenceSignal);
       d.log(`review ${topic.slug}: ${review.merges.length} merges, ${review.controversies.length} controversies`);
       return;
     }
   }
 }
+
+async function reassessAndApplyTaxonomy(
+  d: Deps,
+  topic: {
+    id: string;
+    slug: string;
+    title: string;
+    brief: string | null;
+    parentId: string | null;
+    depth: number;
+    summary?: string | null;
+  },
+  extraEvidenceText: string,
+): Promise<void> {
+  const tree = await repo.listTree(d.sql);
+  const assessment = reassessTopicTaxonomy(topic, tree, extraEvidenceText);
+  if (assessment.shouldMove && assessment.recommendedParentId !== topic.parentId) {
+    await repo.moveTopic(d.sql, topic.id, assessment.recommendedParentId);
+    d.log(`taxonomy ${topic.slug}: ${assessment.reason}`);
+  }
+  for (const link of assessment.crossLinks) {
+    await repo.linkTopics(d.sql, topic.id, link.linkedTopicId, link.relation, link.note);
+  }
+}
+
