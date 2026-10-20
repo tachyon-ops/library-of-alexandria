@@ -366,6 +366,12 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 brief:
                   "Maternal cardiovascular and metabolic adaptation, low-dose aspirin pre-eclampsia prophylaxis, sFlt-1/PlGF biomarkers, gestational diabetes, placental biology, and perinatal outcomes after age 40.",
               },
+              {
+                slug: "lifestyle-metabolic-and-environmental-fertility-optimization",
+                title: "Lifestyle, Metabolic Health & Natural Conception Optimization",
+                brief:
+                  "Non-assisted reproductive optimization at 40–50: circadian sleep and follicular melatonin signaling, pro-fertility nutrition and targeted micronutrient protocols, oocyte mitochondrial ATP bioenergetics (CoQ10, NAD+, spermidine mitophagy), and organic facilitators (24–36h sperm DNA fragmentation reduction, early-shifted fertile window timing, cervical mucus protection, and endocrine/toxin clearance).",
+              },
             ],
           },
           {
@@ -1021,6 +1027,18 @@ export const CROSS_DISCIPLINE_LINKS: {
     relation: "bridges",
     note: "Connects Frozen Embryo Transfer timing (immediate next-menses transfer vs. 1–3 month interval for a vitrified blastocyst at −196°C) with modifiable endometrial receptivity factors (CD138 chronic endometritis, natural-cycle corpus luteum, and luteal progesterone rescue).",
   },
+  {
+    slugA: "lifestyle-metabolic-and-environmental-fertility-optimization",
+    slugB: "mtor-pathway-modulation-follicular-longevity",
+    relation: "bridges",
+    note: "Connects endogenous circadian melatonin, ubiquinol (CoQ10), NAD+/NAMPT salvage, and dietary spermidine mitophagy with follicular longevity and Metaphase II meiotic spindle bioenergetics.",
+  },
+  {
+    slugA: "lifestyle-metabolic-and-environmental-fertility-optimization",
+    slugB: "sperm-chromatin-integrity-dna-fragmentation-diagnostics",
+    relation: "bridges",
+    note: "Connects 24–36 hour short ejaculatory abstinence, scrotal thermoregulation (<34.5°C), circadian sleep (7–8h), and L-carnitine/NAC/lycopene supplementation directly to Sperm DNA Fragmentation Index (DFI) reduction.",
+  },
 ];
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
@@ -1135,6 +1153,26 @@ export async function seed(sql: Sql): Promise<void> {
         "bridges",
         "Connects immediate next-menstrual-cycle Frozen Embryo Transfer versus a 1–3 month interval for a vitrified blastocyst at −196°C.",
       );
+    }
+  }
+
+  // Additively enrich any existing user inquiry on organic/lifestyle conception optimization
+  const lifestyleDossier =
+    ALL_SEED_DOSSIERS["lifestyle-metabolic-and-environmental-fertility-optimization"];
+  if (lifestyleDossier) {
+    for (const legacySlug of [
+      "improve-fertility-organically-conceiving-by-improving-lifestyle",
+      "human-fertility-improve-fertility-organically-conceiving-by-improving-lifestyle",
+      "reproductive-medicine-human-fertility-improve-fertility-organically-conceiving-b",
+      "lifestyle-metabolic-health-natural-conception-optimization",
+      "reproductive-medicine-human-fertility-lifestyle-metabolic-health-natural-concept",
+    ]) {
+      const legacyTopic = await getTopicBySlug(sql, legacySlug);
+      if (legacyTopic) {
+        await seedTopicDossier(sql, legacyTopic.id, lifestyleDossier, {
+          populateTopicFields: false,
+        });
+      }
     }
   }
 }

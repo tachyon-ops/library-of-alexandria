@@ -44,6 +44,10 @@ const LEGACY_TITLE_MAP: Record<string, string> = {
  */
 export function normaliseAgePhrasing(text: string): string {
   return text
+    .replace(
+      /Improve Fertility \(organically Conceiving\) by Improving Lifestyle/gi,
+      "Lifestyle, Metabolic Health & Natural Conception Optimization",
+    )
     .replace(/\b40\s*[–-]\s*44\+?/g, "40–45")
     .replace(/\b44\s*[–-]\s*4[56]\+?/g, "40–45")
     .replace(/\b42\s*[–-]\s*4[3456]\+?/g, "40–45")
@@ -104,6 +108,7 @@ export function normaliseTopicSynthesis(synthesis: TopicSynthesis | null): Topic
                 kicker: s.kicker ? normaliseAgePhrasing(s.kicker) : s.kicker,
                 heading: normaliseAgePhrasing(s.heading),
                 paragraphs: Array.isArray(s.paragraphs) ? s.paragraphs.map(normaliseAgePhrasing) : [],
+                bullets: Array.isArray(s.bullets) ? s.bullets.map(normaliseAgePhrasing) : undefined,
                 callout: s.callout ? normaliseAgePhrasing(s.callout) : s.callout,
               }))
             : [],

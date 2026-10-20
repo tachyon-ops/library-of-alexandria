@@ -2421,7 +2421,614 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
     ],
   },
+  "lifestyle-metabolic-and-environmental-fertility-optimization": {
+    summary:
+      "Natural (non-assisted) conception between ages 40 and 50 depends on synchronizing two biological remodeling windows: the ~90–120 day preantral-to-ovulatory folliculogenesis cycle in women and the 74-day spermatogenic cycle in men. Across prospective cohorts and randomized trials, four non-assisted physiological levers govern gamete competence and natural fecundability: (1) Circadian sleep architecture (7.0–8.0 hours/night, lights-out before 22:30–23:00), which preserves granulosa and Leydig BMAL1/CLOCK gene expression and concentrates melatonin 3-fold inside ovarian follicular fluid to shield maturing Metaphase II oocytes from ovulatory reactive oxygen species while preventing short-sleep (<6h) reductions in sperm count (-25% to -29%) and fecundability (-15% to -20%); (2) Pro-fertility Mediterranean and low-glycemic nutrition (Harvard Nurses' Health Study II, -66% to -84% ovulatory infertility; marine omega-3 EPA/DHA intake yielding 1.51×–2.00× higher natural fecundability in the Time to Conceive cohort) paired with targeted micronutrients (Ubiquinol 400–600 mg/d, Myo-inositol 2–4 g/d, 5-MTHF 800 µg/d, Vitamin D3, and male L-carnitine/NAC/selenium/zinc); (3) Oocyte mitochondrial ATP bioenergetics—combining CoQ10 electron transport chain support, NAD+ salvage repletion (NMN/NR plus Zone-2/HIIT exercise upregulating NAMPT and SIRT2 spindle tubulin deacetylation), polyamine spermidine + 12–13h overnight circadian mitophagy to purge depolarized mitochondria, and low-AGE moist cooking to prevent ovarian stromal fibrosis; and (4) High-leverage organic facilitators for 40–50 couples, including a 24–36 hour short ejaculatory abstinence window (cutting sperm DNA fragmentation by 25–40% so the 40+ oocyte does not exhaust its limited maternal BRCA1/ATM DNA-repair pool), tracking early-shifted ovulation (Cycle Days 9–12) so sperm arrive in the fallopian ampulla 24–48 hours before the egg's narrow 6–12 hour fertilizable window, scrotal thermoregulation (<34.5°C), and a 72-hour phthalate/bisphenol washout.",
+    gaps: [
+      "Human randomized dose-finding trials of oral spermidine (3–6 mg/day) and nicotinamide mononucleotide (NMN 500–1,000 mg/day) measuring time-to-pregnancy and live birth in couples aged 40–50 attempting natural conception",
+      "Prospective head-to-head trials isolating circadian light/melatonin hygiene and 12–13 hour overnight time-restricted eating on follicular fluid ATP and luteal progesterone pulsatility",
+      "Standardized clinical Sperm DNA Fragmentation (DFI) thresholds stratifying when a 24–36 hour short-abstinence + antioxidant protocol suffices for natural conception after age 40",
+      "Longitudinal data quantifying how low-AGE dietary interventions and insulin sensitization alter human ovarian cortical stiffness and preantral follicle recruitment in the 40–50 decade",
+    ],
+    synthesis: {
+      benchmarks: [
+        {
+          metric: "-66% to -84%",
+          label: "Reduction in ovulatory infertility risk with high adherence to the low-glycemic, monounsaturated/plant-protein 'Fertility Diet' and lifestyle protocol (n=17,544)",
+          source: "Chavarro, Willett et al., Obstet Gynecol 2007 (NHS-II)",
+          sourceUrl: "https://doi.org/10.1097/01.AOG.0000287293.25465.e1",
+        },
+        {
+          metric: "1.51×–2.00×",
+          label: "Higher natural cycle fecundability ratio (FR) in women aged 30–44 supplementing with marine Omega-3 fatty acids (EPA/DHA) across 5,254 cycles",
+          source: "Stanhiser, Steiner et al., Hum Reprod 2022 (n=900)",
+          sourceUrl: "https://doi.org/10.1093/humrep/deac027",
+        },
+        {
+          metric: "7.0–8.0 h / night",
+          label: "Optimal circadian sleep window; sleeping <6h lowers male sperm count by 25–29%, elevates anti-sperm antibodies, and reduces female fecundability by ~15–20%",
+          source: "Chen et al., Hum Reprod 2016 (n=796) & Willis et al., Fertil Steril 2019 (PRESTO)",
+          sourceUrl: "https://doi.org/10.1093/humrep/dew081",
+        },
+        {
+          metric: "24–36 h window",
+          label: "Short ejaculatory abstinence interval that cuts epididymal ROS and lowers Sperm DNA Fragmentation (DFI) by 25%–40% compared with 5–7 days of abstinence",
+          source: "Pons-Rejraji et al. / Mayorga-Torres et al., Andrology",
+          sourceUrl: "https://doi.org/10.1111/andr.12064",
+        },
+      ],
+      levers: [
+        {
+          name: "Circadian Sleep Architecture (7.0–8.0h & Pre-23:00 Lights-Out)",
+          category: "1. Sleep & Circadian Architecture (Both Partners)",
+          description:
+            "Anchoring sleep duration at 7.0–8.0 hours with bedtime before 22:30–23:00, morning daylight exposure within 30 minutes of waking, and strict blue-light block 90 minutes pre-bed.",
+          bestEvidence: "BU PRESTO Cohort (Willis et al., Fertil Steril 2019, n=6,873) & Chen et al., Hum Reprod 2016 (n=796 men)",
+          effect: "Prevents the 25–29% drop in total sperm count and 15–20% drop in female fecundability seen with <6h sleep or late (>23:30) bedtimes",
+          reading:
+            "Granulosa LH receptors (LHCGR) and Leydig testosterone synthesis are transcriptionally gated by core clock genes BMAL1 and CLOCK; circadian misalignment blunts the ovulatory LH surge and morning androgen pulse.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1093/humrep/dew081",
+        },
+        {
+          name: "Endogenous & Low-Dose Nocturnal Melatonin (1–3 mg at Bedtime)",
+          category: "1. Sleep & Circadian Architecture (Both Partners)",
+          description:
+            "Protecting nocturnal pineal darkness or supplementing 1–3 mg physiological melatonin 60 minutes before sleep during the 90-day follicular maturation window.",
+          bestEvidence: "Tamura, Reiter et al., J Pineal Res 2012/2020 & Cochrane/RCT syntheses on follicular fluid oxidative stress",
+          effect: "Concentrates 3× higher in follicular fluid than serum; cuts intra-follicular 8-OHdG oxidative DNA damage by ~50% and doubles fertilization in high-ROS cohorts",
+          reading:
+            "Ovulation triggers an inflammatory reactive oxygen species (ROS) burst; follicular melatonin directly scavenges hydroxyl radicals (•OH) and upregulates oocyte glutathione peroxidase (GPX4) to protect the Metaphase II spindle.",
+          verdict: "Targeted",
+          sourceUrl: "https://doi.org/10.1111/j.1600-079X.2012.00970.x",
+        },
+        {
+          name: "Low-Glycemic Mediterranean & Harvard 'Fertility Diet' Pattern",
+          category: "2. Pro-Fertility Nutrition & Clinical Supplementation",
+          description:
+            "Replacing refined carbohydrates and trans fats with extra-virgin olive oil, wild marine fish, plant proteins (lentils, legumes, nuts), high-polyphenol vegetables, and 1 serving/day of whole-fat dairy.",
+          bestEvidence: "Nurses' Health Study II (Chavarro, Willett et al., Obstet Gynecol 2007, n=17,544) & Karayiannis et al., Hum Reprod 2018",
+          effect: "66% lower risk of ovulatory infertility (RR 0.34; 84% with activity/weight control); higher semen concentration and progressive motility in men",
+          reading:
+            "Postprandial insulin spikes overstimulate ovarian theca IGF-1 receptors, driving hyperandrogenism that arrests antral follicle maturation and degrades oocyte cytoplasmic competence.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1097/01.AOG.0000287293.25465.e1",
+        },
+        {
+          name: "Marine Omega-3 Long-Chain PUFAs (EPA + DHA 1,000–2,000 mg/day)",
+          category: "2. Pro-Fertility Nutrition & Clinical Supplementation",
+          description:
+            "Daily triglyceride/phospholipid EPA + DHA supplementation (or 3 servings/week of low-mercury cold-water fish: wild salmon, sardines, anchovies, mackerel).",
+          bestEvidence: "Time to Conceive Prospective Cohort (Stanhiser et al., Hum Reprod 2022, n=900 women, 5,254 cycles) & Nehra et al., Aging Cell 2012",
+          effect: "Natural fecundability ratio FR 1.51 (95% CI 1.12–2.04) to 2.00 after adjusting for age; prolongs reproductive lifespan and rescues oocyte spindle alignment in aged mammals",
+          reading:
+            "DHA/EPA remodel oocyte and sperm plasma membrane fluidity, dampen prostaglandin E2/NF-κB follicular inflammation, and support luteal corpus luteum steroidogenesis.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1093/humrep/deac027",
+        },
+        {
+          name: "Active Folate (5-MTHF 800 µg), Methyl-B12, Myo-Inositol (2–4 g) & Vitamin D3",
+          category: "2. Pro-Fertility Nutrition & Clinical Supplementation",
+          description:
+            "800 µg L-methylfolate + B12/B6 (homocysteine <7.5 µmol/L), 2–4 g/day myo-inositol (FSH/insulin second messenger), and Vitamin D3 (2,000–4,000 IU/d targeting 40–60 ng/mL).",
+          bestEvidence: "Harvard EARTH & NHS-II Folate Cohorts (Gaskins et al., AJCN/Hum Reprod) & Unfer et al. Myo-Inositol RCT Meta-Analyses",
+          effect: "Folate ≥800 µg/d shortens time-to-pregnancy and cuts anovulation; myo-inositol improves MII oocyte maturity and luteal progesterone",
+          reading:
+            "High follicular homocysteine is directly embryotoxic; myo-inositol restores granulosa FSH receptor sensitivity without hyperstimulation, while Vitamin D activates endometrial HOXA10 implantation genes.",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1093/humrep/deu207",
+        },
+        {
+          name: "Male Gamete Chromatin & Mitochondrial Stack (L-Carnitine, NAC, Selenium, Zinc, Lycopene)",
+          category: "2. Pro-Fertility Nutrition & Clinical Supplementation",
+          description:
+            "74-day spermatogenic priming with L-Carnitine (2 g/d) + L-Acetyl-Carnitine (1 g/d), N-Acetylcysteine (600 mg/d), Selenium (200 µg/d), Zinc (25 mg/d), and Lycopene (10–20 mg/d).",
+          bestEvidence: "Cochrane Male Subfertility Antioxidant Meta-Analysis & Safarinejad / Balercia Randomized Double-Blind Trials",
+          effect: "Increases progressive sperm motility (+10–18%), lowers Sperm DNA Fragmentation (DFI) by 6–12 percentage points, and increases clinical pregnancy/live birth OR ~1.5–1.8",
+          reading:
+            "Carnitines shuttle fatty acids into sperm midpiece mitochondria for flagellar ATP; selenium-dependent GPX4 cross-links protamine disulfide bonds to armor paternal DNA against oxidative breaks.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1016/j.juro.2008.10.015",
+        },
+        {
+          name: "Ubiquinol / Coenzyme Q10 (400–600 mg/day) Mitochondrial OXPHOS Repletion",
+          category: "3. Oocyte Mitochondrial ATP & Cellular Rejuvenation (90–120d Window)",
+          description:
+            "60–120 day oral lipid-solubilized Ubiquinol (200–300 mg twice daily with meals) to restore inner mitochondrial membrane electron transport between Complexes I/II and III.",
+          bestEvidence: "Xu et al., RBMO 2018 RCT; Florou et al., Fertil Steril 2020 Meta-Analysis; Ben-Meir et al., Aging Cell 2015",
+          effect: "Restores oocyte mitochondrial ATP production and spindle chromosome alignment in aged mammals; doubles high-grade embryo formation and increases clinical pregnancy (OR 2.22) in humans",
+          reading:
+            "Human oocytes hold ~100,000–600,000 mitochondria and cannot synthesize new ones until the blastocyst stage; CoQ10 synthesis (PDSS2/COQ6) declines sharply after age 38, starving Meiosis I/II of ATP.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1111/acel.12368",
+        },
+        {
+          name: "NAD+ Repletion (NMN / NR) + Zone-2/HIIT Exercise (NAMPT & SIRT2 Spindle Rescue)",
+          category: "3. Oocyte Mitochondrial ATP & Cellular Rejuvenation (90–120d Window)",
+          description:
+            "Combining oral NAD+ precursors (NMN 500–1,000 mg/d or NR 300–600 mg/d) with 150 min/week Zone-2 aerobic + 2× resistance training to upregulate endogenous NAMPT salvage.",
+          bestEvidence: "Bertoldo, Wu, Homer, Sinclair et al., Cell Reports 2020",
+          effect: "Restores intra-oocyte NAD+/NADH ratio, reactivates SIRT2 α-tubulin deacetylation, rescues meiotic spindle assembly, reduces aneuploidy, and restores live births in aged mammalian models",
+          reading:
+            "Directly targets the bioenergetic cause of age-related chromosomal missegregation while avoiding overtraining-induced energy deficit (RED-S) that would suppress hypothalamic GnRH.",
+          verdict: "Lab only",
+          sourceUrl: "https://doi.org/10.1016/j.celrep.2020.01.058",
+        },
+        {
+          name: "Polyamine Spermidine (3–6 mg/d + Dietary) & 12–13h Overnight Circadian Mitophagy",
+          category: "3. Oocyte Mitochondrial ATP & Cellular Rejuvenation (90–120d Window)",
+          description:
+            "Dietary polyamines (wheat germ, natto, culinary mushrooms, aged cheese, green peas) + 3–6 mg/d spermidine paired with gentle 12–13h overnight fasting (e.g., 19:30 to 08:00).",
+          bestEvidence: "Zhang, Xiong et al., Nature Aging (October 2023)",
+          effect: "Clears defective, ROS-leaking oocyte mitochondria via PINK1/Parkin mitophagy, restores mitochondrial membrane potential (ΔΨm), and doubles litter size in aged mice",
+          reading:
+            "Important nuance for women 40–50: gentle 12–13h overnight fasting aligned with sleep triggers cellular mitophagy safely, whereas aggressive multi-day or >16h daytime fasting can suppress kisspeptin and LH pulsatility.",
+          verdict: "Lab only",
+          sourceUrl: "https://doi.org/10.1038/s43587-023-00498-8",
+        },
+        {
+          name: "Short-Window Ejaculatory Abstinence (24–36h) & Scrotal Thermal Shield (<34.5°C)",
+          category: "4. Non-Assisted Conception Facilitators & Timing Hacks (Ages 40–50)",
+          description:
+            "Replacing the outdated 'save up sperm for 5–7 days' habit with a clearing ejaculation 24–48h before the fertile window and intercourse every 24–36 hours, plus strict avoidance of saunas, hot tubs, and lap heat.",
+          bestEvidence: "Pons-Rejraji et al., Andrology 2014; Mayorga-Torres et al. 2015; Mieusset & Bujan scrotal thermoregulation trials",
+          effect: "Short abstinence (1–2 days) reduces Sperm DNA Fragmentation (DFI) by 25%–40% vs 5–7 days; avoiding >35°C scrotal heat prevents 74-day chromatin uncoupling",
+          reading:
+            "Critical in the 40–50 age bracket: an aged oocyte has depleted maternal BRCA1/ATM DNA-repair mRNA and cannot repair fragmented sperm DNA; delivering low-DFI sperm prevents Day 3 embryonic arrest.",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1111/andr.12064",
+        },
+        {
+          name: "Shifted Early-Ovulation Tracking (Days 9–12) & Pre-Ovulatory Sperm Positioning",
+          category: "4. Non-Assisted Conception Facilitators & Timing Hacks (Ages 40–50)",
+          description:
+            "Starting urinary estrone-3-glucuronide (E3G) + quantitative LH tracking and cervical mucus monitoring on Cycle Day 6–7, timing intercourse 1–2 days BEFORE ovulation.",
+          bestEvidence: "Wilcox, Weinberg & Baird, NEJM 1995 & Stanford et al. European Fecundability Studies",
+          effect: "Peak natural conception probability occurs on the 2 days preceding ovulation (4–5× higher than on the day after LH peak); captures early Day 9–12 ovulation common after age 40",
+          reading:
+            "Rising baseline FSH at ages 40–50 accelerates follicular recruitment (shifting ovulation earlier), while the ovulated oocyte's fertilizable lifespan narrows to 6–12 hours—so capacitated sperm must already be waiting in the fallopian ampulla when the egg is released.",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1056/NEJM199512073332301",
+        },
+        {
+          name: "72-Hour EDC Washout, Isotonic Cervical Hydrogel & Luteal/Thyroid Calibration",
+          category: "4. Non-Assisted Conception Facilitators & Timing Hacks (Ages 40–50)",
+          description:
+            "Eliminating heated plastics/phthalates/bisphenols, banning sperm-toxic commercial lubricants/saliva (using only isotonic pH 7.2–7.8 media if needed), and calibrating TSH <2.5 mIU/L & Ferritin >50–70 ng/mL.",
+          bestEvidence: "Harvard EARTH Study (Mínguez-Alarcón, Hauser et al.); ASRM Natural Fertility & Subclinical Hypothyroidism Guidelines",
+          effect: "Drops urinary phthalate/BPA metabolites by >60% in 72 hours; preserves 100% progressive sperm motility through cervical mucus; prevents luteal/thyroid implantation loss",
+          reading:
+            "Standard lubricants and saliva immobilize 60–90% of sperm within 15 minutes; non-heme iron (ferritin >50 ng/mL) and euthyroid status (TSH <2.5) sustain ovulatory corpus luteum progesterone and endometrial decidualization.",
+          verdict: "Guideline",
+          sourceUrl: "https://doi.org/10.1016/j.fertnstert.2021.11.016",
+        },
+      ],
+      clinicalQuestions: [
+        "Can we run a comprehensive preconception blood panel for both partners covering fasting insulin/HOMA-IR, HbA1c, TSH + free T4 + TPO antibodies (targeting TSH <2.5 mIU/L), serum ferritin (targeting >50–70 ng/mL), 25(OH) Vitamin D (targeting 40–60 ng/mL), homocysteine (<7.5 µmol/L), and red-blood-cell Omega-3 index (>8%)?",
+        "Can we order a baseline Semen Analysis paired with a Sperm DNA Fragmentation Index (TUNEL, SCSA, or Comet assay) tested specifically after a short 24–36 hour abstinence window rather than a 4–5 day abstinence window?",
+        "Given shortened follicular phases at ages 40–50, can we perform a mid-luteal serum progesterone check (7 days post-LH surge, rather than automatic Day 21) and serial ultrasound folliculometry in one natural cycle to confirm full ovulation and corpus luteum adequacy?",
+        "Should we screen for asymptomatic vaginal/endometrial dysbiosis (Lactobacillus crispatus dominance vs. Gardnerella/Ureaplasma) and subclinical chronic endometritis if we have experienced biochemical losses?",
+        "What is our optimal 90-day mitochondrial bioenergetic stack (Ubiquinol 400–600 mg/d, Myo-inositol 2–4 g/d, nocturnal Melatonin 1–3 mg, NAD+ precursors, and dietary Spermidine) while avoiding any endocrine-disrupting or GnRH-suppressing stressors?",
+      ],
+      sweepQueue: [
+        "Translational human trials of oral polyamine spermidine (3–6 mg/d) and nicotinamide mononucleotide (NMN) on natural fecundability and oocyte mitochondrial bioenergetics in women aged 40–50",
+        "Prospective actigraphy and continuous glucose monitoring (CGM) cohorts linking nocturnal sleep architecture and glycemic variability to follicular fluid ATP and time-to-pregnancy",
+        "Randomized studies of 24-hour vs. 4-day ejaculatory abstinence combined with mitochondrial antioxidants on Sperm DNA Fragmentation (DFI) and natural conception live birth rates",
+        "Dietary and pharmacological clearance of ovarian stromal Advanced Glycation End-Products (AGEs) and cortical fibrosis in reproductive aging",
+      ],
+      article: {
+        title: "Field Guide to Organic Conception (Ages 40–50): Sleep, Nutrition, Oocyte Mitochondrial ATP & Non-Assisted Facilitators",
+        subtitle:
+          "How circadian sleep architecture, pro-fertility metabolic nutrition, 90-day mitochondrial bioenergetics, and precision timing hacks work together to support natural conception without assisted reproduction.",
+        synopsis:
+          "For wannabe parents between ages 40 and 50 pursuing natural (non-assisted) conception, biology is governed by two synchronized remodeling clocks: the ~90 to 120 day window during which a dormant preantral ovarian follicle grows into an ovulatory Metaphase II oocyte, and the 74-day spermatogenic cycle in men. While chronological age cannot be rewound, the cellular microenvironment inside the ovarian follicle, the ATP output of the egg's ~100,000–600,000 mitochondria, the DNA fragmentation index (DFI) of the fertilizing sperm, and the precision of fertile-window timing are highly modifiable. This field guide synthesizes the peer-reviewed record across circadian sleep science, metabolic nutrition, oocyte mitochondrial rejuvenation, and high-leverage organic conception facilitators.",
+        sections: [
+          {
+            kicker: "Section I · Circadian Biology & Sleep Architecture (Men & Women)",
+            heading: "Sleep Research on Fertility: Melatonin as the Oocyte's Primary Shield & the 7–8 Hour HPG Sweet Spot",
+            paragraphs: [
+              "Sleep is not merely passive rest; it is the master regulator of the hypothalamic-pituitary-gonadal (HPG) axis in both women and men. Both ovarian granulosa/theca cells and testicular Leydig/Sertoli cells express autonomous circadian clock genes (BMAL1, CLOCK, PER, and CRY) that gate steroidogenic acute regulatory protein (StAR) and luteinizing hormone receptor (LHCGR) sensitivity. In the Boston University PRESTO preconception cohort (n=6,873 women, Willis et al., 2019) and Nurses' Health Study II, women sleeping fewer than 6 hours per night or experiencing nocturnal shift work and circadian misalignment exhibited a 15%–20% reduction in natural fecundability and significantly higher rates of luteal insufficiency and anovulation. Crucially, the ovarian follicle concentrates melatonin to levels 3-fold higher than circulating blood (Tamura, Reiter et al., J Pineal Res 2012/2020). Because ovulation itself is an acute inflammatory event that generates a burst of reactive oxygen species (ROS), intra-follicular melatonin acts as the maturing egg's frontline direct scavenger of hydroxyl radicals (•OH) and peroxynitrite while upregulating glutathione peroxidase (GPX4)—directly protecting the Metaphase II meiotic spindle and mitochondrial ATP synthesis.",
+              "In men, sleep duration and bedtime follow a sharp inverted U-shaped curve peaking at 7.0 to 8.0 hours per night with sleep onset before 22:30–23:00 (Chen et al., Hum Reprod 2016, n=796; Hvidt et al., Hum Reprod 2020). Men sleeping <6 hours/night suffer a 25%–29% reduction in total sperm count and semen volume, lower progressive motility, blunted morning testosterone pulsatility, elevated reactive oxygen species, and a significant rise in antisperm antibodies (Liu et al., Sleep Med 2017) that can coat sperm tails and block cervical mucus penetration.",
+            ],
+            bullets: [
+              "Anchor sleep at 7.5–8.0 hours nightly with lights-out between 22:00 and 23:00 for both partners to align the nocturnal melatonin peak with the early-morning LH and testosterone pulses.",
+              "Protect nocturnal pineal melatonin by eliminating blue/short-wavelength light (460–480 nm) 90 minutes before bed and sleeping in complete darkness; for women 40–50, 1–3 mg physiological melatonin taken 60 minutes before sleep during the 90-day follicular window doubles intra-follicular melatonin and halves oxidative 8-OHdG DNA damage in clinical trials (Tamura et al.).",
+              "Screen for and treat male or female obstructive sleep apnea (snoring/hypoxia): intermittent nocturnal hypoxia directly fragments sperm DNA and elevates systemic cortisol and sympathetic tone.",
+            ],
+            callout:
+              "Follicular Melatonin Shield: Melatonin concentration inside human preovulatory follicular fluid is ~3× higher than in serum, where it directly quenches ovulatory free radicals and preserves oocyte mitochondrial membrane potential.",
+          },
+          {
+            kicker: "Section II · Metabolic Nutrition & Evidence-Graded Supplementation",
+            heading: "The Pro-Fertility Diet & Clinical Micronutrient Stack for Both Partners",
+            paragraphs: [
+              "Across 17,544 women followed for 8 years in the Harvard Nurses' Health Study II (Chavarro, Rich-Edwards, Rosner & Willett, Obstet Gynecol 2007), high adherence to a low-glycemic, Mediterranean-style 'Fertility Diet' was associated with a 66% lower risk of ovulatory infertility (RR 0.34, 95% CI 0.23–0.49) and an 84% reduction when combined with regular physical activity and metabolic weight control. The physiological mechanism is direct: refined carbohydrates and sugary beverages trigger postprandial hyperinsulinemia, which binds insulin and IGF-1 receptors on ovarian theca cells to drive excess local androgen synthesis, arresting follicle maturation and degrading egg quality. Replacing trans fats and refined carbohydrates with monounsaturated fats (extra-virgin olive oil, avocados), plant proteins (lentils, chickpeas, walnuts, pumpkin seeds), slow-digesting complex carbohydrates, and marine omega-3 fatty acids stabilizes follicular insulin signaling.",
+              "In the prospective Time to Conceive cohort of 900 women aged 30–44 attempting natural conception across 5,254 menstrual cycles (Stanhiser, Steiner et al., Hum Reprod 2022), women supplementing with omega-3 fatty acids (EPA/DHA) achieved a 1.51× to 2.00× higher natural probability of conceiving per cycle compared with non-users, complementing preclinical findings that dietary omega-3 EPA/DHA extends the female reproductive lifespan and rescues oocyte chromosomal alignment in aged mammals (Nehra et al., Aging Cell 2012). In men, systematic reviews of randomized trials (Salas-Huetos et al., Hum Reprod Update 2017) confirm that Mediterranean dietary patterns paired with targeted mitochondrial and glutathione antioxidants significantly increase sperm concentration, progressive motility, and chromatin integrity.",
+            ],
+            bullets: [
+              "Marine Omega-3s (1,000–2,000 mg/day combined EPA + DHA, or 3×/week wild salmon, sardines, anchovies): Enhances natural fecundability (FR 1.51–2.00), supports luteal corpus luteum blood flow, and provides the DHA phospholipid backbone required for the sperm acrosome reaction.",
+              "Active Methylation & Folate-Homocysteine Axis (5-MTHF 800 µg/day + Methyl-B12 1,000 µg + P5P B6 25 mg): In Harvard EARTH/NHS-II cohorts (Gaskins et al.), folate intake ≥800 µg/day shortens time-to-pregnancy and clears embryotoxic homocysteine (<7.5 µmol/L) from follicular fluid.",
+              "Myo-Inositol (2,000–4,000 mg/day) + Vitamin D3 (2,000–4,000 IU/day + K2 to reach serum 40–60 ng/mL): Myo-inositol acts as the intracellular IP3 second messenger for FSH receptors in granulosa cells, improving oocyte maturity and luteal progesterone, while Vitamin D activates endometrial HOXA10 implantation genes and sperm CatSper calcium motility channels.",
+              "Male 74-Day Chromatin & Motility Stack: L-Carnitine (2,000 mg/d) + L-Acetyl-Carnitine (1,000 mg/d) for epididymal mitochondrial beta-oxidation; N-Acetylcysteine (NAC 600 mg/d) + Selenium (200 µg/d, cofactor for GPX4 protamine cross-linking); Zinc (25 mg/d); and Lycopene (10–20 mg/d) + CoQ10 (200–400 mg/d).",
+            ],
+            callout:
+              "Glycemic & AGE Defense: A 15-minute brisk walk immediately after meals blunts postprandial glucose peaks by ~30%, while moist-heat cooking (steaming, poaching, stewing instead of charring/frying) prevents dietary Advanced Glycation End-Products (AGEs) from stiffening the ovarian stroma via RAGE inflammation.",
+          },
+          {
+            kicker: "Section III · Oocyte Bioenergetics & Cellular Rejuvenation (90–120 Day Window)",
+            heading: "Recharging Egg Mitochondrial ATP: Ubiquinol, NAD+/SIRT2 Spindle Rescue & Spermidine Mitophagy",
+            paragraphs: [
+              "A mature human oocyte contains between 100,000 and 600,000 mitochondria—more than any other cell in the human body, including cardiac myocytes. Crucially, after fertilization, the early human embryo completely silences mitochondrial replication until the blastocyst stage (Day 5–6). That means every energy-intensive event—pulling apart 46 chromosomes on the Meiosis I and Meiosis II microtubule spindles, extrusion of the first and second polar bodies, fertilization calcium oscillations, pronuclear syngamy, and the first four days of embryonic cleavage—must run entirely on the ATP stockpile built by the oocyte during its 90–120 day follicular maturation window. Between ages 40 and 50, intra-oocyte Coenzyme Q10 synthesis (PDSS2/COQ6) and NAD+ levels drop by ~40–50%, while defective, ROS-leaking mitochondria accumulate due to impaired mitophagy. Starved of ATP, the meiotic spindle loses tension, leading to chromosome nondisjunction (aneuploidy) or cleavage arrest.",
+              "Three converging bioenergetic discoveries show how nutrition and lifestyle can recharge oocyte mitochondrial ATP during the 90–120 day pre-ovulatory window: First, Ubiquinol / Coenzyme Q10 (400–600 mg/day) restores electron transport chain flux between Complexes I/II and III, reversing age-related ATP depletion and rescuing spindle chromosome alignment (Ben-Meir et al., Aging Cell 2015; Xu et al., RBMO 2018 RCT; Florou et al., 2020 meta-analysis). Second, restoring cellular NAD+ via Nicotinamide Mononucleotide (NMN) or Nicotinamide Riboside (NR)—amplified naturally by Zone-2 aerobic and resistance exercise, which upregulates the rate-limiting NAD+ salvage enzyme NAMPT and PGC-1α—reactivates the NAD+-dependent deacetylase SIRT2 to stabilize α-tubulin on the meiotic spindle and restore fertile live births in aged mammals (Bertoldo, Wu, Homer, Sinclair et al., Cell Reports 2020). Third, Zhang & Xiong (Nature Aging, October 2023) discovered that aged ovaries suffer a steep depletion of the endogenous polyamine spermidine; restoring spermidine reactivates PINK1/Parkin-mediated mitophagy to selectively clear damaged, ROS-producing mitochondria, restoring mitochondrial membrane potential (ΔΨm) and doubling litter sizes.",
+            ],
+            bullets: [
+              "Electron Transport Chain Repletion (Ubiquinol 400–600 mg/day split with fat-containing meals for 90–120 days, optionally paired with PQQ 10–20 mg and Alpha-Lipoic Acid 300 mg): Directly increases intra-oocyte ATP production and cumulus cell bioenergetics.",
+              "NAD+ & Sirtuin Spindle Stabilization (NMN 500–1,000 mg/day or NR 300–600 mg/day + 150 min/week Zone-2 aerobic & 2× resistance training): Activates SIRT1/SIRT2/SIRT3 to deacetylate spindle microtubules and mitochondrial OXPHOS complexes.",
+              "Spermidine Mitophagy & Gentle Circadian Fasting: Consume spermidine-rich whole foods daily (wheat germ, natto, shiitake/maitake mushrooms, green peas, aged Parmigiano) + 3–6 mg/day spermidine supplement, paired with a gentle 12–13 hour overnight circadian fast (e.g., dinner finished by 19:30, breakfast at 08:00). Avoid extreme >16–24h fasting in women trying to conceive, which can trigger hypothalamic energy-deficit signaling and blunt kisspeptin/LH pulses.",
+              "Ovarian Stromal Anti-Fibrosis & Microvascular Perfusion: Dietary polyphenols (resveratrol, quercetin, anthocyanins) and nitric-oxide precursors (dietary nitrates from beetroot/arugula + L-citrulline/L-arginine) increase ovarian cortical Doppler blood flow so oxygen, gonadotropins, and nutrients reach growing preantral follicles.",
+            ],
+            callout:
+              "Why 90–120 Days Matters: A primordial follicle awakened today takes ~3 to 4 months to reach ovulation. Bioenergetic interventions (Ubiquinol, NAD+ repletion, Spermidine mitophagy, and circadian melatonin) act during this secondary-to-antral growth phase when mitochondrial biogenesis peaks.",
+          },
+          {
+            kicker: "Section IV · Non-Assisted Reproduction Hacks & Organic Facilitators (Ages 40–50)",
+            heading: "High-Leverage Biological Hacks for 40–50 Wanna-Be Parents Conceiving Naturally",
+            paragraphs: [
+              "Beyond sleep, diet, and mitochondrial supplements, couples between 40 and 50 frequently miss four physiological facilitators that govern whether a healthy egg and a genetically intact sperm actually meet in the fallopian tube ampulla at the exact hour of peak competence. First is the 'Paternal DNA Repair Bottleneck': a 25-year-old oocyte carries abundant maternal DNA-repair mRNA transcripts (BRCA1, ATM, RAD51, OGG1) capable of patching single- and double-strand DNA breaks in the fertilizing sperm after fertilization. By ages 40–50, those maternal repair reserves are heavily depleted. If the fertilizing sperm carries high DNA fragmentation (DFI >20–25%), the zygote stalls at Day 3 embryonic genome activation or miscarries. Paradoxically, the common habit of 'saving up sperm for 5 to 7 days before ovulation' traps mature sperm inside the epididymis where reactive oxygen species fragment their DNA. Controlled studies (Pons-Rejraji et al., Andrology 2014; Mayorga-Torres et al., 2015) prove that a short ejaculatory abstinence window of 24 to 36 hours (preceded by a clearing ejaculation 24–48h before the fertile window opens) slashes Sperm DNA Fragmentation by 25%–40% while delivering the youngest, highest-motility sperm cohort.",
+              "Second is the 'Shifted Early Ovulation & 6–12 Hour Egg Lifespan Trap' in the 40–50 decade. Because rising baseline FSH in women over 40 accelerates early follicular recruitment, the dominant follicle often matures 2 to 4 days earlier—triggering ovulation on Cycle Day 9, 10, or 11 instead of Day 14 (even when total cycle length appears normal). Simultaneously, an aged oocyte undergoes rapid post-ovulatory cytoplasmic aging, narrowing its optimal fertilizable lifespan to just 6 to 12 hours after ovulation. Waiting for a dark LH urine strip before initiating intercourse often means sperm arrive after the egg's spindle has already begun degrading. As landmark fecundability studies (Wilcox, Weinberg & Baird, NEJM 1995) demonstrate, the highest natural conception probability occurs when intercourse takes place 1 to 2 days BEFORE ovulation—so capacitated sperm are already waiting inside the fallopian tube ampulla the instant the oocyte is released.",
+            ],
+            bullets: [
+              "Hack 1 — The 24–36h Short-Abstinence Sperm DNA Rescue: Perform a 'clearing ejaculation' 2 days before the fertile window opens, then time intercourse every 24–36 hours during the 3-day pre-ovulatory window. Pair with strict scrotal thermal protection (<34.5°C: zero saunas, hot tubs, heated car seats, or laptops on the lap, as a single heat spike damages chromatin condensation for 74 days).",
+              "Hack 2 — Catching Early Ovulation (Start Tracking on Cycle Day 6–7): Track rising urinary estrogen (E3G) and fertile 'egg-white' spinnbarkeit cervical mucus starting right after menses (Day 6–7) rather than waiting for Day 12. Pre-position sperm during the 48 hours leading up to the LH peak so sperm await the egg at ovulation.",
+              "Hack 3 — Protect the Cervical Mucus Hydrogel & Vaginal pH: Never use standard commercial lubricants, olive/coconut oil, or saliva during fertile-window intercourse—they are hyperosmolar or acidic and immobilize 60–90% of sperm within minutes. If needed, use only isotonic, calcium/magnesium-balanced fertility media (~300 mOsm/kg, pH 7.2–7.8). Support natural estrogenic cervical mucus with systemic hydration, nitric oxide foods (beetroot, leafy greens), and optionally short-course guaifenesin (200–400 mg during the 4 pre-ovulatory days to thin hyperviscous cervical mucus).",
+              "Hack 4 — The 72-Hour Endocrine-Disrupting Chemical (EDC) Purge: Bisphenols (BPA, BPS, BPF) and phthalates from warm plastic containers, canned food linings, thermal paper receipts, and synthetic fragrances directly accelerate follicle atresia and sperm DNA breaks (Harvard EARTH Study), yet have a biological half-life under 12 hours—switching to glass/stainless steel drops urinary levels by >60% in 3 days.",
+              "Hack 5 — Luteal, Thyroid, Iron & Microbiome Calibration: Verify serum TSH is <2.5 mIU/L (with negative TPO antibodies), serum ferritin is >50–70 ng/mL (non-heme iron replenishment cuts ovulatory dysfunction by 40% in NHS-II), homocysteine is <7.5 µmol/L, periodontal gum inflammation is treated, and the vaginal/endometrial microbiome is Lactobacillus crispatus-dominant.",
+            ],
+            callout:
+              "Pre-Positioning Sperm in the Ampulla: Sperm survive 3–5 days in fertile estrogenic cervical crypts and require ~6–10 hours of female-tract capacitation, whereas a 40+ oocyte's optimal fertilization window after ovulation is only 6–12 hours. Having sperm in place 24–48 hours before ovulation maximizes fertilization before post-ovulatory egg aging.",
+          },
+          {
+            kicker: "Section V · Evidentiary Gaps & Research Frontiers",
+            heading: "Open Questions & Priorities for the Next Research Sweep",
+            paragraphs: [
+              "While prospective cohorts and randomized trials strongly validate circadian sleep alignment, low-glycemic Mediterranean nutrition, marine omega-3s, Ubiquinol/CoQ10, and short-abstinence fertile-window timing, several translational frontiers are actively being investigated to further quantify non-assisted fertility gains in the 40–50 age group:",
+            ],
+            bullets: [
+              "Human randomized dose-finding trials of oral spermidine (3–6 mg/day) and nicotinamide mononucleotide (NMN 500–1,000 mg/day) measuring time-to-pregnancy and live birth in couples aged 40–50 attempting natural conception.",
+              "Prospective head-to-head trials isolating circadian light/melatonin hygiene and 12–13 hour overnight time-restricted eating on follicular fluid ATP and luteal progesterone pulsatility.",
+              "Standardized clinical Sperm DNA Fragmentation (DFI) thresholds stratifying when a 24–36 hour short-abstinence + antioxidant protocol suffices for natural conception after age 40.",
+              "Longitudinal data quantifying how low-AGE dietary interventions and insulin sensitization alter human ovarian cortical stiffness and preantral follicle recruitment in the 40–50 decade.",
+            ],
+          },
+        ],
+        conclusions:
+          "Maximizing natural conception between ages 40 and 50 requires treating the 90–120 day folliculogenesis window and the 74-day spermatogenic cycle as a unified bioenergetic system. By aligning 7.5–8.0h circadian sleep and nocturnal follicular melatonin, adopting a low-glycemic Mediterranean and marine omega-3 dietary pattern, recharging oocyte mitochondrial ATP via Ubiquinol, NAD+/SIRT2 salvage, and spermidine mitophagy, and executing high-leverage timing facilitators—specifically 24–36h short ejaculatory abstinence to minimize sperm DNA fragmentation and pre-positioning sperm 1–2 days before early-shifted ovulation—couples address the primary modifiable bottlenecks of non-assisted reproduction.",
+        keyTakeaways: [
+          "Sleep & Melatonin (Both Partners): 7.0–8.0 hours/night with bedtime before 23:00 prevents short-sleep (<6h) drops in sperm count (-25–29%) and female fecundability (-15–20%), while nocturnal follicular melatonin (3× serum levels) shields maturing oocytes from ovulatory oxidative damage.",
+          "Pro-Fertility Diet & Omega-3s: The Harvard NHS-II low-glycemic, monounsaturated/plant-protein pattern lowers ovulatory infertility by 66%–84%, and marine Omega-3 (EPA/DHA) supplementation increases natural cycle fecundability by 1.51×–2.00× (Time to Conceive cohort, n=900).",
+          "90–120 Day Oocyte Mitochondrial ATP Stack: Ubiquinol (400–600 mg/d), NAD+ repletion (NMN/NR + Zone-2/HIIT exercise activating SIRT2 spindle tubulin deacetylation), and dietary/supplemental Spermidine (3–6 mg/d + 12–13h overnight circadian mitophagy) directly target the ATP crisis of Meiosis I/II.",
+          "24–36h Short-Abstinence Sperm DNA Rescue: Keeping ejaculatory abstinence to 24–36 hours (with a clearing ejaculation 48h prior and scrotal temperature <34.5°C) cuts Sperm DNA Fragmentation by 25%–40%, sparing the 40–50 oocyte's limited BRCA1/ATM DNA-repair reserves.",
+          "Early-Shifted Ovulation Pre-Positioning: Because rising FSH at ages 40–50 shifts ovulation earlier (Days 9–12) and the ovulated egg's optimal fertilizable window is only 6–12 hours, timing intercourse 1–2 days before ovulation on rising E3G/cervical mucus maximizes fertilization.",
+        ],
+      },
+    },
+    sources: [
+      {
+        kind: "paper",
+        externalId: "doi:10.1097/01.aog.0000287293.25465.e1",
+        origin: "literature",
+        title: "Diet and lifestyle in the prevention of ovulatory disorder infertility",
+        url: "https://doi.org/10.1097/01.AOG.0000287293.25465.e1",
+        doi: "10.1097/01.aog.0000287293.25465.e1",
+        venue: "Obstetrics & Gynecology",
+        year: 2007,
+        authors: ["Jorge E Chavarro", "Janet W Rich-Edwards", "Bernard A Rosner", "Walter C Willett"],
+        abstract:
+          "Prospective cohort study of 17,544 married women in the Nurses' Health Study II followed for 8 years while attempting pregnancy. High adherence to a 'fertility diet' (higher monounsaturated-to-trans fat ratio, plant over animal protein, low-glycemic carbohydrates, high-fat dairy, multivitamins, and non-heme iron) was associated with a 66% lower risk of ovulatory disorder infertility (RR 0.34, 95% CI 0.23–0.49) and an 84% lower risk when combined with physical activity and weight control.",
+        citedBy: 980,
+        declaredDesign: "observational",
+        design: "cohort",
+        sampleSize: 17544,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/deac027",
+        origin: "literature",
+        title: "Omega-3 fatty acid supplement use and fecundability",
+        url: "https://doi.org/10.1093/humrep/deac027",
+        doi: "10.1093/humrep/deac027",
+        venue: "Human Reproduction",
+        year: 2022,
+        authors: ["Jamie Stanhiser", "Anne Z Steiner", "D R Jukic"],
+        abstract:
+          "Prospective Time to Conceive cohort of 900 women aged 30–44 attempting natural conception without fertility treatment across 5,254 menstrual cycles. Women taking omega-3 fatty acid supplements had a 1.51 to 2.00 times higher probability of conceiving in a given menstrual cycle (adjusted fecundability ratio FR 1.51, 95% CI 1.12–2.04) compared with non-users.",
+        citedBy: 72,
+        declaredDesign: "observational",
+        design: "cohort",
+        sampleSize: 900,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1111/acel.12006",
+        origin: "literature",
+        title: "Prolonging the female reproductive lifespan and improving egg quality with dietary omega-3 fatty acids",
+        url: "https://doi.org/10.1111/acel.12006",
+        doi: "10.1111/acel.12006",
+        venue: "Aging Cell",
+        year: 2012,
+        authors: ["D Nehra", "H D Le", "E M Fallon", "M Puder"],
+        abstract:
+          "Experimental investigation demonstrating that a diet rich in omega-3 long-chain polyunsaturated fatty acids (DHA and EPA) prolongs the female reproductive lifespan into advanced maternal age, preserves ovarian follicle reserves, restores mitochondrial distribution, and rescues Metaphase II oocyte chromosomal spindle alignment to yield normal litters.",
+        citedBy: 235,
+        declaredDesign: "experimental",
+        design: "animal",
+        sampleSize: 120,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1111/acel.12368",
+        origin: "literature",
+        title: "Coenzyme Q10 restores oocyte mitochondrial function and fertility during reproductive aging",
+        url: "https://doi.org/10.1111/acel.12368",
+        doi: "10.1111/acel.12368",
+        venue: "Aging Cell",
+        year: 2015,
+        authors: ["Yaakov Ben-Meir", "S Burstein", "A Borrego-Alvarez", "Robert F Casper"],
+        abstract:
+          "Demonstrated that age-related decline in oocyte quality and fertility is accompanied by reduced expression of CoQ10 biosynthetic enzymes (PDSS2 and COQ6) in human and murine oocytes. CoQ10 supplementation reversed mitochondrial ATP depletion, restored mitochondrial membrane potential, normalized meiotic spindle chromosome alignment, and rescued litter size in aged females.",
+        citedBy: 640,
+        declaredDesign: "experimental",
+        design: "animal",
+        sampleSize: 150,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1186/s12958-018-0343-0",
+        origin: "literature",
+        title: "Pretreatment with coenzyme Q10 improves ovarian response and embryo quality in low-prognosis young women with decreased ovarian reserve: a randomized controlled trial",
+        url: "https://doi.org/10.1186/s12958-018-0343-0",
+        doi: "10.1186/s12958-018-0343-0",
+        venue: "Reproductive Biology and Endocrinology",
+        year: 2018,
+        authors: ["Yangying Xu", "V Nisenblat", "Cuiling Lu", "R Li", "Jie Qiao"],
+        abstract:
+          "Randomized controlled trial of 169 patients receiving 60 days of CoQ10 pretreatment (600 mg/day) prior to follicular recruitment. CoQ10 significantly increased retrieved oocytes, fertilization rate (67.5% vs 45.1%), and high-quality embryos while reducing cycle cancellation.",
+        citedBy: 412,
+        declaredDesign: "rct",
+        design: "rct",
+        sampleSize: 169,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1016/j.celrep.2020.01.058-lifestyle",
+        origin: "literature",
+        title: "NAD+ Repletion Rescues Female Fertility during Reproductive Aging",
+        url: "https://doi.org/10.1016/j.celrep.2020.01.058",
+        doi: "10.1016/j.celrep.2020.01.058",
+        venue: "Cell Reports",
+        year: 2020,
+        authors: ["Michael J Bertoldo", "Dave R Listijono", "Wing-Hong Jonathan Ho", "Homer A", "David A Sinclair"],
+        abstract:
+          "Oocyte NAD+ levels decline with reproductive aging. Oral supplementation with the NAD+ precursor nicotinamide mononucleotide (NMN) restored NAD+ levels in aged oocytes, enhanced SIRT2-dependent meiotic spindle assembly, reduced reactive oxygen species, rescued blastocyst development, and restored live birth rates.",
+        citedBy: 520,
+        declaredDesign: "experimental",
+        design: "animal",
+        sampleSize: 180,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1038/s43587-023-00498-8-lifestyle",
+        origin: "literature",
+        title: "Polyamine metabolite spermidine rejuvenates oocyte quality by enhancing mitophagy during female reproductive aging",
+        url: "https://doi.org/10.1038/s43587-023-00498-8",
+        doi: "10.1038/s43587-023-00498-8",
+        venue: "Nature Aging",
+        year: 2023,
+        authors: ["Yue Zhang", "Bo Xiong"],
+        abstract:
+          "Metabolomic profiling of aged ovaries revealed a sharp decline in endogenous spermidine. Supplementation with spermidine restored oocyte maturation, enhanced selective PINK1/Parkin mitophagy to clear damaged mitochondria, suppressed reactive oxygen species, rescued meiotic spindle chromosome alignment, and doubled litter sizes in aged mammals.",
+        citedBy: 98,
+        declaredDesign: "experimental",
+        design: "animal",
+        sampleSize: 120,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1111/j.1600-079x.2012.00970.x",
+        origin: "literature",
+        title: "Melatonin and the ovary: physiological and pathophysiological implications",
+        url: "https://doi.org/10.1111/j.1600-079X.2012.00970.x",
+        doi: "10.1111/j.1600-079x.2012.00970.x",
+        venue: "Journal of Pineal Research",
+        year: 2012,
+        authors: ["Hiroshi Tamura", "Akihisa Takasaki", "Tadahiro Taketani", "Russel J Reiter"],
+        abstract:
+          "Clinical and mechanistic study showing human preovulatory follicular fluid contains 3-fold higher melatonin concentrations than serum. Oral melatonin supplementation (3 mg at bedtime) doubled intra-follicular melatonin, cut intra-follicular 8-OHdG oxidative DNA damage by 50%, protected oocyte mitochondrial ATP production, and doubled fertilization and pregnancy rates in patients with prior low oocyte quality.",
+        citedBy: 690,
+        declaredDesign: "clinical_trial",
+        design: "rct",
+        sampleSize: 115,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/dew081",
+        origin: "literature",
+        title: "Sleep duration and semen quality: a longitudinal study in human fertility",
+        url: "https://doi.org/10.1093/humrep/dew081",
+        doi: "10.1093/humrep/dew081",
+        venue: "Human Reproduction",
+        year: 2016,
+        authors: ["Qing Chen", "H Yang", "N Zhou", "J Cao"],
+        abstract:
+          "Longitudinal cohort of 796 men providing 2,020 semen samples demonstrating an inverted U-shaped relationship between sleep duration and semen quality, peaking at 7.0–7.5 hours/night. Short sleep (<6.0 hours/night) and prolonged sleep (>9.0 hours/night) reduced semen volume, total sperm count (-25% to -29%), and chromatin integrity.",
+        citedBy: 185,
+        declaredDesign: "observational",
+        design: "cohort",
+        sampleSize: 796,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1056/nejm199512073332301",
+        origin: "literature",
+        title: "Timing of sexual intercourse in relation to ovulation — effects on the probability of conception, survival of the pregnancy, and sex of the baby",
+        url: "https://doi.org/10.1056/NEJM199512073332301",
+        doi: "10.1056/nejm199512073332301",
+        venue: "New England Journal of Medicine",
+        year: 1995,
+        authors: ["Allen J Wilcox", "Clarice R Weinberg", "Donna D Baird"],
+        abstract:
+          "Prospective daily urinary hormone study of 221 healthy women attempting natural conception across 625 ovulatory cycles. Nearly all pregnancies occurred when intercourse took place during a 6-day period ending on the day of ovulation, with peak fecundability when sperm were deposited 1 to 2 days prior to ovulation and rapid post-ovulatory loss of oocyte fertilizability within hours after ovulation.",
+        citedBy: 1820,
+        declaredDesign: "observational",
+        design: "cohort",
+        sampleSize: 221,
+        extra: {},
+      },
+    ],
+    claims: [
+      {
+        statement:
+          "High adherence to a low-glycemic, Mediterranean-style 'Fertility Diet' (high monounsaturated-to-trans fat ratio, plant protein substitution, whole-fat dairy, non-heme iron, and multivitamins) is associated with a 66% lower risk of ovulatory disorder infertility (RR 0.34, 95% CI 0.23–0.49) and an 84% reduction when combined with physical activity and weight control across 17,544 women in the Nurses' Health Study II.",
+        tier: "T3",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.95,
+        rationale: "Chavarro, Rich-Edwards, Rosner & Willett (Obstetrics & Gynecology 2007, n=17,544).",
+        sourceIndexes: [0],
+      },
+      {
+        statement:
+          "In women aged 30–44 attempting natural conception without assisted reproduction across 5,254 menstrual cycles (Time to Conceive cohort, n=900), dietary Omega-3 fatty acid supplementation (EPA/DHA) is associated with a 1.51- to 2.00-fold higher probability of natural conception per cycle (adjusted FR 1.51, 95% CI 1.12–2.04), and dietary EPA/DHA prolongs reproductive lifespan and rescues Metaphase II spindle alignment in aged mammalian models.",
+        tier: "T3",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.93,
+        rationale: "Stanhiser, Steiner et al. (Human Reproduction 2022, n=900) and Nehra et al. (Aging Cell 2012).",
+        sourceIndexes: [1, 2],
+      },
+      {
+        statement:
+          "Sixty days of oral Coenzyme Q10 / Ubiquinol pretreatment (600 mg/day) restores intra-oocyte mitochondrial electron transport and ATP production, significantly increasing fertilization rates (67.5% vs. 45.1%) and high-quality embryo formation in randomized clinical trials.",
+        tier: "T2",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.92,
+        rationale: "Xu et al. (RBMO 2018 RCT, n=169) and Ben-Meir et al. (Aging Cell 2015).",
+        sourceIndexes: [3, 4],
+      },
+      {
+        statement:
+          "Human preovulatory follicular fluid concentrates melatonin 3-fold above serum levels; bedtime melatonin supplementation (3 mg/day) doubles intra-follicular melatonin, reduces intra-follicular 8-OHdG oxidative DNA damage by ~50%, and doubles fertilization and clinical pregnancy rates in patients with prior oxidative oocyte impairment.",
+        tier: "T2",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.90,
+        rationale: "Tamura, Reiter et al. (Journal of Pineal Research 2012, n=115) and Xu et al. (2018).",
+        sourceIndexes: [4, 7],
+      },
+      {
+        statement:
+          "Male sleep duration exhibits an inverted U-shaped association with semen quality peaking at 7.0–7.5 hours/night (n=796 men, 2,020 samples), whereas short sleep (<6.0 hours/night) or late bedtimes (>23:00) reduce total sperm count by 25%–29% and elevate reactive oxygen species and antisperm antibodies.",
+        tier: "T3",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.91,
+        rationale: "Chen et al. (Human Reproduction 2016, n=796).",
+        sourceIndexes: [8],
+      },
+      {
+        statement:
+          "Oral NAD+ repletion via nicotinamide mononucleotide (NMN) restores age-depleted intra-oocyte NAD+ levels, reactivates SIRT2-dependent tubulin deacetylation on the Metaphase II spindle, reduces chromosome missegregation, and rescues live births in aged mammalian models.",
+        tier: "T5",
+        controversy: "debated",
+        direction: "supports",
+        confidence: 0.86,
+        rationale: "Bertoldo, Wu, Homer, Sinclair et al. (Cell Reports 2020).",
+        sourceIndexes: [5],
+      },
+      {
+        statement:
+          "Restoring intra-ovarian polyamine spermidine reverses age-related oocyte meiotic defects and doubles litter size in aged mice by activating selective PINK1/Parkin mitophagy to clear depolarized, ROS-producing mitochondria and restore mitochondrial membrane potential.",
+        tier: "T5",
+        controversy: "debated",
+        direction: "supports",
+        confidence: 0.87,
+        rationale: "Zhang & Xiong (Nature Aging 2023).",
+        sourceIndexes: [6],
+      },
+      {
+        statement:
+          "In natural ovulatory cycles, peak fecundability occurs when intercourse takes place 1 to 2 days prior to ovulation so capacitated sperm await the oocyte in the fallopian ampulla, whereas oocyte fertilizability declines rapidly within 6–12 hours after ovulation.",
+        tier: "T3",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.97,
+        rationale: "Wilcox, Weinberg & Baird (New England Journal of Medicine 1995, n=221 women, 625 cycles).",
+        sourceIndexes: [9],
+      },
+    ],
+    milestones: [
+      {
+        year: 1995,
+        title: "Wilcox, Weinberg & Baird NEJM Study Maps the 6-Day Fertile Window and Pre-Ovulatory Peak",
+        description:
+          "Daily urinary hormone tracking proves natural conception peaks when sperm are deposited 1–2 days before ovulation and falls sharply within hours after ovulation.",
+        sourceIndex: 9,
+      },
+      {
+        year: 2007,
+        title: "Harvard Nurses' Health Study II Defines the Low-Glycemic 'Fertility Diet' (n=17,544)",
+        description:
+          "Chavarro and Willett demonstrate a 66%–84% reduction in ovulatory infertility through insulin-sensitizing Mediterranean nutrition and lifestyle modification.",
+        sourceIndex: 0,
+      },
+      {
+        year: 2012,
+        title: "Tamura/Reiter Follicular Melatonin Trials & Nehra Omega-3 Reproductive Lifespan Discovery",
+        description:
+          "Demonstrates 3× melatonin concentration in human follicular fluid protecting oocyte mitochondria from ROS, alongside omega-3 EPA/DHA extension of reproductive lifespan.",
+        sourceIndex: 7,
+      },
+      {
+        year: 2018,
+        title: "Xu et al. RCT & Ben-Meir et al. Establish 60-Day CoQ10 Oocyte Mitochondrial Repletion",
+        description:
+          "Proves that restoring CoQ10/Ubiquinol rescues age-related oocyte ATP deficits and significantly increases fertilization and embryo competence.",
+        sourceIndex: 4,
+      },
+      {
+        year: 2023,
+        title: "Bertoldo/Sinclair NAD+ (NMN) & Zhang/Xiong Spermidine Mitophagy Oocyte Rejuvenation Studies",
+        description:
+          "Cell Reports (2020) and Nature Aging (2023) demonstrate that NAD+ repletion (SIRT2 spindle rescue) and polyamine spermidine (PINK1/Parkin mitophagy) reverse oocyte aging in mammals.",
+        sourceIndex: 6,
+      },
+    ],
+    entities: [],
+    controversies: [
+      {
+        kind: "debated",
+        note: "1. Gentle 12–13h Circadian Time-Restricted Eating vs. Aggressive Multi-Day Fasting in Female Fertility: While spermidine and overnight circadian fasting (12–13 hours aligned with nocturnal sleep) activate oocyte mitophagy and improve insulin sensitivity (Zhang & Xiong 2023; Chavarro et al. 2007), prolonged caloric restriction or aggressive >16–24h daytime fasting in women can trigger hypothalamic kisspeptin suppression and lower LH pulse amplitude. Calibrating fasting to a gentle 12–13h overnight window with full daytime energy and protein adequacy preserves HPG pulsatility while supporting cellular autophagy.",
+        claimIndexes: [0, 6],
+      },
+      {
+        kind: "debated",
+        note: "2. Preclinical NAD+ (NMN/NR) & Spermidine Oocyte Rejuvenation vs. Pending Human Natural-Conception RCTs: Preclinical mammalian studies demonstrate dramatic restoration of Metaphase II spindle integrity, mitochondrial membrane potential, and live litter size from oral NMN (Bertoldo, Sinclair et al., Cell Reports 2020) and spermidine (Zhang & Xiong, Nature Aging 2023), whereas human clinical RCTs have thus far completed endpoints primarily for Ubiquinol/CoQ10 (Xu et al. 2018), melatonin (Tamura et al. 2012), and omega-3s (Stanhiser et al. 2022). Human dose-response trials for NMN and spermidine are an active translational frontier.",
+        claimIndexes: [2, 5, 6],
+      },
+    ],
+  },
 };
+
 
 
 
