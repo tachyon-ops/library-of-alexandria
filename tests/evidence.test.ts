@@ -9,6 +9,7 @@ import {
   normaliseDesign,
   normaliseDoi,
   reassessTopicTaxonomy,
+  selectBestDictionaryDefinition,
   slugify,
   suggestTopicTitle,
   synthesizeSearchBriefing,
@@ -83,6 +84,67 @@ describe("helpers", () => {
     const gardner = lookupGlossaryTerm("4BB");
     expect(gardner?.term).toContain("Gardner Blastocyst Grading");
     expect(gardner?.synopsis).toContain("Inner Cell Mass");
+
+    const teEmbryo = lookupGlossaryTerm(
+      "TE",
+      "The Gardner system (A, B, C grading for ICM and TE) remains the global benchmark for visual assessment.",
+    );
+    expect(teEmbryo?.term).toContain("Trophectoderm");
+    expect(teEmbryo?.synopsis).toContain("blastocyst");
+    expect(teEmbryo?.synopsis).not.toContain("Telugu");
+
+    const teDefault = lookupGlossaryTerm("TE");
+    expect(teDefault?.term).toContain("Trophectoderm");
+
+    const morphometry = lookupGlossaryTerm(
+      "Morphometry",
+      "From Gardner to Objective Morphometry: blastocyst area and quantitative TE cell counts.",
+    );
+    expect(morphometry?.term).toContain("Morphometry");
+    expect(morphometry?.synopsis).toContain("blastocyst");
+
+    // Context disambiguates shared acronyms across domains or sub-fields
+    const gvNuclear = lookupGlossaryTerm(
+      "GV",
+      "Assessment of retrieved oocytes before insemination classifies nuclear maturity as MII, MI, or GV arrested in Prophase I.",
+    );
+    expect(gvNuclear?.term).toContain("Oocyte Nuclear Maturity");
+
+    const gvIvm = lookupGlossaryTerm(
+      "GV",
+      "Gameto Fertilo co-cultures immature oocytes with stem-cell-derived ovarian support cells during IVM.",
+    );
+    expect(gvIvm?.term).toContain("In Vitro Maturation");
+
+    // Inline parenthetical acronym expansion extracted directly from surrounding passage context
+    const inlineAcronym = lookupGlossaryTerm(
+      "COC",
+      "Intact Cumulus-Oophorus Complex (COC) architecture protects the maturing oocyte during follicle aspiration.",
+    );
+    expect(inlineAcronym?.term).toContain("Cumulus-Oophorus Complex");
+    expect(inlineAcronym?.synopsis).toContain("Cumulus-Oophorus Complex");
+
+    // Remote dictionary definition selection rejects ISO language code / symbol noise and picks the context-matching definition
+    const rejectedSymbolOnly = selectBestDictionaryDefinition(
+      "TE",
+      [{ word: "te", partOfSpeech: "symbol", definition: "ISO 639-1 language code for Telugu ." }],
+      "The Gardner system (A, B, C grading for ICM and TE) remains the global benchmark for visual assessment.",
+    );
+    expect(rejectedSymbolOnly).toBeNull();
+
+    const selectedContextual = selectBestDictionaryDefinition(
+      "epithelium",
+      [
+        { word: "epithelium", partOfSpeech: "symbol", definition: "ISO 639-1 language code for a synthetic language." },
+        {
+          word: "epithelium",
+          partOfSpeech: "noun",
+          definition: "A membranous cellular tissue that covers a free surface or lines a tube or cavity of an animal body, such as the blastocyst trophectoderm layer.",
+        },
+      ],
+      "Trophectoderm (TE) forms the outer cohesive cellular epithelium of the blastocyst prior to implantation.",
+    );
+    expect(selectedContextual?.synopsis).toContain("cellular tissue");
 
     const pronuclear = lookupGlossaryTerm("2PN");
     expect(pronuclear?.term).toContain("Pronuclear Scoring");

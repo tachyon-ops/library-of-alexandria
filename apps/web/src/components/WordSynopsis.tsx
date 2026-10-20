@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { candidateLookupForms, lookupGlossaryTerm, type GlossaryEntry } from "@lib/core";
+import {
+  candidateLookupForms,
+  lookupGlossaryTerm,
+  selectBestDictionaryDefinition,
+  type GlossaryEntry,
+  type RemoteDefinitionCandidate,
+} from "@lib/core";
 
 interface PopoverState {
   word: string;
@@ -21,35 +27,72 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-async function fetchDictionaryDefinition(raw: string, signal: AbortSignal): Promise<GlossaryEntry | null> {
+function extractSelectionContext(target: HTMLElement, sel: Selection | null): string {
+  const pieces: string[] = [];
+  const pageTitle = document.querySelector("h1")?.textContent?.trim();
+  if (pageTitle) pieces.push(pageTitle);
+
+  const section = target.closest("section, article");
+  const sectionHeading = section?.querySelector("h2, h3, .monograph-section-kicker")?.textContent?.trim();
+  if (sectionHeading && sectionHeading !== pageTitle) {
+    pieces.push(sectionHeading);
+  }
+
+  const block = target.closest("p, li, blockquote, td, dd, figcaption, h1, h2, h3, h4");
+  const blockText = block?.textContent?.trim() || sel?.anchorNode?.parentElement?.textContent?.trim();
+  if (blockText) {
+    pieces.push(blockText.slice(0, 600));
+  }
+
+  return pieces.join(" — ");
+}
+
+async function fetchDictionaryDefinition(
+  raw: string,
+  context: string,
+  signal: AbortSignal,
+): Promise<GlossaryEntry | null> {
   const forms = candidateLookupForms(raw);
   if (forms.length === 0) return null;
 
-  const cacheKey = forms[0]!;
+  const trimmedExact = raw.trim().replace(/^[^a-zA-Z0-9-]+|[^a-zA-Z0-9-]+$/g, "");
+  const lookupQueue = trimmedExact && !forms.includes(trimmedExact) ? [trimmedExact, ...forms] : forms;
+
+  const cacheKey = `${forms[0]!}:${context.slice(0, 120).toLowerCase()}`;
   const cached = REMOTE_CACHE.get(cacheKey);
   if (cached) return cached;
 
+  const candidates: RemoteDefinitionCandidate[] = [];
+
   // 1. Try Free Dictionary API across candidate forms (exact word first, then base lemma)
-  for (const form of forms.slice(0, 3)) {
+  for (const form of lookupQueue.slice(0, 3)) {
     try {
       const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(form)}`, {
         signal,
       });
       if (!res.ok) continue;
       const data = await res.json();
-      if (Array.isArray(data) && data[0]?.meanings?.[0]?.definitions?.[0]?.definition) {
-        const firstMeaning = data[0].meanings[0];
-        const def = String(firstMeaning.definitions[0].definition).trim();
-        const partOfSpeech = (firstMeaning.partOfSpeech as string | undefined) ?? "term";
-        const resolvedWord = (data[0].word as string | undefined) ?? form;
-        const entry: GlossaryEntry = {
-          term: raw.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "") || resolvedWord,
-          domain: `Dictionary (${partOfSpeech})`,
-          synopsis: form !== forms[0] ? `${def} (Base form: "${resolvedWord}".)` : def,
-          etymology: (data[0].origin as string | undefined) || undefined,
-        };
-        REMOTE_CACHE.set(cacheKey, entry);
-        return entry;
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          const resolvedWord = (item?.word as string | undefined) ?? form;
+          const etymology = (item?.origin as string | undefined) || undefined;
+          const meanings = Array.isArray(item?.meanings) ? item.meanings : [];
+          for (const meaning of meanings) {
+            const partOfSpeech = (meaning?.partOfSpeech as string | undefined) ?? "term";
+            const defs = Array.isArray(meaning?.definitions) ? meaning.definitions : [];
+            for (const d of defs.slice(0, 3)) {
+              const defText = typeof d?.definition === "string" ? d.definition.trim() : "";
+              if (defText) {
+                candidates.push({ word: resolvedWord, partOfSpeech, definition: defText, etymology });
+              }
+            }
+          }
+        }
+        const best = selectBestDictionaryDefinition(raw, candidates, context);
+        if (best) {
+          REMOTE_CACHE.set(cacheKey, best);
+          return best;
+        }
       }
     } catch {
       if (signal.aborted) return null;
@@ -57,7 +100,7 @@ async function fetchDictionaryDefinition(raw: string, signal: AbortSignal): Prom
   }
 
   // 2. Fallback to English Wiktionary REST API
-  for (const form of forms.slice(0, 2)) {
+  for (const form of lookupQueue.slice(0, 3)) {
     try {
       const res = await fetch(`https://en.wiktionary.org/api/rest_v1/page/definition/${encodeURIComponent(form)}`, {
         signal,
@@ -65,19 +108,21 @@ async function fetchDictionaryDefinition(raw: string, signal: AbortSignal): Prom
       if (!res.ok) continue;
       const data = await res.json();
       const enList = data?.en;
-      if (Array.isArray(enList) && enList[0]?.definitions?.[0]?.definition) {
-        const firstBlock = enList[0];
-        const rawDef = String(firstBlock.definitions[0].definition);
-        const cleanDef = stripHtml(rawDef);
-        if (cleanDef.length > 5) {
-          const partOfSpeech = (firstBlock.partOfSpeech as string | undefined)?.toLowerCase() ?? "term";
-          const entry: GlossaryEntry = {
-            term: raw.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "") || form,
-            domain: `Dictionary (${partOfSpeech})`,
-            synopsis: cleanDef,
-          };
-          REMOTE_CACHE.set(cacheKey, entry);
-          return entry;
+      if (Array.isArray(enList)) {
+        for (const block of enList) {
+          const partOfSpeech = (block?.partOfSpeech as string | undefined)?.toLowerCase() ?? "term";
+          const defs = Array.isArray(block?.definitions) ? block.definitions : [];
+          for (const d of defs.slice(0, 3)) {
+            const cleanDef = typeof d?.definition === "string" ? stripHtml(d.definition) : "";
+            if (cleanDef.length > 5) {
+              candidates.push({ word: form, partOfSpeech, definition: cleanDef });
+            }
+          }
+        }
+        const best = selectBestDictionaryDefinition(raw, candidates, context);
+        if (best) {
+          REMOTE_CACHE.set(cacheKey, best);
+          return best;
         }
       }
     } catch {
@@ -130,20 +175,25 @@ export function WordSynopsis() {
 
       abortRef.current?.abort();
 
-      const localMatch = lookupGlossaryTerm(raw);
+      const context = extractSelectionContext(target, sel);
+      const localMatch = lookupGlossaryTerm(raw, context);
       if (!localMatch) return;
 
       // Render local scientific or dictionary entry immediately (zero wait time), anchored to document coordinates
       setState({ word: raw, entry: localMatch, left, top, width: cardWidth, placeAbove });
 
+      const isMorphologicalSynthesis = Boolean(localMatch.etymology?.startsWith("Morphology:"));
       const isCuratedScientific =
-        !localMatch.domain.startsWith("Lexicon") && localMatch.domain !== "Scientific Terminology";
+        !localMatch.domain.startsWith("Lexicon") &&
+        localMatch.domain !== "Scientific Terminology" &&
+        !isMorphologicalSynthesis;
       if (isCuratedScientific) {
         return;
       }
 
-      // If it fell back to the generic grammatical/morphological analyzer, enrich from live dictionary APIs
+      // If it fell back to the generic grammatical/morphological analyzer, enrich from live dictionary APIs using passage context
       const isGenericFallback =
+        isMorphologicalSynthesis ||
         localMatch.synopsis.startsWith("English term (") ||
         localMatch.synopsis.startsWith("In a manner characterized by") ||
         localMatch.synopsis.startsWith("The action, process, or resulting state") ||
@@ -162,7 +212,7 @@ export function WordSynopsis() {
       const controller = new AbortController();
       abortRef.current = controller;
 
-      void fetchDictionaryDefinition(raw, controller.signal).then((remoteEntry) => {
+      void fetchDictionaryDefinition(raw, context, controller.signal).then((remoteEntry) => {
         if (!remoteEntry || controller.signal.aborted) return;
         setState((prev) =>
           prev && prev.word === raw

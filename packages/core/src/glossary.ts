@@ -81,13 +81,13 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
     etymology: "Greek blastos ('sprout, bud') + kystis ('sac, bladder').",
   },
   {
-    term: "Trophectoderm",
-    aliases: ["trophoblast", "trophectodermal"],
+    term: "Trophectoderm (TE)",
+    aliases: ["te", "trophoblast", "trophectodermal"],
     domain: "Embryology",
     synopsis:
-      "The outer layer of cells surrounding a blastocyst that implants into the uterine lining and forms the placenta.",
+      "The outer layer of cells surrounding a blastocyst (scored A, B, or C as the second letter in Gardner grading, such as 4AA or 4BB) that implants into the uterine lining and forms the placenta.",
     whyItMatters:
-      "During PGT-A genetic testing, 5–8 cells are biopsied from the trophectoderm rather than the inner cell mass.",
+      "Trophectoderm (TE) morphology is a stronger independent predictor of implantation and live birth than Inner Cell Mass (ICM) grade, and during PGT-A genetic testing, 5–8 cells are biopsied from the trophectoderm rather than the ICM.",
     etymology: "Greek trophe ('nourishment') + ektos ('outside') + derma ('skin').",
   },
   {
@@ -109,6 +109,25 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
       "AA, AB, BA, and BB blastocysts all have high implantation potential; however, morphological grade only weakly predicts chromosomal euploidy in women over 40, where a 4BB euploid embryo outperforms a 4AA aneuploid embryo, and trophectoderm grade correlates slightly more strongly with implantation than ICM grade.",
   },
   {
+    term: "Morphometry & Morphokinetics (Time-Lapse Embryo Assessment)",
+    aliases: [
+      "morphometry",
+      "morphometric",
+      "morphokinetics",
+      "morphokinetic",
+      "time-lapse",
+      "tlm",
+      "kidscore",
+      "idascore",
+    ],
+    domain: "Clinical Embryology & AI Selection",
+    synopsis:
+      "Quantitative measurement of embryo size and cellular geometry (morphometry, such as blastocyst area ≥25,000 µm², diameter ≥170 µm, and trophectoderm cell counts) alongside continuous cell-division timing intervals (morphokinetics) captured in time-lapse incubators.",
+    whyItMatters:
+      "Supplements subjective visual grading with objective parameters (such as time to blastulation tB, synchronous cleavage s2, and quantitative TE cell counts) to rank embryos for transfer without disturbing culture conditions.",
+    etymology: "Greek morphe ('form, shape') + metria ('measurement') / kinesis ('motion').",
+  },
+  {
     term: "Pronuclear Scoring (2PN, 1PN, 0PN & 3PN Fertilisation Check)",
     aliases: ["2pn", "1pn", "0pn", "3pn", "pronucleus", "pronuclei", "pronuclear", "1pn/2pn", "2pn/1pn"],
     domain: "Clinical Embryology",
@@ -119,7 +138,7 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
   },
   {
     term: "Oocyte Nuclear Maturity & Morphology (MII, MI, GV & Istanbul Consensus)",
-    aliases: ["gv", "polar body", "perivitelline", "ooplasm", "zona pellucida", "dysmorphisms"],
+    aliases: ["gv", "mi", "mii", "polar body", "perivitelline", "ooplasm", "zona pellucida", "zp", "dysmorphisms"],
     domain: "Clinical Embryology",
     synopsis:
       "Assessment of retrieved oocytes before insemination: nuclear maturity classifies eggs as Metaphase II (MII, mature with extruded first polar body, ready for ICSI), Metaphase I (MI, immature without polar body), or Germinal Vesicle (GV, arrested in Prophase I), alongside cytoplasmic and extracytoplasmic morphology.",
@@ -722,7 +741,16 @@ const CURATED_GLOSSARY: RawGlossaryDef[] = [
   },
 ];
 
-const GLOSSARY_INDEX = new Map<string, GlossaryEntry>();
+const GLOSSARY_CANDIDATES = new Map<string, GlossaryEntry[]>();
+function addGlossaryCandidate(key: string, entry: GlossaryEntry): void {
+  const existing = GLOSSARY_CANDIDATES.get(key);
+  if (!existing) {
+    GLOSSARY_CANDIDATES.set(key, [entry]);
+  } else if (!existing.some((e) => e.term === entry.term)) {
+    existing.push(entry);
+  }
+}
+
 for (const item of CURATED_GLOSSARY) {
   const entry: GlossaryEntry = {
     term: item.term,
@@ -738,9 +766,9 @@ for (const item of CURATED_GLOSSARY) {
   ];
   for (const k of keys) {
     if (k) {
-      GLOSSARY_INDEX.set(k, entry);
+      addGlossaryCandidate(k, entry);
       const asciiKey = k.normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
-      GLOSSARY_INDEX.set(asciiKey, entry);
+      addGlossaryCandidate(asciiKey, entry);
     }
   }
 }
@@ -911,6 +939,7 @@ const MORPH_PREFIXES: [string, string][] = [
   ["gonado", "reproductive gland / ovary or testis"],
   ["tropho", "nourishment / placental support (Greek trophe)"],
   ["blast", "early embryonic bud or precursor cell (Greek blastos)"],
+  ["morpho", "form, shape, or cellular structure (Greek morphe)"],
   ["angi", "blood vessel (Greek angeion)"],
   ["vaso", "blood vessel / duct (Latin vas)"],
   ["hemo", "blood (Greek haima)"],
@@ -1101,42 +1130,280 @@ function formatDisplayWord(raw: string): string {
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
+const CONTEXT_STOPWORDS = new Set([
+  "the", "and", "for", "that", "this", "with", "from", "are", "was", "were", "have", "has", "had",
+  "not", "but", "what", "all", "can", "when", "there", "use", "used", "each", "which", "their",
+  "how", "will", "other", "about", "out", "many", "then", "them", "these", "some", "into", "more",
+  "than", "its", "over", "also", "after", "before", "most", "between", "such", "only", "both",
+]);
+
+function tokenizeContext(text: string): string[] {
+  return text
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9+-]+/)
+    .filter((t) => t.length >= 2 && !CONTEXT_STOPWORDS.has(t));
+}
+
+function inferContextDomain(context?: string): string {
+  if (!context) return "Scientific Terminology";
+  const lower = context.toLowerCase();
+  if (/\b(blastocyst|trophectoderm|gardner|icm|zygote|pronucle|morula|cleavage|embryo|mii|gv|zona)\b/.test(lower)) {
+    return "Clinical Embryology";
+  }
+  if (/\b(oocyte|follic|ovarian|amh|ivf|icsi|sperm|endometri|fertility|gestation|pregnancy|luteal)\b/.test(lower)) {
+    return "Reproductive Biology & Medicine";
+  }
+  if (/\b(hamiltonian|lagrangian|quantum|hilbert|milgrom|mond|unruh|relativity|spacetime|baryon|gauge)\b/.test(lower)) {
+    return "Physics & Cosmology";
+  }
+  if (/\b(martingale|volatility|garch|arbitrage|black-scholes|ito|portfolio|cointegration|paretian)\b/.test(lower)) {
+    return "Quantitative Finance & Econometrics";
+  }
+  return "Scientific Terminology";
+}
+
+function pickBestGlossaryCandidate(
+  candidates: GlossaryEntry[],
+  rawInput: string,
+  context?: string,
+): GlossaryEntry {
+  if (candidates.length === 1 || !context || !context.trim()) {
+    return candidates[0]!;
+  }
+  const ctxTokens = tokenizeContext(context);
+  if (ctxTokens.length === 0) return candidates[0]!;
+
+  const cleanedRaw = cleanToken(rawInput);
+  let best = candidates[0]!;
+  let bestScore = -1;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const cand = candidates[i]!;
+    const termLower = cand.term.toLowerCase();
+    const bodyLower = `${cand.term} ${cand.domain} ${cand.synopsis} ${cand.whyItMatters ?? ""}`.toLowerCase();
+    let score = 0;
+    for (const tok of ctxTokens) {
+      if (tok === cleanedRaw) continue;
+      if (termLower.includes(tok)) {
+        score += 4;
+      } else if (bodyLower.includes(tok)) {
+        score += 2;
+      }
+    }
+    // Slight preference for earlier curated order on exact ties
+    const weighted = score - i * 0.01;
+    if (weighted > bestScore) {
+      bestScore = weighted;
+      best = cand;
+    }
+  }
+  return best;
+}
+
+const ACRONYM_LEADING_STOPWORDS = new Set([
+  "the", "a", "an", "of", "in", "on", "at", "to", "for", "with", "by", "as", "is", "are", "was", "were",
+  "or", "and", "from", "into", "via", "per", "such", "called", "termed", "known", "intact", "standard",
+  "human", "clinical", "objective", "quantitative", "qualitative", "single", "double", "total", "mean",
+]);
+
+function extractInlineAcronymExpansion(rawInput: string, context?: string): GlossaryEntry | null {
+  if (!context) return null;
+  const trimmed = rawInput.trim().replace(/^[^a-zA-Z0-9-]+|[^a-zA-Z0-9-]+$/g, "");
+  if (trimmed.length < 2 || trimmed.length > 8 || !/^[A-Za-z0-9-]+$/.test(trimmed)) return null;
+
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const letters = trimmed.replace(/[^a-zA-Z]/g, "").toLowerCase();
+  if (letters.length < 2) return null;
+
+  // Pattern 1: "Full Term Phrase (ACRONYM)"
+  const beforeRegex = new RegExp(`([A-Za-z][A-Za-z0-9/-]*(?:\\s+[A-Za-z&/-][A-Za-z0-9/-]*){1,6})\\s*\\(\\s*${escaped}\\s*\\)`, "i");
+  const beforeMatch = context.match(beforeRegex);
+  if (beforeMatch && beforeMatch[1]) {
+    const rawWords = beforeMatch[1].trim().split(/\s+/);
+    while (rawWords.length > letters.length && ACRONYM_LEADING_STOPWORDS.has(rawWords[0]!.toLowerCase())) {
+      rawWords.shift();
+    }
+    const candidateWords = rawWords.slice(-Math.min(rawWords.length, letters.length + 2));
+    while (candidateWords.length > 1 && ACRONYM_LEADING_STOPWORDS.has(candidateWords[0]!.toLowerCase())) {
+      candidateWords.shift();
+    }
+    const phrase = candidateWords.join(" ").trim();
+    const initials = candidateWords
+      .flatMap((w) => w.split("-"))
+      .map((w) => w.replace(/[^a-zA-Z]/g, "")[0]?.toLowerCase() ?? "")
+      .join("");
+    if (phrase.length >= 5 && (initials.includes(letters.slice(0, 2)) || initials[0] === letters[0])) {
+      return {
+        term: `${phrase} (${trimmed.toUpperCase()})`,
+        domain: inferContextDomain(context),
+        synopsis: `Abbreviation for ${phrase}, as used in this passage.`,
+      };
+    }
+  }
+
+  // Pattern 2: "ACRONYM (Full Term Phrase)"
+  const afterRegex = new RegExp(`\\b${escaped}\\s*\\(\\s*([A-Za-z][A-Za-z0-9\\s,/-]{5,80})\\s*\\)`, "i");
+  const afterMatch = context.match(afterRegex);
+  if (afterMatch && afterMatch[1]) {
+    const phrase = afterMatch[1].trim();
+    const words = phrase.split(/[\s-]+/).filter((w) => w.length > 0);
+    const initials = words.map((w) => w[0]?.toLowerCase() ?? "").join("");
+    if (words.length >= 2 && (initials.includes(letters.slice(0, 2)) || initials[0] === letters[0])) {
+      return {
+        term: `${phrase} (${trimmed.toUpperCase()})`,
+        domain: inferContextDomain(context),
+        synopsis: `Abbreviation for ${phrase}, as used in this passage.`,
+      };
+    }
+  }
+
+  return null;
+}
+
+export interface RemoteDefinitionCandidate {
+  word: string;
+  partOfSpeech: string;
+  definition: string;
+  etymology?: string;
+}
+
+const NOISE_DEFINITION_RE =
+  /\b(iso 639|language code|iata|icao|postal abbreviation|postcode|zip code|solf[eè]ge|letter of the .* alphabet|morse code|internet top-level domain|country code|international vehicle registration)\b/i;
+
 /**
- * Pure lookup of ANY double-clicked word or short term:
- * 1. Curated scientific, clinical & research methodology glossary
- * 2. Built-in academic & general English lexicon (including lemmatized stems)
- * 3. Greek/Latin scientific root & English morphological synthesis so every word is explainable immediately.
+ * Selects the best dictionary definition from remote API candidates (Free Dictionary / Wiktionary)
+ * using the surrounding passage context and filtering out symbol / language-code noise.
  */
-export function lookupGlossaryTerm(rawInput: string): GlossaryEntry | null {
+export function selectBestDictionaryDefinition(
+  rawInput: string,
+  candidates: RemoteDefinitionCandidate[],
+  context?: string,
+): GlossaryEntry | null {
+  if (!candidates || candidates.length === 0) return null;
+
+  const valid = candidates.filter((c) => {
+    const def = c.definition?.trim() ?? "";
+    if (def.length < 6) return false;
+    const pos = (c.partOfSpeech ?? "").toLowerCase();
+    if (pos === "symbol" || NOISE_DEFINITION_RE.test(def)) return false;
+    return true;
+  });
+
+  if (valid.length === 0) return null;
+
+  const ctxTokens = context ? tokenizeContext(context) : [];
+  const ctxLower = (context ?? "").toLowerCase();
+  const isBioContext = /\b(blastocyst|trophectoderm|gardner|icm|embryo|oocyte|follic|cell|clinical|pregnancy|ivf|fertility|uterine|placenta|chromosome|euploid|aneuploid|sperm|ovarian|morphometry|grading|biopsy)\b/.test(ctxLower);
+  const isQuantContext = /\b(hamiltonian|lagrangian|quantum|hilbert|milgrom|mond|martingale|volatility|garch|arbitrage|black-scholes|ito|portfolio|cointegration|theorem|manifold)\b/.test(ctxLower);
+
+  let best = valid[0]!;
+  let bestScore = -1000;
+
+  for (let i = 0; i < valid.length; i++) {
+    const cand = valid[i]!;
+    const defLower = cand.definition.toLowerCase();
+    let score = 0;
+
+    for (const tok of ctxTokens) {
+      if (tok.length >= 3 && defLower.includes(tok)) {
+        score += 3;
+      }
+    }
+
+    if (isBioContext && /\b(cell|tissue|layer|embryo|blastocyst|organ|body|membrane|placenta|uterus|biology|medicine|clinical|genetic|form|shape|measure|size|count|score|grade|outer|inner|surface|epithelium|anatom)\b/.test(defLower)) {
+      score += 5;
+    }
+    if (isQuantContext && /\b(math|physics|function|equation|probability|random|process|vector|matrix|space|energy|market|variance|distribution|measure)\b/.test(defLower)) {
+      score += 5;
+    }
+
+    if (/^(initialism|abbreviation|acronym|alternative form) of\b/i.test(cand.definition.trim()) && cand.definition.length < 45) {
+      score -= 3;
+    } else if (cand.definition.length >= 25) {
+      score += 1;
+    }
+
+    const weighted = score - i * 0.05;
+    if (weighted > bestScore) {
+      bestScore = weighted;
+      best = cand;
+    }
+  }
+
+  const trimmedRaw = rawInput.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "");
+  const cleanedRaw = cleanToken(rawInput);
+  const resolvedWord = best.word || trimmedRaw;
+  const isLemmaNote = cleanedRaw && best.word && cleanToken(best.word) !== cleanedRaw;
+
+  return {
+    term: trimmedRaw || resolvedWord,
+    domain: `Dictionary (${best.partOfSpeech || "term"})`,
+    synopsis: isLemmaNote ? `${best.definition} (Base form: "${resolvedWord}".)` : best.definition,
+    etymology: best.etymology,
+  };
+}
+
+/**
+ * Pure lookup of ANY double-clicked word or short term, optionally disambiguated
+ * by the surrounding sentence, section, or topic context:
+ * 1. Curated scientific, clinical & research methodology glossary (scored against context when polysemous)
+ * 2. Inline parenthetical acronym expansion from the surrounding passage context
+ * 3. Built-in academic & general English lexicon (including lemmatized stems)
+ * 4. Greek/Latin scientific root & English morphological synthesis so every word is explainable immediately.
+ */
+export function lookupGlossaryTerm(rawInput: string, context?: string): GlossaryEntry | null {
   if (!rawInput) return null;
   const cleaned = cleanToken(rawInput);
   if (!cleaned || cleaned.length < 2) return null;
 
+  // Guard lowercase common English conjunction "or" unless uppercase "OR" or in statistical context
+  const trimmedRaw = rawInput.trim().replace(/^[^a-zA-Z0-9+-]+|[^a-zA-Z0-9+-]+$/g, "");
+  const isLowercaseOr =
+    cleaned === "or" &&
+    trimmedRaw === "or" &&
+    (!context || !/\b(95%|ci|confidence|odds|ratio|relative risk|rr|p\s*[=<]|p-value)\b/i.test(context));
+
   const forms = candidateLookupForms(cleaned);
 
-  // 1. Check curated scientific glossary
-  for (const form of forms) {
-    const match = GLOSSARY_INDEX.get(form);
-    if (match) return match;
+  // 1. Check curated scientific glossary (disambiguating multiple candidates with context)
+  if (!isLowercaseOr) {
+    for (const form of forms) {
+      const candidates = GLOSSARY_CANDIDATES.get(form);
+      if (candidates && candidates.length > 0) {
+        return pickBestGlossaryCandidate(candidates, rawInput, context);
+      }
+    }
   }
 
   // 2. If hyphenated (e.g. "maternal-spindle", "pre-eclampsia", "peer-reviewed"), check joined & parts
   if (cleaned.includes("-")) {
     const joined = cleaned.replace(/-/g, "");
     for (const form of candidateLookupForms(joined)) {
-      const match = GLOSSARY_INDEX.get(form);
-      if (match) return match;
+      const candidates = GLOSSARY_CANDIDATES.get(form);
+      if (candidates && candidates.length > 0) {
+        return pickBestGlossaryCandidate(candidates, rawInput, context);
+      }
     }
     const parts = cleaned.split("-").filter((p) => p.length >= 2);
     for (const part of parts) {
       for (const form of candidateLookupForms(part)) {
-        const match = GLOSSARY_INDEX.get(form);
-        if (match) return match;
+        const candidates = GLOSSARY_CANDIDATES.get(form);
+        if (candidates && candidates.length > 0) {
+          return pickBestGlossaryCandidate(candidates, rawInput, context);
+        }
       }
     }
   }
 
-  // 3. Check general & academic English lexicon (exact or lemmatized stem)
+  // 3. Check if the surrounding passage defines an inline acronym (e.g. "Cumulus-Oophorus Complex (COC)")
+  const inlineExpansion = extractInlineAcronymExpansion(rawInput, context);
+  if (inlineExpansion) {
+    return inlineExpansion;
+  }
+
+  // 4. Check general & academic English lexicon (exact or lemmatized stem)
   for (const form of forms) {
     const lex = GENERAL_LEXICON_INDEX.get(form);
     if (lex) {
@@ -1167,7 +1434,7 @@ export function lookupGlossaryTerm(rawInput: string): GlossaryEntry | null {
     }
   }
 
-  // 4. Check morphological Greek/Latin/English prefixes & suffixes
+  // 5. Check morphological Greek/Latin/English prefixes & suffixes
   const matchedPre = cleaned.length >= 4 ? MORPH_PREFIXES.find(([pre]) => cleaned.startsWith(pre) && cleaned.length > pre.length + 2) : undefined;
   const matchedSuf = cleaned.length >= 5 ? MORPH_SUFFIXES.find(([suf]) => cleaned.endsWith(suf) && cleaned.length > suf.length + 2) : undefined;
   const displayTerm = formatDisplayWord(rawInput);
@@ -1178,7 +1445,7 @@ export function lookupGlossaryTerm(rawInput: string): GlossaryEntry | null {
     if (matchedSuf) pieces.push(`suffix "-${matchedSuf[0]}" (${matchedSuf[1]})`);
     return {
       term: displayTerm,
-      domain: matchedSuf ? "Scientific Terminology" : "Lexicon",
+      domain: matchedSuf ? inferContextDomain(context) : "Lexicon",
       synopsis:
         matchedPre && matchedSuf
           ? `Term combining ${matchedPre[1]} with ${matchedSuf[1]}.`
@@ -1189,7 +1456,7 @@ export function lookupGlossaryTerm(rawInput: string): GlossaryEntry | null {
     };
   }
 
-  // 5. Universal grammatical / inflectional dictionary fallback so every word is immediately explainable
+  // 6. Universal grammatical / inflectional dictionary fallback so every word is immediately explainable
   const stem = forms.find((f) => f !== cleaned && f.length >= 3) ?? cleaned;
   let pos = "term";
   let explanation = `English term ("${cleaned}") used in this passage.`;
