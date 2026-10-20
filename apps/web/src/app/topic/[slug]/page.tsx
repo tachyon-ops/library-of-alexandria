@@ -166,6 +166,17 @@ export default async function TopicPage({
     sourceUrls: Array.isArray(e.sourceUrls) ? e.sourceUrls : [],
   }));
   const entityGroups = groupBy(safeEntities, (e) => e.kind);
+  const safeConnectedTopics = (connectedTopics ?? []).map((l) =>
+    isLegacyFetIntervalTopic
+      ? {
+          ...l,
+          note: "Connects immediate next-menstrual-cycle Frozen Embryo Transfer versus a 1–3 month interval for a vitrified blastocyst at −196°C with modifiable endometrial receptivity factors.",
+        }
+      : {
+          ...l,
+          note: l.note ? normaliseAgePhrasing(l.note) : null,
+        },
+  );
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
   const activeJob = safeJobs.find((j) => j.status === "running");
@@ -442,7 +453,7 @@ export default async function TopicPage({
             displayTitle={displayTitle}
             ancestors={ancestors}
             childrenNodes={children}
-            associatedNodes={connectedTopics}
+            associatedNodes={safeConnectedTopics}
             showNotes={!hasIntermediateSections}
           />
         </section>
@@ -730,7 +741,7 @@ export default async function TopicPage({
               displayTitle={displayTitle}
               ancestors={ancestors}
               childrenNodes={children}
-              associatedNodes={connectedTopics}
+              associatedNodes={safeConnectedTopics}
               showNotes
             />
           </section>
