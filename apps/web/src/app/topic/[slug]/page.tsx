@@ -129,7 +129,11 @@ export default async function TopicPage({
   const entityGroups = groupBy(safeEntities, (e) => e.kind);
 
   const safeJobs = Array.isArray(jobs) ? jobs : [];
-  const running = safeJobs.find((j) => j.status === "running") ?? safeJobs.find((j) => j.status === "queued");
+  const activeJob = safeJobs.find((j) => j.status === "running");
+  const queuedJobs = safeJobs
+    .filter((j) => j.status === "queued")
+    .sort((a, b) => (STAGE_ORDER[a.kind] ?? 99) - (STAGE_ORDER[b.kind] ?? 99));
+  const running = activeJob ?? queuedJobs[0];
   const failed = safeJobs.find((j) => j.status === "failed");
   const displayTitle = normaliseTopicTitle(topic.title);
   const briefText =
@@ -158,8 +162,10 @@ export default async function TopicPage({
   const leverCategories = [...new Set(levers.map((l) => l?.category).filter(Boolean))];
 
   const lastResearchedStr = formatTopicDate(topic.lastResearchedAt);
-  const currentStageIndex = running ? (STAGE_ORDER[running.kind] ?? -1) : -1;
   const completedKinds = new Set(safeJobs.filter((j) => j.status === "done").map((j) => j.kind));
+  const openKinds = new Set(
+    safeJobs.filter((j) => j.status === "running" || j.status === "queued").map((j) => j.kind),
+  );
 
   const validMilestones = (milestones ?? []).filter((m) => m && typeof m.year === "number");
   const validDebates = (debates ?? []).map((d) => ({
@@ -265,7 +271,8 @@ export default async function TopicPage({
             {sources.length} {sources.length === 1 ? "source" : "sources"} ↓
           </a>
           <span className="status-line" role="status">
-            {busy && running ? `${JOB_WORDS[running.kind] ?? running.kind}…` : null}
+            {busy && activeJob ? `${JOB_WORDS[activeJob.kind] ?? activeJob.kind}…` : null}
+            {busy && !activeJob && running ? `Queued: ${JOB_WORDS[running.kind] ?? running.kind}…` : null}
             {!busy && lastResearchedStr ? `Last researched ${lastResearchedStr}` : null}
             {topic.status === "error" && failed ? ` Stopped: ${failed.error?.split("\n")[0]}` : null}
           </span>
@@ -277,7 +284,11 @@ export default async function TopicPage({
               <div className="progress-status-badge">
                 <span className="pulse-indicator" aria-hidden="true" />
                 <strong>
-                  {running ? (JOB_WORDS[running.kind] ?? `Running ${running.kind}`) : "Autonomous research in progress"}
+                  {activeJob
+                    ? (JOB_WORDS[activeJob.kind] ?? `Running ${activeJob.kind}`)
+                    : running
+                      ? `Queued: ${JOB_WORDS[running.kind] ?? running.kind}`
+                      : "Autonomous research in progress"}
                 </strong>
               </div>
               <span className="tasks-count muted small">
@@ -288,8 +299,8 @@ export default async function TopicPage({
             <ol className="pipeline-stepper" aria-label="Autonomous research pipeline stages">
               {PIPELINE_STAGES.map((stage, idx) => {
                 const isCurrent = running?.kind === stage.kind;
-                const isDone = completedKinds.has(stage.kind) || (currentStageIndex > (STAGE_ORDER[stage.kind] ?? 99));
-                const isQueued = !isCurrent && !isDone && safeJobs.some((j) => j.kind === stage.kind && j.status === "queued");
+                const isDone = !isCurrent && !openKinds.has(stage.kind) && completedKinds.has(stage.kind);
+                const isQueued = !isCurrent && !isDone && openKinds.has(stage.kind);
                 const stageStatus = isCurrent ? "running" : isDone ? "done" : isQueued ? "queued" : "pending";
 
                 return (
