@@ -20,8 +20,17 @@ const LEGACY_TITLE_MAP: Record<string, string> = {
   "Male factor after 40": "Andrology & Male Factor Infertility",
   "Donor eggs in Europe": "Assisted Reproductive Technology & Gamete Donation",
   "Frontier fertility treatments": "Translational & Geroprotective Reproductive Biology",
+  "Frontier Studies on 40+ Fertility and New Clinical Trials": "Translational & Geroprotective Reproductive Biology",
   "Pregnancy after 44": "Advanced Maternal Age & Pregnancy After 40",
   "Maternal-Fetal Medicine & Obstetric Perinatology": "Advanced Maternal Age & Pregnancy After 40",
+  "Improve Fertility (organically Conceiving) by Improving Lifestyle":
+    "Lifestyle, Metabolic Health & Natural Conception Optimization",
+  "Nutrition": "Reproductive Nutrition, Dietary Patterns & Ovulatory Function",
+  "Supplements": "Micronutrient, Antioxidant & Mitochondrial Fertility Supplementation",
+  "Rejuvenating Both Sperm as Well as Ovarian":
+    "Male & Ovarian Gamete Rejuvenation, Spermatogenesis & Follicular Activation",
+  "BB/AA, 1PN/2PN -What Grading Methods Are The":
+    "Blastocyst Morphological Grading (Gardner AA/BB) & Zygote Pronuclear Scoring (2PN/1PN)",
 };
 
 export function normaliseTopicTitle(title: string): string {

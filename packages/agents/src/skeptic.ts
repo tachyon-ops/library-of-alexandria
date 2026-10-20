@@ -30,11 +30,28 @@ export const LeverSchema = z.object({
   sourceUrl: z.string().optional().describe("URL to paper or trial if available"),
 });
 
+export const ArticleSectionSchema = z.object({
+  kicker: z.string().optional().describe("Short editorial section kicker (e.g. 'Section I · Primary Literature')"),
+  heading: z.string().describe("Section heading"),
+  paragraphs: z.array(z.string()).describe("1 to 3 substantive narrative paragraphs with numbers, study designs, and citations"),
+  callout: z.string().optional().describe("Optional key quantitative highlight or clinical reading callout"),
+});
+
+export const TopicArticleSchema = z.object({
+  title: z.string().describe("Editorial monograph title for the branch"),
+  subtitle: z.string().describe("Sub-headline framing the scientific scope and empirical certainty"),
+  synopsis: z.string().describe("Executive synopsis paragraph summarizing what is settled vs contested"),
+  sections: z.array(ArticleSectionSchema).default([]).describe("2 to 4 editorial blog-style sections walking through the primary research, mechanisms, and debates"),
+  conclusions: z.string().describe("Calibrated conclusions paragraph synthesising actionable findings and next sweeps"),
+  keyTakeaways: z.array(z.string()).default([]).describe("3 to 5 bullet takeaways with numbers and study grades"),
+});
+
 export const SynthesisSchema = z.object({
   benchmarks: z.array(BenchmarkSchema).default([]).describe("2 to 4 baseline probability benchmarks or hard numbers establishing the prior odds"),
   levers: z.array(LeverSchema).default([]).describe("Key interventions/levers evaluated as a decision ledger, stratified across subgroups"),
   clinicalQuestions: z.array(z.string()).default([]).describe("3 to 5 sharp questions to ask a specialist or clinic consultation"),
   sweepQueue: z.array(z.string()).default([]).describe("3 to 5 open frontiers or trials in progress queued for the next research sweep"),
+  article: TopicArticleSchema.optional().describe("Blog-style State of the Field research article with synopsis, narrative sections, conclusions, and key takeaways"),
 });
 
 export const ReviewSchema = z.object({
@@ -74,16 +91,17 @@ export async function reviewTopic(
     schema: ReviewSchema,
     maxTokens: 6000,
     system: `${LIBRARIAN}
-You are the skeptic. Your job is calibration.
+You are the skeptic and field chronicler. Your job is calibration and editorial synthesis.
 - Merge claims that state the same finding.
 - Flag contradictions between claims, single-study claims treated as established, and treatments marketed ahead of evidence.
 - Keep frontier ideas visible; label them, do not delete them.
 - The summary leads with what is best supported (T1 > T6) and states plainly where evidence is thin.
-- Synthesize an evaluated decision ledger (benchmarks, levers, clinical questions, sweep queue):
+- Synthesize an evaluated decision ledger (benchmarks, levers, clinical questions, sweep queue, and article):
   * Benchmarks: 2 to 4 baseline probability anchors or hard demographic/clinical rates that ground the topic.
   * Levers: Concrete interventions evaluated across operational/decision stages. Group findings across canonical clinical subgroups (e.g., age bands, ovulatory status, prior failure history) for humanity, not an isolated single person. Name landmark trials, measured effect sizes (with %, RR, or OR), clinical reading, and assign an honest verdict (Supported, Targeted, Guideline, Weak, Not supported, Trial only, Lab only, Case by case).
   * Clinical questions: 3 to 5 sharp, high-yield questions for specialist consultations.
-  * Sweep queue: 3 to 5 open frontiers or ongoing trials to track next.`,
+  * Sweep queue: 3 to 5 open frontiers or ongoing trials to track next.
+  * Article: Compose a structured blog-style State of the Field research article (title, subtitle, synopsis, 2–4 narrative sections covering primary research, mechanisms/levers, and contested frontiers, plus calibrated conclusions and key takeaways).`,
     prompt: `${topicContext(input.topic, input.path)}
 Claims (index, tier, label, source count, years):
 ${list || "(none yet)"}

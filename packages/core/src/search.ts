@@ -769,6 +769,70 @@ const CANONICAL_TOPIC_FACETS: CanonicalFacetSpec[] = [
     matches: (q) => /\b(paternal\s+age|male\s+age|older\s+father)\b/.test(q),
   },
   {
+    slug: "lifestyle-metabolic-and-environmental-fertility-optimization",
+    title: "Lifestyle, Metabolic Health & Natural Conception Optimization",
+    brief:
+      "Impact of insulin sensitivity, circadian sleep architecture, physical activity, thermal and endocrine-disrupting chemical exposure, and body composition on natural fecundity, ovulatory regularity, and time-to-pregnancy.",
+    parentSlugs: [
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      (terms.has("lifestyle") || /\b(organically\s+conceiv|natural\s+conception|conceiv[a-z]+\s+naturally)\b/.test(q)) &&
+      (terms.has("fertility") || terms.has("conceiving") || terms.has("conceive") || terms.has("conception") || terms.has("sperm") || terms.has("ovarian")),
+  },
+  {
+    slug: "reproductive-nutrition-dietary-patterns-and-fertility",
+    title: "Reproductive Nutrition, Dietary Patterns & Ovulatory Function",
+    brief:
+      "Mediterranean and pro-fertility dietary cohorts (EARTH and Nurses' Health Study II), omega-3 polyunsaturated fatty acids, glycemic load, folate-methylation pathways, and clinical fecundability outcomes.",
+    parentSlugs: [
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      (terms.has("nutrition") || terms.has("diet") || terms.has("dietary")) &&
+      (terms.has("fertility") || terms.has("conceiving") || terms.has("conception") || terms.has("sperm") || terms.has("ovarian") || terms.has("oocyte") || terms.has("embryo")),
+  },
+  {
+    slug: "micronutrient-antioxidant-and-mitochondrial-fertility-supplementation",
+    title: "Micronutrient, Antioxidant & Mitochondrial Fertility Supplementation",
+    brief:
+      "Randomised trials and meta-analyses of Coenzyme Q10 (ubiquinol), myo-inositol, DHEA, L-carnitine, N-acetylcysteine, melatonin, methylfolate, vitamin D, and zinc/selenium on oocyte maturity, sperm chromatin integrity, and live birth.",
+    parentSlugs: [
+      "translational-geroprotective-reproductive-biology",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      (terms.has("supplement") || terms.has("supplements") || terms.has("supplementation") || terms.has("micronutrient") || terms.has("antioxidant")) &&
+      (terms.has("fertility") || terms.has("conceiving") || terms.has("conception") || terms.has("sperm") || terms.has("ovarian") || terms.has("oocyte") || terms.has("embryo")),
+  },
+  {
+    slug: "ovarian-rejuvenation-follicular-activation-and-geroprotective-therapy",
+    title: "Ovarian Rejuvenation, Follicular Activation & Geroprotective Therapy",
+    brief:
+      "Intraovarian platelet-rich plasma (PRP), Hippo/PI3K pathway primordial follicle activation, mTOR modulation (rapamycin), NAD+/sirtuin mitochondrial restoration, and stem-cell secretome trials in diminished ovarian reserve.",
+    parentSlugs: [
+      "translational-geroprotective-reproductive-biology",
+      "ovarian-reserve-oocyte-cryopreservation",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(rejuvenat[a-z]*)\b/.test(q) &&
+      (terms.has("ovarian") || terms.has("ovary") || terms.has("ovaries") || terms.has("oocyte") || terms.has("oocytes") || terms.has("egg") || terms.has("eggs")),
+  },
+  {
+    slug: "spermatogenesis-oxidative-stress-and-male-gamete-rejuvenation",
+    title: "Spermatogenesis, Oxidative Stress & Male Gamete Rejuvenation",
+    brief:
+      "Testicular mitochondrial bioenergetics, reactive oxygen species (ROS) mitigation, hormonal axis restoration, varicocele/scrotal thermoregulation, and antioxidant/lifestyle interventions on sperm motility, morphology, and DNA fragmentation.",
+    parentSlugs: [
+      "andrology-male-factor-infertility",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(rejuvenat[a-z]*)\b/.test(q) &&
+      (terms.has("sperm") || terms.has("spermatogenesis") || terms.has("semen") || terms.has("male") || terms.has("testicular")),
+  },
+  {
     slug: "mond-modified-newtonian-dynamics-and-galactic-rotation",
     title: "Modified Newtonian Dynamics (MOND), Relativistic Extensions & Galactic Dynamics",
     brief:

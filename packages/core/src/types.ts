@@ -59,11 +59,28 @@ export interface SynthesisLever {
   sourceUrl?: string;
 }
 
+export interface TopicArticleSection {
+  kicker?: string;
+  heading: string;
+  paragraphs: string[];
+  callout?: string;
+}
+
+export interface TopicArticle {
+  title: string;
+  subtitle: string;
+  synopsis: string;
+  sections: TopicArticleSection[];
+  conclusions: string;
+  keyTakeaways: string[];
+}
+
 export interface TopicSynthesis {
   benchmarks?: SynthesisBenchmark[];
   levers?: SynthesisLever[];
   clinicalQuestions?: string[];
   sweepQueue?: string[];
+  article?: TopicArticle;
 }
 
 export interface Topic {

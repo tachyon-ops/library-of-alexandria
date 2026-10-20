@@ -1,3 +1,4 @@
+export * from "./article";
 export * from "./evidence";
 export * from "./glossary";
 export * from "./search";

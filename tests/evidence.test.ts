@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildDynamicFieldArticle,
   extractSearchTerms,
   inferBranchProposal,
   inferBranchProposals,
@@ -337,6 +338,198 @@ describe("helpers", () => {
     );
     expect(protectedCheck.shouldMove).toBe(false);
     expect(protectedCheck.recommendedParentId).toBe("t-root");
+
+    // Multi-branch decomposition for natural conception, lifestyle, nutrition, supplements & gamete rejuvenation
+    const lifestyleNodes = [
+      ...treeNodes,
+      {
+        id: "t-male",
+        parentId: "t-root",
+        slug: "male-reproductive-biology-andrology",
+        title: "Male Reproductive Biology & Andrology",
+        brief: "Spermatogenesis, sperm DNA fragmentation",
+        depth: 1,
+      },
+      {
+        id: "t-maternal",
+        parentId: "t-root",
+        slug: "maternal-fetal-medicine-obstetrics",
+        title: "Maternal-Fetal Medicine & Perinatal Outcomes",
+        brief: "Preconception optimization, obstetric health",
+        depth: 1,
+      },
+    ];
+    const lifestyleProposals = inferBranchProposals(
+      "improve fertility (organically conceiving) by improving lifestyle, nutrition, supplements, and rejuvenating both sperm as well as ovarian",
+      lifestyleNodes,
+    );
+    expect(lifestyleProposals.length).toBeGreaterThanOrEqual(3);
+    expect(lifestyleProposals.some((p) => p.title.includes("Lifestyle") || p.title.includes("Nutrition") || p.title.includes("Micronutrient") || p.title.includes("Rejuvenation"))).toBe(true);
+  });
+
+  it("composes dynamic blog-style field research articles in both live-dispatch and reviewed monograph modes", () => {
+    // 1. Live-dispatch mode (topic still queued/researching with harvested sources and 0 claims)
+    const liveMonograph = buildDynamicFieldArticle({
+      title: "Lifestyle, Metabolic & Circadian Optimization for Natural Conception",
+      brief: "Preconception lifestyle, sleep, and metabolic insulin sensitivity for natural fecundability.",
+      status: "queued",
+      summary: null,
+      gaps: ["Lack of large RCTs isolating circadian melatonin shifts from caloric restriction."],
+      synthesis: null,
+      ancestors: [{ title: "Reproductive Medicine & Human Fertility", slug: "reproductive-medicine-human-fertility" }],
+      children: [],
+      claims: [],
+      sources: [
+        {
+          id: "src-1",
+          title: "Preconception Mediterranean diet adherence and fecundability in prospective cohorts",
+          url: "https://doi.org/10.1093/humrep/dead001",
+          doi: "10.1093/humrep/dead001",
+          year: 2023,
+          authors: ["Karayiannis D", "Kontogianni MD"],
+          venue: "Human Reproduction",
+          citedBy: 142,
+          design: "cohort",
+        },
+        {
+          id: "src-2",
+          title: "Coenzyme Q10 supplementation and oocyte mitochondrial bioenergetics: systematic review and meta-analysis",
+          url: "https://doi.org/10.1016/j.fertnstert.2022.01.002",
+          doi: "10.1016/j.fertnstert.2022.01.002",
+          year: 2022,
+          authors: ["Florou P", "Anagnostis P"],
+          venue: "Fertility and Sterility",
+          citedBy: 210,
+          design: "meta_analysis",
+        },
+      ],
+      milestones: [],
+      debates: [],
+      entities: [],
+    });
+
+    expect(liveMonograph.isLiveDispatch).toBe(true);
+    expect(liveMonograph.title).toContain("Lifestyle");
+    expect(liveMonograph.synopsis.length).toBeGreaterThan(60);
+    expect(liveMonograph.sections.length).toBeGreaterThanOrEqual(3);
+    expect(liveMonograph.conclusions.length).toBeGreaterThan(40);
+    expect(liveMonograph.keyTakeaways.length).toBeGreaterThanOrEqual(3);
+    expect(liveMonograph.featuredStudies).toHaveLength(2);
+    expect(liveMonograph.charts.tierDistribution.find((t) => t.tier === "T1")?.count).toBe(1);
+    expect(liveMonograph.charts.yearHistogram.some((y) => y.count > 0)).toBe(true);
+
+    // 2. Full reviewed monograph mode with claims, levers, benchmarks, debates, and milestones
+    const fullMonograph = buildDynamicFieldArticle({
+      title: "Ovarian Rejuvenation: Intraovarian PRP, Mitochondrial Bioenergetics & Follicular Reactivation",
+      brief: "Autologous intraovarian PRP, mTOR modulation, and mitochondrial rescue.",
+      status: "ready",
+      summary: "Controlled trials show intraovarian PRP does not significantly increase live birth over sham in unselected POR, whereas CoQ10 improves oocyte yield.",
+      gaps: ["Multi-centre sham-controlled RCT stratified by baseline AMH < 0.5 ng/mL."],
+      synthesis: {
+        benchmarks: [
+          {
+            metric: "8–12%",
+            label: "Spontaneous follicular reactivation rate per cycle in severe DOR",
+            source: "Cakiroglu et al. 2020",
+          },
+        ],
+        levers: [
+          {
+            name: "Coenzyme Q10 (600 mg/d)",
+            category: "Mitochondrial Bioenergetics",
+            description: "60-day oral ubiquinol/CoQ10 pretreatment prior to follicular recruitment",
+            bestEvidence: "Xu et al. 2018 RCT & Florou 2020 Meta-analysis",
+            effect: "+1.8 retrieved oocytes; higher high-grade embryo rate",
+            reading: "Low-risk adjunct prior to stimulation",
+            verdict: "Targeted",
+          },
+          {
+            name: "Autologous Intraovarian PRP Injection",
+            category: "Interventional Biologics",
+            description: "Cortical injection of autologous platelet-rich plasma",
+            bestEvidence: "Herlihy et al. 2024 Sham-Controlled RCT",
+            effect: "No significant difference in euploid blastocysts or live birth vs control",
+            reading: "Mechanical needle puncture effect cannot be excluded",
+            verdict: "Not supported",
+          },
+        ],
+      },
+      ancestors: [{ title: "Reproductive Medicine & Human Fertility", slug: "reproductive-medicine-human-fertility" }],
+      children: [],
+      claims: [
+        {
+          id: "cl-1",
+          statement: "CoQ10 pretreatment for 60 days improves ovarian response and embryo quality in diminished ovarian reserve.",
+          tier: "T1",
+          controversy: "settled",
+          direction: "supports",
+          rationale: "OR 2.22 (95% CI 1.38–3.58) for clinical pregnancy via mitochondrial complex I–III electron transport chain & ROS attenuation.",
+          sources: [
+            {
+              id: "src-2",
+              title: "CoQ10 meta-analysis",
+              url: "https://doi.org/10.1016/j.fertnstert.2022.01.002",
+              year: 2022,
+              design: "meta_analysis",
+              venue: "Fertility and Sterility",
+            },
+          ],
+        },
+        {
+          id: "cl-2",
+          statement: "Intraovarian PRP does not improve euploid blastocyst yield in a prospective randomized controlled trial.",
+          tier: "T2",
+          controversy: "contested",
+          direction: "refutes",
+          rationale: "0.8 vs 0.9 euploid blastocysts (p = 0.64); mechanical cortical disruption cannot be excluded.",
+          sources: [
+            {
+              id: "src-3",
+              title: "Randomized controlled trial of intraovarian platelet-rich plasma before IVF",
+              url: "https://doi.org/10.1093/humrep/deae010",
+              year: 2024,
+              design: "rct",
+              venue: "Human Reproduction",
+            },
+          ],
+        },
+      ],
+      sources: [
+        {
+          id: "src-3",
+          title: "Randomized controlled trial of intraovarian platelet-rich plasma before IVF",
+          url: "https://doi.org/10.1093/humrep/deae010",
+          doi: "10.1093/humrep/deae010",
+          year: 2024,
+          authors: ["Herlihy NS", "Seli E"],
+          venue: "Human Reproduction",
+          citedBy: 85,
+          design: "rct",
+        },
+      ],
+      milestones: [
+        {
+          year: 2018,
+          title: "Xu et al. CoQ10 pretreatment RCT in poor ovarian responders",
+          description: "Demonstrated improved oocyte retrieval and embryo quality after 60-day CoQ10 priming.",
+          sourceUrl: "https://doi.org/10.1186/s12958-018-0343-0",
+        },
+      ],
+      debates: [
+        {
+          kind: "mechanistic_uncertainty",
+          note: "Does intraovarian PRP act via platelet growth factors or cortical needle trauma?",
+        },
+      ],
+      entities: [],
+    });
+
+    expect(fullMonograph.isLiveDispatch).toBe(false);
+    expect(fullMonograph.sections.length).toBeGreaterThanOrEqual(4);
+    expect(fullMonograph.charts.verdictProfile).toHaveLength(2);
+    expect(fullMonograph.charts.settledCount).toBe(1);
+    expect(fullMonograph.charts.frontierCount).toBe(1);
+    expect(fullMonograph.keyTakeaways.length).toBeGreaterThanOrEqual(3);
   });
 });
 
