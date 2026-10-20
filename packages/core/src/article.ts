@@ -366,24 +366,30 @@ export function buildDynamicFieldArticle(input: {
       ? ancestors.map((a) => a.title).slice(-2).join(" → ")
       : "The Tree of Knowledge";
 
+  const useBespokeAiArticle =
+    aiArticle !== undefined && !isMechanicalFallbackArticle(aiArticle);
+
   const articleTitle =
-    aiArticle?.title ??
-    `State of the Field: ${title}`;
+    useBespokeAiArticle && aiArticle?.title
+      ? aiArticle.title
+      : `State of the Field: ${title}`;
 
   const articleSubtitle =
-    aiArticle?.subtitle ??
-    (brief
-      ? `${brief.endsWith(".") ? brief : `${brief}.`} Grounded synthesis across ${sources.length} primary sources and ${claims.length} graded findings within ${lineageLabel}.`
-      : `An evidence-graded scientific monograph synthesising ${sources.length} indexed publications, clinical trials, and empirical benchmarks within ${lineageLabel}.`);
+    useBespokeAiArticle && aiArticle?.subtitle
+      ? aiArticle.subtitle
+      : brief
+        ? `${brief.endsWith(".") ? brief : `${brief}.`} Grounded synthesis across ${sources.length} primary sources and ${claims.length} graded findings within ${lineageLabel}.`
+        : `An evidence-graded scientific monograph synthesising ${sources.length} indexed publications, clinical trials, and empirical benchmarks within ${lineageLabel}.`;
 
   const synopsisText =
-    aiArticle?.synopsis ??
-    (summary && summary.length > 60
-      ? summary
-      : composeFallbackSynopsis(title, brief, lineageLabel, claims, sources, benchmarks, children));
+    useBespokeAiArticle && aiArticle?.synopsis
+      ? aiArticle.synopsis
+      : summary && summary.length > 60
+        ? summary
+        : composeFallbackSynopsis(title, brief, lineageLabel, claims, sources, benchmarks, children);
 
   const sections: TopicArticleSection[] =
-    aiArticle && Array.isArray(aiArticle.sections) && aiArticle.sections.length >= 2
+    useBespokeAiArticle && aiArticle && Array.isArray(aiArticle.sections) && aiArticle.sections.length >= 2
       ? aiArticle.sections
       : composeFallbackSections({
           title,
@@ -404,20 +410,21 @@ export function buildDynamicFieldArticle(input: {
         });
 
   const conclusionsText =
-    aiArticle?.conclusions ??
-    composeFallbackConclusions({
-      title,
-      claims,
-      sources,
-      levers,
-      gaps,
-      sweepQueue,
-      bestTier,
-      isLiveDispatch,
-    });
+    useBespokeAiArticle && aiArticle?.conclusions
+      ? aiArticle.conclusions
+      : composeFallbackConclusions({
+          title,
+          claims,
+          sources,
+          levers,
+          gaps,
+          sweepQueue,
+          bestTier,
+          isLiveDispatch,
+        });
 
   const keyTakeaways: string[] =
-    aiArticle && Array.isArray(aiArticle.keyTakeaways) && aiArticle.keyTakeaways.length > 0
+    useBespokeAiArticle && aiArticle && Array.isArray(aiArticle.keyTakeaways) && aiArticle.keyTakeaways.length > 0
       ? aiArticle.keyTakeaways
       : composeKeyTakeaways({
           title,
@@ -433,7 +440,10 @@ export function buildDynamicFieldArticle(input: {
     synopsisText.split(/\s+/).length +
     conclusionsText.split(/\s+/).length +
     sections.reduce(
-      (acc, sec) => acc + sec.paragraphs.reduce((pAcc, p) => pAcc + p.split(/\s+/).length, 0),
+      (acc, sec) =>
+        acc +
+        sec.paragraphs.reduce((pAcc, p) => pAcc + p.split(/\s+/).length, 0) +
+        (sec.bullets ?? []).reduce((bAcc, b) => bAcc + b.split(/\s+/).length, 0),
       0,
     );
   const readingMinutes = Math.max(3, Math.round(wordCount / 180));
@@ -693,13 +703,11 @@ function composeFallbackSections(args: {
   }
 
   // Section 4 (or Section 3 if no milestones/debates yet): Open Questions, Methodological Gaps & Next Research Sweep
-  const openFrontiers = [...gaps, ...sweepQueue].filter(Boolean);
+  const openFrontiers = Array.from(new Set([...gaps, ...sweepQueue].map((g) => g.trim()).filter(Boolean)));
   const sec4Paragraphs: string[] = [];
   if (openFrontiers.length > 0) {
     sec4Paragraphs.push(
-      `Critical evidentiary gaps and methodological priorities identified across ${title} include: ${openFrontiers
-        .slice(0, 3)
-        .join(" ")}`,
+      `Methodological priorities and open empirical questions queued for the next research sweep across ${title} focus on resolving subgroup effect sizes, causal mechanisms, and long-term outcomes:`,
     );
   } else {
     sec4Paragraphs.push(
@@ -710,9 +718,22 @@ function composeFallbackSections(args: {
     kicker: `Section ${sections.length === 3 ? "IV" : "III"} · Evidentiary Gaps & Research Frontiers`,
     heading: "Open Questions & Priorities for the Next Research Sweep",
     paragraphs: sec4Paragraphs,
+    bullets: openFrontiers.length > 0 ? openFrontiers.slice(0, 6) : undefined,
   });
 
   return sections;
+}
+
+function isMechanicalFallbackArticle(article: TopicArticle | undefined): boolean {
+  if (!article || !Array.isArray(article.sections) || article.sections.length < 2) return true;
+  return article.sections.some((sec) =>
+    (sec.paragraphs ?? []).some(
+      (p) =>
+        p.startsWith("Critical evidentiary gaps and methodological priorities identified across ") ||
+        p.startsWith("Methodological priorities and open empirical questions queued for the next research sweep across ") ||
+        p.startsWith("The primary research record in "),
+    ),
+  );
 }
 
 function composeFallbackConclusions(args: {
@@ -742,10 +763,10 @@ function composeFallbackConclusions(args: {
           .join(", ")}.`
       : "";
 
-  const openQuestions = [...gaps, ...sweepQueue].slice(0, 2);
+  const openCount = new Set([...gaps, ...sweepQueue].filter(Boolean)).size;
   const gapConclusion =
-    openQuestions.length > 0
-      ? ` Key open questions for the next research sweep include: ${openQuestions.join(" ")}`
+    openCount > 0
+      ? ` The ${openCount} open research ${openCount === 1 ? "priority" : "priorities"} detailed above guide the next autonomous literature and clinical trial sweep.`
       : ` Subsequent research sweeps will continue tracking newly registered clinical trials and preprints to update this monograph.`;
 
   return `${statusOpening}${leverConclusion}${gapConclusion}`;

@@ -91,6 +91,18 @@ const SLUG_PAIRS: [string, string][] = [
     "human-fertility-frontier-fertility-treatments-rapamycin-mtor-inhibition-for-ovar",
     "mtor-pathway-modulation-follicular-longevity",
   ],
+  [
+    "improve-fertility-organically-conceiving-by-improving-lifestyle",
+    "lifestyle-metabolic-and-environmental-fertility-optimization",
+  ],
+  [
+    "human-fertility-improve-fertility-organically-conceiving-by-improving-lifestyle",
+    "lifestyle-metabolic-and-environmental-fertility-optimization",
+  ],
+  [
+    "reproductive-medicine-human-fertility-improve-fertility-organically-conceiving-b",
+    "lifestyle-metabolic-and-environmental-fertility-optimization",
+  ],
 ];
 
 const SLUG_ALIASES = new Map<string, string>([

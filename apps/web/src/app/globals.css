@@ -2745,6 +2745,59 @@ a.node-map-pill:hover {
   margin: 0;
 }
 
+.field-article-toc {
+  padding: 0.75rem 1.05rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.9rem;
+  font-family: var(--sans);
+  font-size: 0.84rem;
+}
+
+.field-article-toc-label {
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.field-article-toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  counter-reset: toc-sec;
+}
+
+.field-article-toc-list li {
+  counter-increment: toc-sec;
+}
+
+.field-article-toc-list li::before {
+  content: counter(toc-sec, upper-roman) ". ";
+  font-weight: 700;
+  color: var(--t1);
+  font-size: 0.78rem;
+}
+
+.field-article-bullets {
+  margin: 0.15rem 0 0;
+  padding-left: 1.35rem;
+  display: grid;
+  gap: 0.45rem;
+  font-family: var(--serif);
+  font-size: 0.98rem;
+  line-height: 1.62;
+  color: var(--ink);
+}
+
 .field-article-callout {
   margin-top: 0.2rem;
   padding: 0.65rem 0.9rem;

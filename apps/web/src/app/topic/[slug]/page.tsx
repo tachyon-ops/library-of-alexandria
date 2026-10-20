@@ -126,6 +126,29 @@ export default async function TopicPage({
       await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
     }
   }
+  if (
+    !topic &&
+    (slug === "lifestyle-metabolic-and-environmental-fertility-optimization" ||
+      slug.includes("improve-fertility-organically-conceiving") ||
+      slug.includes("lifestyle-metabolic-health-natural-conception"))
+  ) {
+    const canonicalSlug = "lifestyle-metabolic-and-environmental-fertility-optimization";
+    const parent = await getTopicBySlug(db, "reproductive-medicine-human-fertility");
+    const dossier = ALL_SEED_DOSSIERS[canonicalSlug];
+    if (dossier) {
+      topic = await ensureSeedTopic(db, {
+        slug: canonicalSlug,
+        title: "Lifestyle, Metabolic Health & Natural Conception Optimization",
+        brief:
+          "Non-assisted reproductive optimization at 40–50: circadian sleep and follicular melatonin signaling, pro-fertility nutrition and targeted micronutrient protocols, oocyte mitochondrial ATP bioenergetics (CoQ10, NAD+, spermidine mitophagy), and organic facilitators (24–36h sperm DNA fragmentation reduction, early-shifted fertile window timing, cervical mucus protection, and endocrine/toxin clearance).",
+        parentId: parent?.id ?? null,
+        depth: parent ? parent.depth + 1 : 3,
+        summary: dossier.summary,
+        dossier,
+      });
+      await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
+    }
+  }
   if (!topic) notFound();
 
   const [roots, ancestors, children, connectedTopics, rawClaims, rawDbSources, entities, rawMilestones, rawDebates, open, jobs] = await Promise.all([
@@ -144,9 +167,17 @@ export default async function TopicPage({
 
   const isLegacyFetIntervalTopic =
     topic.slug === "advanced-maternal-age-pregnancy-after-40-frontier-studies-on-40-fertility-and-ne-41";
+  const isLifestyleConceptionTopic =
+    topic.slug === "lifestyle-metabolic-and-environmental-fertility-optimization" ||
+    topic.slug.includes("improve-fertility-organically-conceiving") ||
+    topic.slug.includes("lifestyle-metabolic-health-natural-conception") ||
+    topic.title === "Improve Fertility (organically Conceiving) by Improving Lifestyle" ||
+    topic.title === "Lifestyle, Metabolic Health & Natural Conception Optimization";
   const curatedDossier: SeedDossier | undefined = isLegacyFetIntervalTopic
     ? ALL_SEED_DOSSIERS["inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer"]
-    : ALL_SEED_DOSSIERS[topic.slug];
+    : isLifestyleConceptionTopic
+      ? ALL_SEED_DOSSIERS["lifestyle-metabolic-and-environmental-fertility-optimization"]
+      : ALL_SEED_DOSSIERS[topic.slug];
 
   const { claims, dbSources, milestones, debates } = mergeCuratedDossierRecords(
     curatedDossier,
@@ -188,22 +219,23 @@ export default async function TopicPage({
   const displayTitle = normaliseTopicTitle(topic.title);
   const briefText = isLegacyFetIntervalTopic
     ? "After an unsuccessful embryo transfer, with one remaining vitrified blastocyst: evidence comparing immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus waiting 1–3 months, cryostorage stability at −196°C, and specific uterine, endocrine, or psychological factors that justify a purposeful interval."
-    : (topic.brief ? normaliseAgePhrasing(topic.brief) : null) ??
-      (ancestors.length > 0
-        ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
-        : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
+    : isLifestyleConceptionTopic
+      ? "Non-assisted reproductive optimization at 40–50: circadian sleep and follicular melatonin signaling, pro-fertility nutrition and targeted micronutrient protocols, oocyte mitochondrial ATP bioenergetics (CoQ10, NAD+, spermidine mitophagy), and organic facilitators (24–36h sperm DNA fragmentation reduction, early-shifted fertile window timing, cervical mucus protection, and endocrine/toxin clearance)."
+      : (topic.brief ? normaliseAgePhrasing(topic.brief) : null) ??
+        (ancestors.length > 0
+          ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
+          : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
 
   const rawEffectiveSummary =
-    isLegacyFetIntervalTopic && curatedDossier
+    (isLegacyFetIntervalTopic || isLifestyleConceptionTopic) && curatedDossier
       ? curatedDossier.summary
       : (topic.summary ?? curatedDossier?.summary ?? null);
-  const effectiveSummary = rawEffectiveSummary ? normaliseAgePhrasing(rawEffectiveSummary) : null;
-
-  const descriptionText =
-    effectiveSummary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, (claims ?? []).length);
+  const effectiveSummary =
+    (rawEffectiveSummary ? normaliseAgePhrasing(rawEffectiveSummary) : null) ??
+    describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, (claims ?? []).length);
 
   let rawSynthesis: TopicSynthesis | null = null;
-  if (isLegacyFetIntervalTopic && curatedDossier?.synthesis) {
+  if ((isLegacyFetIntervalTopic || isLifestyleConceptionTopic) && curatedDossier?.synthesis) {
     rawSynthesis = curatedDossier.synthesis;
   } else if (typeof topic.synthesis === "string") {
     try {
@@ -219,12 +251,14 @@ export default async function TopicPage({
     (!rawSynthesis || (!rawSynthesis.benchmarks?.length && !rawSynthesis.levers?.length))
   ) {
     rawSynthesis = curatedDossier.synthesis;
+  } else if (curatedDossier?.synthesis?.article && rawSynthesis) {
+    rawSynthesis = { ...rawSynthesis, article: curatedDossier.synthesis.article };
   }
   const synthesis = normaliseTopicSynthesis(rawSynthesis);
 
   const effectiveGaps = Array.from(
     new Set(
-      isLegacyFetIntervalTopic
+      isLegacyFetIntervalTopic || isLifestyleConceptionTopic
         ? (curatedDossier?.gaps ?? [])
         : [...(curatedDossier?.gaps ?? []), ...(topic.gaps ?? [])],
     ),
@@ -251,6 +285,7 @@ export default async function TopicPage({
   }));
 
   const isClinicalTopic =
+    isLifestyleConceptionTopic ||
     topic.slug.includes("medicine") ||
     topic.slug.includes("fertility") ||
     topic.slug.includes("ovarian") ||
@@ -271,8 +306,7 @@ export default async function TopicPage({
     validMilestones.length > 0 ||
     claims.length > 0 ||
     validDebates.length > 0 ||
-    safeEntities.length > 0 ||
-    (effectiveGaps.length > 0 && sweepQueue.length === 0);
+    safeEntities.length > 0;
 
   const spawnedSlugs = (resolvedSearchParams?.spawned ?? "")
     .split(",")
@@ -448,7 +482,6 @@ export default async function TopicPage({
         )}
 
         <section className="summary">
-          <p>{descriptionText}</p>
           <NodeTopologyMap
             displayTitle={displayTitle}
             ancestors={ancestors}
@@ -718,17 +751,6 @@ export default async function TopicPage({
               <EntityTable key={kind} title={ENTITY_HEADINGS[kind] ?? kind} rows={rows} />
             ))}
           </details>
-        )}
-
-        {effectiveGaps.length > 0 && sweepQueue.length === 0 && (
-          <section>
-            <h2>Open questions</h2>
-            <ul className="gaps">
-              {effectiveGaps.map((g) => (
-                <li key={g}>{g}</li>
-              ))}
-            </ul>
-          </section>
         )}
 
         {hasIntermediateSections && (

@@ -52,7 +52,52 @@ export function FieldResearchArticle({
       {/* Executive Synopsis */}
       <div className="field-article-synopsis" role="region" aria-label="Article synopsis">
         <span className="field-article-kicker">Synopsis · Executive Overview</span>
-        <p>{monograph.synopsis}</p>
+        <p className="field-article-lead">{monograph.synopsis}</p>
+      </div>
+
+      {/* Blog / Field Guide Section Jump Bar */}
+      {monograph.sections.length > 1 && (
+        <nav className="field-article-toc" aria-label="In this field guide">
+          <span className="field-article-toc-label">In this field guide:</span>
+          <ol className="field-article-toc-list">
+            {monograph.sections.map((section, idx) => (
+              <li key={idx}>
+                <a href={`#article-section-${idx + 1}`}>{section.heading}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
+
+      {/* Editorial Narrative Sections */}
+      <div className="field-article-body">
+        {monograph.sections.map((section, idx) => (
+          <section
+            key={idx}
+            id={`article-section-${idx + 1}`}
+            className="field-article-section"
+          >
+            {section.kicker && (
+              <span className="field-article-kicker">{section.kicker}</span>
+            )}
+            <h3>{section.heading}</h3>
+            <div className="field-article-prose">
+              {section.paragraphs.map((p, pIdx) => (
+                <p key={pIdx}>{p}</p>
+              ))}
+              {section.bullets && section.bullets.length > 0 && (
+                <ul className="field-article-bullets">
+                  {section.bullets.map((b, bIdx) => (
+                    <li key={bIdx}>{b}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {section.callout && (
+              <aside className="field-article-callout">{section.callout}</aside>
+            )}
+          </section>
+        ))}
       </div>
 
       {/* Figure 1: Evidence Architecture, Study Designs & Publication Velocity */}
@@ -179,24 +224,6 @@ export function FieldResearchArticle({
           </figcaption>
         </figure>
       )}
-
-      {/* Editorial Narrative Sections */}
-      <div className="field-article-body">
-        {monograph.sections.map((section, idx) => (
-          <section key={idx} className="field-article-section">
-            {section.kicker && (
-              <span className="field-article-kicker">{section.kicker}</span>
-            )}
-            <h3>{section.heading}</h3>
-            {section.paragraphs.map((p, pIdx) => (
-              <p key={pIdx}>{p}</p>
-            ))}
-            {section.callout && (
-              <aside className="field-article-callout">{section.callout}</aside>
-            )}
-          </section>
-        ))}
-      </div>
 
       {/* Figure 2: Quantitative Verdict Profile & Effect-Size Matrix when levers exist */}
       {charts.verdictProfile.length > 0 && (

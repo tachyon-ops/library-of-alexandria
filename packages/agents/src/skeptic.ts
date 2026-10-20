@@ -34,6 +34,7 @@ export const ArticleSectionSchema = z.object({
   kicker: z.string().optional().describe("Short editorial section kicker (e.g. 'Section I · Primary Literature')"),
   heading: z.string().describe("Section heading"),
   paragraphs: z.array(z.string()).describe("1 to 3 substantive narrative paragraphs with numbers, study designs, and citations"),
+  bullets: z.array(z.string()).optional().describe("Optional structured bullet points for actionable protocols, mechanisms, or open research questions"),
   callout: z.string().optional().describe("Optional key quantitative highlight or clinical reading callout"),
 });
 

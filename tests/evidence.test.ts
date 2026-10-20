@@ -636,7 +636,7 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(PHYSICS_FRONTIER_GRAVITY_DOSSIERS)).toHaveLength(4);
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(44);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(45);
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
       expect(treeSlugs.has(slug), `dossier slug ${slug} must exist in ENCYCLOPAEDIC_TRUNKS`).toBe(true);
@@ -702,6 +702,18 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(fetInterval.summary).toContain("58,001");
     expect(fetInterval.summary.toLowerCase()).not.toContain("duostim");
     expect(fetInterval.summary).not.toMatch(/\b40[–-]44/);
+
+    // Verify Lifestyle, Metabolic Health & Natural Conception Optimization blog-style field guide dossier
+    const lifestyle = ALL_SEED_DOSSIERS["lifestyle-metabolic-and-environmental-fertility-optimization"]!;
+    expect(lifestyle.sources).toHaveLength(10);
+    expect(lifestyle.claims).toHaveLength(8);
+    expect(lifestyle.synthesis.levers).toHaveLength(12);
+    expect(lifestyle.synthesis.article).toBeDefined();
+    expect(lifestyle.synthesis.article!.sections).toHaveLength(5);
+    expect(lifestyle.synthesis.article!.sections[0]!.bullets?.length).toBeGreaterThanOrEqual(3);
+    expect(lifestyle.synthesis.article!.sections[1]!.bullets?.length).toBeGreaterThanOrEqual(4);
+    expect(lifestyle.summary).toContain("melatonin");
+    expect(lifestyle.summary).toContain("spermidine");
   });
 });
 
