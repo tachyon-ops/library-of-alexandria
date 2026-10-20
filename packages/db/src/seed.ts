@@ -265,6 +265,14 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 title: "Ovarian Reserve & Oocyte Cryopreservation",
                 brief:
                   "Follicular dynamics, ovarian aging across the reproductive lifespan, double stimulation (DuoStim), oocyte vitrification, warming survival, and cumulative live birth outcomes.",
+                children: [
+                  {
+                    slug: "oocyte-nuclear-maturity-and-morphological-grading",
+                    title: "Oocyte Nuclear Maturity (MII/MI/GV) & Morphological Grading",
+                    brief:
+                      "Istanbul consensus oocyte assessment, Metaphase II (MII) vs Metaphase I (MI) and Germinal Vesicle (GV) nuclear maturity, polar body integrity, perivitelline space, zona pellucida birefringence, smooth endoplasmic reticulum (SER) aggregates, and cytoplasmic dysmorphisms.",
+                  },
+                ],
               },
               {
                 slug: "endometrial-receptivity-implantation-biology",
@@ -297,6 +305,20 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 title: "Assisted Reproductive Technology & Gamete Donation",
                 brief:
                   "In vitro fertilisation, intracytoplasmic sperm injection, embryo selection, third-party reproduction, outcomes, and international regulatory frameworks.",
+                children: [
+                  {
+                    slug: "zygote-pronuclear-scoring-2pn-1pn-3pn-fertilisation",
+                    title: "Zygote Pronuclear Scoring (2PN, 1PN, 0PN & 3PN) & Fertilisation Ploidy Assessment",
+                    brief:
+                      "ESHRE/Istanbul fertilisation check at 16–18 hours post-insemination, normal diploid 2PN2PB zygotes, monopronuclear (1PN) and appronuclear (0PN) biparental diploid rescue via PGT-A/SNP haplotyping, and tripronuclear (3PN) polyspermy/digyny exclusion.",
+                  },
+                  {
+                    slug: "blastocyst-morphological-grading-gardner-criteria-morphokinetics",
+                    title: "Blastocyst Morphological Grading (Gardner AA/BB System) & Embryo Morphokinetics",
+                    brief:
+                      "Gardner & Schoolcraft blastocyst scoring (expansion stages 1–6, Inner Cell Mass grades A–C, Trophectoderm grades A–C: AA, AB, BA, BB, BC, CC), Day 3 cleavage compaction, time-lapse morphokinetic intervals, euploidy correlation, and live-birth outcomes.",
+                  },
+                ],
               },
               {
                 slug: "translational-geroprotective-reproductive-biology",
@@ -966,6 +988,24 @@ export const CROSS_DISCIPLINE_LINKS: {
     slugB: "classical-mechanics-thermodynamics-electromagnetism",
     relation: "bridges",
     note: "Continuum mechanics, Cauchy stress–strain elasticity, catenary arch statics, and building thermodynamics ground architectural engineering in classical physics.",
+  },
+  {
+    slugA: "oocyte-nuclear-maturity-and-morphological-grading",
+    slugB: "zygote-pronuclear-scoring-2pn-1pn-3pn-fertilisation",
+    relation: "bridges",
+    note: "Metaphase II nuclear maturity, first polar body extrusion, and cytoplasmic ATP reserves directly govern normal 2PN2PB pronuclear formation vs 1PN/3PN fertilisation anomalies at 16–18 hours post-insemination.",
+  },
+  {
+    slugA: "zygote-pronuclear-scoring-2pn-1pn-3pn-fertilisation",
+    slugB: "blastocyst-morphological-grading-gardner-criteria-morphokinetics",
+    relation: "bridges",
+    note: "Day-1 pronuclear ploidy (2PN vs biparental diploid 1PN/0PN rescue) and early syngamy timings (tPNf, t2) predict Day 5–6 blastocyst expansion and Gardner ICM/trophectoderm grades (AA/AB/BA/BB).",
+  },
+  {
+    slugA: "oocyte-nuclear-maturity-and-morphological-grading",
+    slugB: "blastocyst-morphological-grading-gardner-criteria-morphokinetics",
+    relation: "intersects",
+    note: "Oocyte nuclear competence (MII vs IVM-rescued MI/GV) and meiotic spindle integrity determine embryonic genome activation at the 8-cell stage and subsequent Gardner blastocyst expansion.",
   },
 ];
 

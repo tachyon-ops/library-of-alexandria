@@ -8,7 +8,7 @@ import {
 } from "@lib/core";
 import { listTree, searchLibrary } from "@lib/db";
 import Link from "next/link";
-import { startTopic } from "@/app/actions";
+import { organizeInquiry } from "@/app/actions";
 import { LibrarySearchForm } from "@/components/LibrarySearchForm";
 import { normaliseTopicTitle, sql } from "@/lib/data";
 
@@ -25,27 +25,6 @@ function parseJsonArray<T>(val: unknown): T[] {
     }
   }
   return [];
-}
-
-function buildOrderedTreeOptions(nodes: SearchTreeNode[]): { id: string; label: string; depth: number }[] {
-  const byParent = new Map<string | null, SearchTreeNode[]>();
-  for (const n of nodes) {
-    const list = byParent.get(n.parentId) ?? [];
-    list.push(n);
-    byParent.set(n.parentId, list);
-  }
-  const out: { id: string; label: string; depth: number }[] = [];
-  function walk(parentId: string | null, depth: number) {
-    if (depth >= 5) return;
-    const children = byParent.get(parentId) ?? [];
-    for (const child of children) {
-      const prefix = depth > 0 ? `${"— ".repeat(depth)}` : "";
-      out.push({ id: child.id, label: `${prefix}${child.title}`, depth });
-      walk(child.id, depth + 1);
-    }
-  }
-  walk(null, 0);
-  return out;
 }
 
 export default async function SearchPage({
@@ -70,8 +49,6 @@ export default async function SearchPage({
     brief: r.brief ? r.brief.replace(/after 44/gi, "after 40") : null,
     depth: r.depth,
   }));
-
-  const treeOptions = buildOrderedTreeOptions(treeNodes);
 
   const results: LibrarySearchResults | null = rawResults
     ? {
@@ -337,62 +314,63 @@ export default async function SearchPage({
           </div>
 
           <aside className="search-side-col">
-            <section className="search-branch-card" aria-label="Spawn a new research branch">
+            <section className="search-branch-card" aria-label="AI tree organisation">
               <h2>
-                {synthesis.coverageStatus === "unexplored"
-                  ? "Spawn this research branch"
-                  : "Go deeper: spawn a sub-branch"}
+                {synthesis.suggestedBranches.length > 1
+                  ? `AI tree organisation (${synthesis.suggestedBranches.length} branches)`
+                  : "AI tree organisation"}
               </h2>
               <p className="muted small">
-                {synthesis.coverageStatus === "unexplored"
-                  ? "This topic is not in the archive yet. Create a branch to dispatch the autonomous scout, literature harvesters, reader, and skeptic workers."
-                  : "Want dedicated literature harvesting and clinical trial scanning specifically on this angle? Queue a new sub-branch in the Tree of Knowledge."}
+                {synthesis.suggestedBranches.length > 1
+                  ? `Your question spans ${synthesis.suggestedBranches.length} canonical scientific sub-disciplines. The AI organises each branch under its proper parent discipline in the Tree of Knowledge and links their intersections automatically.`
+                  : "You ask the question; the AI names the canonical scientific discipline, places it under the right parent in the Tree of Knowledge, and dispatches the research workers."}
               </p>
 
-              <form action={startTopic} className="new-topic search-spawn-form">
-                <label htmlFor="spawn-title">
-                  <span>Proposed branch title</span>
-                  <input
-                    id="spawn-title"
-                    name="title"
-                    required
-                    defaultValue={synthesis.suggestedBranch.title}
-                  />
-                </label>
+              <ol className="ai-branch-plan-list" aria-label="Canonical branches organised by AI">
+                {synthesis.suggestedBranches.map((branch, idx) => (
+                  <li key={`${branch.title}-${idx}`} className="ai-branch-plan-item">
+                    <div className="ai-branch-plan-meta">
+                      <span
+                        className="ai-branch-badge"
+                        data-existing={branch.existingTopicSlug ? "true" : "false"}
+                      >
+                        {branch.existingTopicSlug ? "In Tree of Knowledge" : "New branch to spawn"}
+                      </span>
+                      {branch.parentTitle && (
+                        <span className="ai-branch-parent muted small">
+                          Under{" "}
+                          {branch.parentSlug ? (
+                            <Link href={`/topic/${branch.parentSlug}`}>{branch.parentTitle}</Link>
+                          ) : (
+                            branch.parentTitle
+                          )}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="ai-branch-title">
+                      {branch.existingTopicSlug ? (
+                        <Link href={`/topic/${branch.existingTopicSlug}`}>{branch.title} →</Link>
+                      ) : (
+                        branch.title
+                      )}
+                    </h3>
+                    <p className="ai-branch-brief muted small">{branch.brief}</p>
+                  </li>
+                ))}
+              </ol>
 
-                <label htmlFor="spawn-parent">
-                  <span>Place under discipline</span>
-                  <select
-                    id="spawn-parent"
-                    name="parentId"
-                    defaultValue={synthesis.suggestedBranch.parentId ?? ""}
-                  >
-                    <option value="">Root of the Tree of Knowledge (new top-level trunk)</option>
-                    {treeOptions.map((opt) => (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <p className="muted small spawn-reason">{synthesis.suggestedBranch.reason}</p>
-
-                <label htmlFor="spawn-brief">
-                  <span>Research brief for autonomous workers</span>
-                  <textarea
-                    id="spawn-brief"
-                    name="brief"
-                    rows={3}
-                    defaultValue={synthesis.suggestedBranch.brief}
-                  />
-                </label>
-
-                <div className="form-row">
-                  <label className="check">
-                    <input type="checkbox" name="research" defaultChecked /> Start research now
-                  </label>
-                  <button type="submit">Create &amp; research branch</button>
-                </div>
+              <form action={organizeInquiry} className="new-topic search-spawn-form">
+                <input type="hidden" name="query" value={query} />
+                <input type="hidden" name="research" value="on" />
+                <button type="submit" className="ai-organize-submit">
+                  {synthesis.suggestedBranches.some((b) => !b.existingTopicSlug)
+                    ? synthesis.suggestedBranches.length > 1
+                      ? `Let AI spawn & research ${synthesis.suggestedBranches.length} branches`
+                      : "Let AI spawn & research branch"
+                    : synthesis.suggestedBranches.length > 1
+                      ? `Queue AI research across ${synthesis.suggestedBranches.length} branches`
+                      : "Queue AI research on this branch"}
+                </button>
               </form>
             </section>
           </aside>
