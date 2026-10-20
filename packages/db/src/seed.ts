@@ -1017,9 +1017,9 @@ export const CROSS_DISCIPLINE_LINKS: {
   },
   {
     slugA: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
-    slugB: "ovarian-reserve-oocyte-cryopreservation",
+    slugB: "endometrial-receptivity-implantation-biology",
     relation: "bridges",
-    note: "Contrasts time-critical consecutive ovarian stimulation (DuoStim for aging unretrieved oocytes after 40) against time-independent Frozen Embryo Transfer scheduling of vitrified blastocysts (−196°C) and strategic endometrial reset before a final transfer.",
+    note: "Connects Frozen Embryo Transfer timing (immediate next-menses transfer vs. 1–3 month interval for a vitrified blastocyst at −196°C) with modifiable endometrial receptivity factors (CD138 chronic endometritis, natural-cycle corpus luteum, and luteal progesterone rescue).",
   },
 ];
 
@@ -1133,7 +1133,7 @@ export async function seed(sql: Sql): Promise<void> {
         legacyIntervalTopic.id,
         canonicalFetNode.id,
         "bridges",
-        "Unites consecutive vs. spaced Frozen Embryo Transfer (immediate next-period FET vs. 1–3 month last-embryo reset) with consecutive vs. spaced ovarian stimulation (DuoStim).",
+        "Connects immediate next-menstrual-cycle Frozen Embryo Transfer versus a 1–3 month interval for a vitrified blastocyst at −196°C.",
       );
     }
   }

@@ -29,7 +29,7 @@ export async function planTopic(
     maxTokens: 3000,
     system: `${LIBRARIAN}
 You are the scout. You decide how a topic branches into canonical scientific sub-disciplines and what to search for.
-Name every sub-branch with formal scientific or academic taxonomy terms (MeSH or established discipline nomenclature) that aggregate findings across the general population. Never name branches after a narrow personal scenario, an arbitrary age cutoff (such as "after 40" or "after 44"), or conversational phrasing.
+Name every sub-branch with formal scientific or academic taxonomy terms (MeSH or established discipline nomenclature) that aggregate findings across the general population. Never name branches after a narrow personal scenario, an arbitrary age cutoff, or conversational phrasing.
 Queries are keyword searches, 2 to 8 words, no boolean syntax. Include one query aimed at recent milestones and one aimed at criticism or failed replications.
 For web tasks, write a one-sentence instruction, for example "Find clinical centres and regulatory frameworks offering X, with published outcomes and pricing".`,
     prompt: `${topicContext(input.topic, input.path)}

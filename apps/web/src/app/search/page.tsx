@@ -10,7 +10,7 @@ import { listTree, searchLibrary } from "@lib/db";
 import Link from "next/link";
 import { organizeInquiry } from "@/app/actions";
 import { LibrarySearchForm } from "@/components/LibrarySearchForm";
-import { normaliseTopicTitle, sql } from "@/lib/data";
+import { normaliseAgePhrasing, normaliseTopicTitle, sql } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +46,7 @@ export default async function SearchPage({
     parentId: r.parentId,
     slug: r.slug,
     title: normaliseTopicTitle(r.title),
-    brief: r.brief ? r.brief.replace(/after 44/gi, "after 40") : null,
+    brief: r.brief ? normaliseAgePhrasing(r.brief) : null,
     depth: r.depth,
   }));
 
@@ -56,7 +56,7 @@ export default async function SearchPage({
         topics: rawResults.topics.map((t) => ({
           ...t,
           title: normaliseTopicTitle(t.title),
-          brief: t.brief ? t.brief.replace(/after 44/gi, "after 40") : null,
+          brief: t.brief ? normaliseAgePhrasing(t.brief) : null,
         })),
         claims: rawResults.claims.map((c) => ({
           ...c,

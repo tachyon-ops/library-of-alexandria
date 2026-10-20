@@ -38,7 +38,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { FieldResearchArticle } from "@/components/FieldResearchArticle";
 import { NewTopicForm } from "@/components/NewTopicForm";
 import { Tree } from "@/components/Tree";
-import { loadTree, normaliseTopicTitle, sql } from "@/lib/data";
+import { loadTree, normaliseAgePhrasing, normaliseTopicSynthesis, normaliseTopicTitle, sql } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -150,17 +150,17 @@ export default async function TopicPage({
 
   const { claims, dbSources, milestones, debates } = mergeCuratedDossierRecords(
     curatedDossier,
-    rawClaims ?? [],
-    rawDbSources ?? [],
-    rawMilestones ?? [],
-    rawDebates ?? [],
+    isLegacyFetIntervalTopic ? [] : (rawClaims ?? []),
+    isLegacyFetIntervalTopic ? [] : (rawDbSources ?? []),
+    isLegacyFetIntervalTopic ? [] : (rawMilestones ?? []),
+    isLegacyFetIntervalTopic ? [] : (rawDebates ?? []),
   );
 
   const busy = open > 0 || topic.status === "queued" || topic.status === "researching";
   const claimNumber = new Map((claims ?? []).map((c, i) => [c.id, i + 1]));
   const sources = mergeSources(dbSources, claims);
 
-  const safeEntities = (entities ?? []).map((e) => ({
+  const safeEntities = (isLegacyFetIntervalTopic ? [] : (entities ?? [])).map((e) => ({
     ...e,
     attributes: e.attributes && typeof e.attributes === "object" ? e.attributes : {},
     sourceUrls: Array.isArray(e.sourceUrls) ? e.sourceUrls : [],
@@ -176,42 +176,48 @@ export default async function TopicPage({
   const failed = safeJobs.find((j) => j.status === "failed");
   const displayTitle = normaliseTopicTitle(topic.title);
   const briefText = isLegacyFetIntervalTopic
-    ? "Immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus waiting 1–3+ months to 'reset' before transferring a final remaining vitrified embryo after a failed transfer, alongside consecutive (DuoStim) versus spaced ovarian stimulation cycles after age 40."
-    : (topic.brief ? topic.brief.replace(/after 44/gi, "after 40") : null) ??
+    ? "After an unsuccessful embryo transfer, with one remaining vitrified blastocyst: evidence comparing immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus waiting 1–3 months, cryostorage stability at −196°C, and specific uterine, endocrine, or psychological factors that justify a purposeful interval."
+    : (topic.brief ? normaliseAgePhrasing(topic.brief) : null) ??
       (ancestors.length > 0
         ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
         : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
 
-  const effectiveSummary =
+  const rawEffectiveSummary =
     isLegacyFetIntervalTopic && curatedDossier
-      ? topic.summary && !topic.summary.includes("−196°C")
-        ? `${curatedDossier.summary}\n\n${topic.summary}`
-        : (topic.summary ?? curatedDossier.summary)
+      ? curatedDossier.summary
       : (topic.summary ?? curatedDossier?.summary ?? null);
+  const effectiveSummary = rawEffectiveSummary ? normaliseAgePhrasing(rawEffectiveSummary) : null;
 
   const descriptionText =
     effectiveSummary ?? describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, (claims ?? []).length);
 
-  let synthesis: TopicSynthesis | null = null;
-  if (typeof topic.synthesis === "string") {
+  let rawSynthesis: TopicSynthesis | null = null;
+  if (isLegacyFetIntervalTopic && curatedDossier?.synthesis) {
+    rawSynthesis = curatedDossier.synthesis;
+  } else if (typeof topic.synthesis === "string") {
     try {
-      synthesis = JSON.parse(topic.synthesis);
+      rawSynthesis = JSON.parse(topic.synthesis);
     } catch {
-      synthesis = null;
+      rawSynthesis = null;
     }
   } else if (topic.synthesis && typeof topic.synthesis === "object") {
-    synthesis = topic.synthesis;
+    rawSynthesis = topic.synthesis;
   }
   if (
     curatedDossier?.synthesis &&
-    (!synthesis || (!synthesis.benchmarks?.length && !synthesis.levers?.length))
+    (!rawSynthesis || (!rawSynthesis.benchmarks?.length && !rawSynthesis.levers?.length))
   ) {
-    synthesis = curatedDossier.synthesis;
+    rawSynthesis = curatedDossier.synthesis;
   }
+  const synthesis = normaliseTopicSynthesis(rawSynthesis);
 
   const effectiveGaps = Array.from(
-    new Set([...(curatedDossier?.gaps ?? []), ...(topic.gaps ?? [])]),
-  );
+    new Set(
+      isLegacyFetIntervalTopic
+        ? (curatedDossier?.gaps ?? [])
+        : [...(curatedDossier?.gaps ?? []), ...(topic.gaps ?? [])],
+    ),
+  ).map(normaliseAgePhrasing);
 
   const benchmarks = Array.isArray(synthesis?.benchmarks) ? synthesis.benchmarks : [];
   const levers = Array.isArray(synthesis?.levers) ? synthesis.levers : [];
@@ -228,6 +234,8 @@ export default async function TopicPage({
   const validMilestones = (milestones ?? []).filter((m) => m && typeof m.year === "number");
   const validDebates = (debates ?? []).map((d) => ({
     ...d,
+    kind: normaliseAgePhrasing(d.kind),
+    note: normaliseAgePhrasing(d.note),
     claimIds: Array.isArray(d.claimIds) ? d.claimIds : [],
   }));
 
