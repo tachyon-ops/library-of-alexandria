@@ -1,4 +1,5 @@
 import "server-only";
+import type { TopicSynthesis } from "@lib/core";
 import { getSql, listTree, type TreeNode } from "@lib/db";
 
 export const PAYPAL_DONATE_URL =
@@ -31,14 +32,84 @@ const LEGACY_TITLE_MAP: Record<string, string> = {
     "Male & Ovarian Gamete Rejuvenation, Spermatogenesis & Follicular Activation",
   "BB/AA, 1PN/2PN -What Grading Methods Are The":
     "Blastocyst Morphological Grading (Gardner AA/BB) & Zygote Pronuclear Scoring (2PN/1PN)",
+  "BB/AA, 1PN/2PN - What Grading Methods Are There for Oocytes End Embryos":
+    "Blastocyst Morphological Grading (Gardner AA/BB) & Zygote Pronuclear Scoring (2PN/1PN)",
   "Consecutive or Spaced Out +40s yo female IVF Cycles":
-    "Inter-Transfer Interval (Immediate vs. Delayed FET & Endometrial Reset) & Consecutive IVF Cycles After 40",
+    "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
 };
+
+/**
+ * Normalises editorial age phrasing so generic/synthesised copy uses 40 / 45 / 50
+ * (e.g. 40+, 40–45) rather than 42 or 44.
+ */
+export function normaliseAgePhrasing(text: string): string {
+  return text
+    .replace(/\b40\s*[–-]\s*44\+?/g, "40–45")
+    .replace(/\b44\s*[–-]\s*4[56]\+?/g, "40–45")
+    .replace(/\b42\s*[–-]\s*4[3456]\+?/g, "40–45")
+    .replace(/\b40\s*[–-]\s*42\b/g, "40–45")
+    .replace(/\b(?:44|42)\+/g, "40+")
+    .replace(/\(\s*specifically around age (?:44|42)\s*\)/gi, "(after age 40)")
+    .replace(/\(\s*(?:age\s*)?(?:44|42)\s*\)/gi, "(40+)")
+    .replace(/\b(ages?|aged)\s+(?:44|42)\b/gi, "$1 40+")
+    .replace(/\b(after|over|above|around|by)\s+age\s+(?:44|42)\b/gi, "$1 age 40")
+    .replace(/\b(after|over|above)\s+(?:44|42)\b/gi, "$1 40");
+}
 
 export function normaliseTopicTitle(title: string): string {
   const mapped = LEGACY_TITLE_MAP[title];
   if (mapped) return mapped;
-  return title.replace(/after 44/gi, "after 40");
+  return normaliseAgePhrasing(title);
+}
+
+export function normaliseTopicSynthesis(synthesis: TopicSynthesis | null): TopicSynthesis | null {
+  if (!synthesis) return null;
+  return {
+    ...synthesis,
+    benchmarks: Array.isArray(synthesis.benchmarks)
+      ? synthesis.benchmarks.map((b) => ({
+          ...b,
+          label: normaliseAgePhrasing(b.label),
+        }))
+      : [],
+    levers: Array.isArray(synthesis.levers)
+      ? synthesis.levers.map((l) => ({
+          ...l,
+          name: normaliseAgePhrasing(l.name),
+          category: normaliseAgePhrasing(l.category),
+          description: normaliseAgePhrasing(l.description),
+          effect: normaliseAgePhrasing(l.effect),
+          reading: normaliseAgePhrasing(l.reading),
+        }))
+      : [],
+    clinicalQuestions: Array.isArray(synthesis.clinicalQuestions)
+      ? synthesis.clinicalQuestions.map(normaliseAgePhrasing)
+      : [],
+    sweepQueue: Array.isArray(synthesis.sweepQueue)
+      ? synthesis.sweepQueue.map(normaliseAgePhrasing)
+      : [],
+    article: synthesis.article
+      ? {
+          ...synthesis.article,
+          title: normaliseAgePhrasing(synthesis.article.title),
+          subtitle: normaliseAgePhrasing(synthesis.article.subtitle),
+          synopsis: normaliseAgePhrasing(synthesis.article.synopsis),
+          conclusions: normaliseAgePhrasing(synthesis.article.conclusions),
+          keyTakeaways: Array.isArray(synthesis.article.keyTakeaways)
+            ? synthesis.article.keyTakeaways.map(normaliseAgePhrasing)
+            : [],
+          sections: Array.isArray(synthesis.article.sections)
+            ? synthesis.article.sections.map((s) => ({
+                ...s,
+                kicker: s.kicker ? normaliseAgePhrasing(s.kicker) : s.kicker,
+                heading: normaliseAgePhrasing(s.heading),
+                paragraphs: Array.isArray(s.paragraphs) ? s.paragraphs.map(normaliseAgePhrasing) : [],
+                callout: s.callout ? normaliseAgePhrasing(s.callout) : s.callout,
+              }))
+            : [],
+        }
+      : undefined,
+  };
 }
 
 export function anyBusy(nodes: TreeBranch[]): boolean {
@@ -54,7 +125,7 @@ export async function loadTree(): Promise<TreeBranch[]> {
       {
         ...r,
         title: normaliseTopicTitle(r.title),
-        brief: r.brief ? r.brief.replace(/after 44/gi, "after 40") : null,
+        brief: r.brief ? normaliseAgePhrasing(r.brief) : null,
         children: [],
       },
     ]),
