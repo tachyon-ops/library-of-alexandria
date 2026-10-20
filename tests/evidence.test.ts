@@ -427,6 +427,25 @@ describe("helpers", () => {
     );
     expect(lifestyleProposals.length).toBeGreaterThanOrEqual(3);
     expect(lifestyleProposals.some((p) => p.title.includes("Lifestyle") || p.title.includes("Nutrition") || p.title.includes("Micronutrient") || p.title.includes("Rejuvenation"))).toBe(true);
+
+    // Inter-transfer interval (immediate next-period FET vs waiting a few months to reset for last embryo)
+    const fetIntervalProposals = inferBranchProposals(
+      "should we try the next embryo transfer right after this one (period came) or wait a few months, reset, and try again the last embryo?",
+      [
+        ...treeNodes,
+        {
+          id: "t-endo",
+          parentId: "t-root",
+          slug: "endometrial-receptivity-implantation-biology",
+          title: "Endometrial Receptivity & Implantation Biology",
+          brief: "Endometrial physiology and FET",
+          depth: 1,
+        },
+      ],
+    );
+    expect(fetIntervalProposals.length).toBeGreaterThanOrEqual(1);
+    expect(fetIntervalProposals[0]!.title).toContain("Inter-Transfer Interval");
+    expect(fetIntervalProposals[0]!.parentId).toBe("t-endo");
   });
 
   it("composes dynamic blog-style field research articles in both live-dispatch and reviewed monograph modes", () => {
@@ -617,7 +636,7 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(PHYSICS_FRONTIER_GRAVITY_DOSSIERS)).toHaveLength(4);
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(43);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(44);
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
       expect(treeSlugs.has(slug), `dossier slug ${slug} must exist in ENCYCLOPAEDIC_TRUNKS`).toBe(true);
@@ -673,6 +692,14 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(mond.summary).toContain("Milgrom");
     const qi = ALL_SEED_DOSSIERS["quantised-inertia-horizon-mechanics-and-unruh-radiation"]!;
     expect(qi.summary).toContain("Unruh");
+
+    // Verify FET inter-transfer interval & last-embryo reset dossier
+    const fetInterval = ALL_SEED_DOSSIERS["inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer"]!;
+    expect(fetInterval.sources).toHaveLength(8);
+    expect(fetInterval.claims).toHaveLength(7);
+    expect(fetInterval.milestones).toHaveLength(4);
+    expect(fetInterval.controversies).toHaveLength(2);
+    expect(fetInterval.summary).toContain("58,001");
   });
 });
 
