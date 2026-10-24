@@ -64,7 +64,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WordSynopsis />
         <footer className="site-footer">
           <p className="muted small">
-            Organises published research; not medical advice. Double-click any word for its plain-language definition. Built by{" "}
+            Organises published research; not medical, legal, or financial advice. Bibliographic metadata &amp;
+            transformative synthesis only (no full-text hosting).{" "}
+            <Link href="/privacy">Privacy, Copyright &amp; Disclaimer</Link> · Built by{" "}
             <a href={AUTHOR_SITE_URL} target="_blank" rel="noopener noreferrer">
               nuuno.art
             </a>{" "}

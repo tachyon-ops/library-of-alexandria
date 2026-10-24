@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildChildSlug,
   buildDynamicFieldArticle,
+  buildNestedTopicPaths,
   extractSearchTerms,
   inferBranchProposal,
   inferBranchProposals,
@@ -10,7 +11,10 @@ import {
   normaliseDesign,
   normaliseDoi,
   reassessTopicTaxonomy,
+  resolveTopicFromUrlSegments,
+  sanitizePublicInquiry,
   selectBestDictionaryDefinition,
+  shortTopicSegment,
   slugify,
   suggestTopicTitle,
   synthesizeSearchBriefing,
@@ -513,6 +517,52 @@ describe("helpers", () => {
     expect(childSlug.length).toBeLessThanOrEqual(80);
     expect(childSlug.endsWith("-embryo-glue")).toBe(true);
     expect(childSlug).not.toBe(longParentSlug);
+
+    // Nested hierarchical URLs with short 1-3 word segments and legacy URL resolution
+    expect(
+      shortTopicSegment(
+        "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41",
+        "Embryo Glue",
+      ),
+    ).toBe("embryoglue");
+    expect(
+      shortTopicSegment(
+        "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the",
+        "Blastocyst Morphological Grading (Gardner AA/BB System)",
+      ),
+    ).toBe("blastocyst-grading");
+
+    const urlTree = [
+      { id: "n-root", parentId: null, slug: "natural-and-life-sciences", title: "Natural & Life Sciences" },
+      { id: "n-med", parentId: "n-root", slug: "medicine-health-and-longevity", title: "Medicine, Health & Longevity" },
+      { id: "n-repro", parentId: "n-med", slug: "reproductive-medicine-human-fertility", title: "Reproductive Medicine & Human Fertility" },
+      { id: "n-endo", parentId: "n-repro", slug: "endometrial-receptivity-implantation-biology", title: "Endometrial Receptivity & Implantation Biology" },
+      { id: "n-art", parentId: "n-repro", slug: "assisted-reproductive-technology-gamete-donation", title: "Assisted Reproductive Technology & Gamete Donation" },
+      { id: "n-glue", parentId: "n-endo", slug: "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence", title: "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence" },
+      { id: "n-grading", parentId: "n-art", slug: "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the", title: "Blastocyst Morphological Grading (Gardner AA/BB System)" },
+    ];
+    const { byId } = buildNestedTopicPaths(urlTree);
+    expect(byId.get("n-glue")).toBe(
+      "natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+    );
+    expect(byId.get("n-grading")).toBe(
+      "natural-sciences/biomedicine/reproductive-medicine/assisted-reproduction/blastocyst-grading",
+    );
+
+    const fromLegacyGlueUrl = resolveTopicFromUrlSegments(
+      ["reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41"],
+      urlTree,
+    );
+    expect(fromLegacyGlueUrl.node?.id).toBe("n-glue");
+    expect(fromLegacyGlueUrl.canonicalNestedPath).toBe(
+      "natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+    );
+
+    const fromShortGlueUrl = resolveTopicFromUrlSegments(["embryoglue"], urlTree);
+    expect(fromShortGlueUrl.node?.id).toBe("n-glue");
+    expect(fromShortGlueUrl.canonicalNestedPath).toBe(
+      "natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+    );
   });
 
   it("composes dynamic blog-style field research articles in both live-dispatch and reviewed monograph modes", () => {

@@ -1,5 +1,5 @@
 import "server-only";
-import type { TopicSynthesis } from "@lib/core";
+import { buildNestedTopicPaths, type TopicSynthesis } from "@lib/core";
 import { getSql, listTree, type TreeNode } from "@lib/db";
 
 export const PAYPAL_DONATE_URL =
@@ -127,16 +127,56 @@ export function anyBusy(nodes: TreeBranch[]): boolean {
   return nodes.some((n) => n.status === "queued" || n.status === "researching" || anyBusy(n.children));
 }
 
-/** Builds the nested tree from the flat topic list. */
+const LEGACY_EMBRYOGLUE_SLUG =
+  "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41";
+const CANONICAL_EMBRYOGLUE_SLUG =
+  "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence";
+
+/** Normalises raw flat tree rows: heals legacy EmbryoGlue placement and computes nested URL paths. */
+export function normaliseTreeRows(rows: TreeNode[]): {
+  nodes: TreeNode[];
+  byId: Map<string, string>;
+  byRawSlug: Map<string, string>;
+} {
+  const hasCanonicalGlue = rows.some((r) => r.slug === CANONICAL_EMBRYOGLUE_SLUG);
+  const endoNode = rows.find(
+    (r) =>
+      r.slug === "endometrial-receptivity-implantation-biology" ||
+      r.slug === "uterine-receptivity-and-implantation-failure" ||
+      r.slug === "human-fertility-uterine-receptivity-and-implantation-failure",
+  );
+
+  const filtered = rows
+    .filter((r) => !(hasCanonicalGlue && r.slug === LEGACY_EMBRYOGLUE_SLUG))
+    .map((r) => {
+      const title = normaliseTopicTitle(r.title);
+      const brief = r.brief ? normaliseAgePhrasing(r.brief) : null;
+      if (r.slug === LEGACY_EMBRYOGLUE_SLUG && endoNode) {
+        return {
+          ...r,
+          parentId: endoNode.id,
+          depth: endoNode.depth + 1,
+          title,
+          brief,
+        };
+      }
+      return { ...r, title, brief };
+    });
+
+  const { byId, byRawSlug } = buildNestedTopicPaths(filtered);
+  return { nodes: filtered, byId, byRawSlug };
+}
+
+/** Builds the nested tree from the flat topic list, setting each node's slug to its nested hierarchical path. */
 export async function loadTree(): Promise<TreeBranch[]> {
-  const rows = await listTree(sql());
+  const rawRows = await listTree(sql());
+  const { nodes, byId: nestedPathById } = normaliseTreeRows(rawRows);
   const byId = new Map<string, TreeBranch>(
-    rows.map((r) => [
+    nodes.map((r) => [
       r.id,
       {
         ...r,
-        title: normaliseTopicTitle(r.title),
-        brief: r.brief ? normaliseAgePhrasing(r.brief) : null,
+        slug: nestedPathById.get(r.id) ?? r.slug,
         children: [],
       },
     ]),

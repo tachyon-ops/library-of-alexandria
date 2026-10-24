@@ -37,7 +37,7 @@ Arrows point from dependency to dependent. Anything against these arrows is a de
 - Job flow and what each job does: `apps/worker/src/handlers.ts` (`runJob`).
 - Prompts and output schemas: `packages/agents/src/{taxonomist,scout,reader,web,skeptic}.ts`, shared stance in `prompts.ts`.
 - Schema: `packages/db/migrations/*.sql`. Queries: `packages/db/src/repo.ts`.
-- Topic page: `apps/web/src/app/topic/[slug]/page.tsx`. Styles and tokens: `apps/web/src/app/globals.css`.
+- Topic page: `apps/web/src/app/topic/[...slug]/page.tsx`. Styles and tokens: `apps/web/src/app/globals.css`.
 - Configuration: `.env.example` (every variable is documented there).
 - Docs: `docs/philosophy.md` (principles and stance), `docs/specs.md` (as-built v0.1 specification), `docs/roadmap.md` (milestones M0–M5 and exit criteria), `docs/decisions.md` (architecture decisions D-001+).
 
