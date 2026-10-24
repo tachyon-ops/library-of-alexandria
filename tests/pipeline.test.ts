@@ -506,6 +506,7 @@ describe.skipIf(!url)("research pipeline", () => {
     expect(searchRes.topics.length).toBeGreaterThanOrEqual(1);
     expect(searchRes.claims.length).toBeGreaterThanOrEqual(2);
     expect(searchRes.sources.length).toBeGreaterThanOrEqual(1);
+    expect(searchRes.sources.every((s) => s.abstract === null)).toBe(true);
     const clinicSearch = await repo.searchLibrary(sql, "Clinic Real Spain");
     expect(clinicSearch.entities.map((e) => e.name)).toContain("Clinic Real");
   });

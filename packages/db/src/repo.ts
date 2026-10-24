@@ -919,7 +919,7 @@ export async function searchLibrary(sql: Sql, rawQuery: string, limit = 20): Pro
       )
       SELECT
         sc.id, sc.kind, sc.origin, sc.title, sc.url, sc.doi, sc.venue, sc.year,
-        sc.authors, sc.abstract, sc.cited_by, sc.design,
+        sc.authors, NULL::text AS abstract, sc.cited_by, sc.design,
         COALESCE(json_agg(DISTINCT jsonb_build_object(
           'slug', t.slug,
           'title', t.title
@@ -929,7 +929,7 @@ export async function searchLibrary(sql: Sql, rawQuery: string, limit = 20): Pro
       LEFT JOIN topics t ON t.id = ts.topic_id
       WHERE sc.match_score > 0
       GROUP BY sc.id, sc.kind, sc.origin, sc.title, sc.url, sc.doi, sc.venue, sc.year,
-               sc.authors, sc.abstract, sc.cited_by, sc.design, sc.match_score
+               sc.authors, sc.cited_by, sc.design, sc.match_score
       ORDER BY sc.match_score DESC, sc.year DESC NULLS LAST, sc.cited_by DESC NULLS LAST
       LIMIT ${limit}`,
 

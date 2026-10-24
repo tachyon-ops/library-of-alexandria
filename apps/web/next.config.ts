@@ -14,6 +14,17 @@ const config: NextConfig = {
   outputFileTracingRoot: root,
   turbopack: { root },
   agentRules: false,
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "geolocation=(), camera=(), microphone=(), accelerometer=()" },
+        ],
+      },
+    ];
+  },
 };
 
 export default config;

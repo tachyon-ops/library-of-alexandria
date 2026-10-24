@@ -72,6 +72,10 @@ export function LibrarySearchForm({
           ))}
         </ul>
       </div>
+      <p className="privacy-inline-note muted small">
+        Public scientific archive — do not enter names, dates of birth, or personal medical identifiers. Organises
+        published research; not medical advice. <Link href="/privacy">Privacy &amp; copyright notice</Link>.
+      </p>
     </section>
   );
 }

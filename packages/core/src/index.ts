@@ -3,6 +3,7 @@ export * from "./evidence";
 export * from "./glossary";
 export * from "./search";
 export * from "./types";
+export * from "./urls";
 
 export function slugify(input: string): string {
   return input

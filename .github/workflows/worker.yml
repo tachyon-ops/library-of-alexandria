@@ -3,7 +3,7 @@ name: Research Worker
 on:
   workflow_dispatch:
   push:
-    branches: [master, develop]
+    branches: [master]
   schedule:
     - cron: "*/15 * * * *"
 

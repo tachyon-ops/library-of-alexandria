@@ -478,12 +478,43 @@ function stripConversationalScaffolding(raw: string): string {
 }
 
 /**
+ * Scrubs accidental personally identifiable information (email addresses, phone numbers,
+ * dates of birth, medical record numbers, and explicit patient-name tags) from public
+ * search queries and topic briefs while preserving DOIs (10.xxxx/...), embryo grades,
+ * and scientific notation.
+ */
+export function sanitizePublicInquiry(input: string): string {
+  if (!input) return "";
+  return input
+    // Preserve DOIs by temporarily masking them
+    .replace(/\b(10\.\d{4,9}\/[-._;()/:a-zA-Z0-9]+)/g, "__DOI_TOKEN_$1__")
+    // Strip email addresses
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, "")
+    // Strip explicit DOB / birth date patterns (e.g. DOB 14/05/1983 or 1983-05-14)
+    .replace(/\b(?:dob|date\s+of\s+birth|born(?:\s+on)?)[\s:=-]*\d{1,4}[/.-]\d{1,2}[/.-]\d{2,4}\b/gi, "")
+    .replace(/\b\d{1,2}[/.-]\d{1,2}[/.-](?:19|20)\d{2}\b/g, "")
+    // Strip explicit MRN / patient ID / SSN / AHV numbers
+    .replace(/\b(?:mrn|patient\s*(?:id|no|number|#)|ssn|ahv|nhs\s*(?:no|number))[\s:#=-]*[A-Za-z0-9-]{4,}\b/gi, "")
+    // Strip explicit "Patient Firstname Lastname" or "My name is Firstname Lastname"
+    .replace(/\b(?:patient|my\s+name\s+is|i\s+am)\s+[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, "")
+    // Strip international and local phone numbers (7+ digits with spaces/hyphens/plus, not part of a DOI)
+    .replace(/(?:\b(?:tel|phone|mobile|call)[\s:=-]*)?(?:\+\d{1,3}[\s.-]?)?(?:\(\d{1,4}\)[\s.-]?)?\b\d{2,4}[\s.-]\d{2,4}[\s.-]\d{2,4}(?:[\s.-]\d{1,4})?\b/gi, "")
+    // Restore DOIs
+    .replace(/__DOI_TOKEN_(10\.\d{4,9}\/[-._;()/:a-zA-Z0-9]+)__/g, "$1")
+    // Clean up empty parentheses or dangling punctuation left by scrubbed tokens
+    .replace(/\(\s*[,;:-]*\s*\)/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/**
  * Formats a user search query or natural-language question into a clean
  * canonical scientific branch title.
  */
 export function suggestTopicTitle(query: string): string {
-  const cleaned = stripConversationalScaffolding(query);
-  const base = cleaned || query.trim().replace(/[?!.]+$/g, "") || "New Research Inquiry";
+  const safeQuery = sanitizePublicInquiry(query);
+  const cleaned = stripConversationalScaffolding(safeQuery);
+  const base = cleaned || safeQuery.trim().replace(/[?!.]+$/g, "") || "New Research Inquiry";
   if (/^(?:embryo\s*glue|hyaluronan\s+(?:embryo\s+)?transfer\s+medi(?:um|a))$/i.test(base.trim())) {
     return "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence";
   }

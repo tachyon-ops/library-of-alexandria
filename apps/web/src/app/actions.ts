@@ -1,7 +1,7 @@
 "use server";
 
 import { reassessTopicTaxonomyWithAi, resolveInquiryBranches } from "@lib/agents";
-import { type SearchTreeNode, type Topic } from "@lib/core";
+import { sanitizePublicInquiry, type SearchTreeNode, type Topic } from "@lib/core";
 import {
   ALL_SEED_DOSSIERS,
   createTopic,
@@ -18,7 +18,7 @@ import {
 } from "@lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { normaliseTopicTitle, sql } from "@/lib/data";
+import { normaliseTopicTitle, normaliseTreeRows, sql } from "@/lib/data";
 
 const autoDepth = () => Number(process.env.AUTO_EXPAND_DEPTH ?? 1);
 
@@ -69,12 +69,12 @@ export async function wakeWorker(formData?: FormData): Promise<void> {
  * autonomous research.
  */
 export async function organizeInquiry(formData: FormData): Promise<void> {
-  const rawQuery = String(formData.get("query") ?? formData.get("title") ?? "").trim();
+  const rawQuery = sanitizePublicInquiry(String(formData.get("query") ?? formData.get("title") ?? "").trim());
   if (!rawQuery) return;
   const shouldResearch = formData.get("research") !== "off";
-  const customTitle = String(formData.get("customTitle") ?? "").trim();
+  const customTitle = sanitizePublicInquiry(String(formData.get("customTitle") ?? "").trim());
   const customParentId = String(formData.get("customParentId") ?? "").trim();
-  const customBrief = String(formData.get("customBrief") ?? "").trim();
+  const customBrief = sanitizePublicInquiry(String(formData.get("customBrief") ?? "").trim());
 
   const db = sql();
   const [rawTree, rawResults] = await Promise.all([
@@ -244,11 +244,15 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
   const primary = organisedTopics[0];
   if (!primary) return;
 
+  const updatedTree = await listTree(db);
+  const { byId: nestedById, byRawSlug: nestedBySlug } = normaliseTreeRows(updatedTree);
+  const primaryPath = nestedById.get(primary.id) ?? nestedBySlug.get(primary.slug) ?? primary.slug;
+
   if (organisedTopics.length > 1) {
     const slugs = organisedTopics.map((t) => t.slug).join(",");
-    redirect(`/topic/${primary.slug}?spawned=${encodeURIComponent(slugs)}`);
+    redirect(`/topic/${primaryPath}?spawned=${encodeURIComponent(slugs)}`);
   }
-  redirect(`/topic/${primary.slug}`);
+  redirect(`/topic/${primaryPath}`);
 }
 
 export async function startTopic(formData: FormData): Promise<void> {
