@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 
-export type Role = "scout" | "reader" | "web" | "skeptic";
+export type Role = "taxonomist" | "scout" | "reader" | "web" | "skeptic";
 export type LlmProvider = "anthropic" | "gemini";
 
 export interface Usage {
@@ -31,6 +31,7 @@ export interface Llm {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const DEFAULT_MODELS: Record<Role, string> = {
+  taxonomist: "claude-3-5-haiku-latest",
   scout: "claude-3-5-sonnet-latest",
   reader: "claude-3-5-haiku-latest",
   web: "claude-3-5-sonnet-latest",
@@ -38,6 +39,7 @@ export const DEFAULT_MODELS: Record<Role, string> = {
 };
 
 export const DEFAULT_GEMINI_MODELS: Record<Role, string> = {
+  taxonomist: "gemini-2.5-flash-lite",
   scout: "gemini-3.6-flash",
   reader: "gemini-3.6-flash",
   web: "gemini-3.6-flash",
@@ -58,6 +60,20 @@ const GEMINI_FALLBACKS = [
   "gemini-2.0-flash-lite",
 ];
 
+export function hasLlmConfigured(env = process.env): boolean {
+  return Boolean(
+    env.GEMINI_API_KEY?.trim() ||
+      env.ANTHROPIC_API_KEY?.trim() ||
+      env.AI_API_KEY?.trim() ||
+      env.GROQ_API_KEY?.trim() ||
+      env.CEREBRAS_API_KEY?.trim() ||
+      env.MISTRAL_API_KEY?.trim() ||
+      env.OPENROUTER_API_KEY?.trim() ||
+      env.OPENAI_API_KEY?.trim() ||
+      env.GITHUB_MODELS_TOKEN?.trim(),
+  );
+}
+
 export function providerFromEnv(env = process.env): LlmProvider {
   const explicit = env.LLM_PROVIDER?.trim().toLowerCase();
   if (explicit === "anthropic") return "anthropic";
@@ -72,6 +88,7 @@ export function providerFromEnv(env = process.env): LlmProvider {
 export function modelsFromEnv(env = process.env, provider = providerFromEnv(env)): Record<Role, string> {
   const defaults = provider === "gemini" ? DEFAULT_GEMINI_MODELS : DEFAULT_MODELS;
   return {
+    taxonomist: env.MODEL_TAXONOMIST || defaults.taxonomist,
     scout: env.MODEL_SCOUT || defaults.scout,
     reader: env.MODEL_READER || defaults.reader,
     web: env.MODEL_WEB || defaults.web,
@@ -331,8 +348,8 @@ export class GeminiLlm implements Llm {
     private fetchImpl: typeof fetch = fetch,
   ) {}
 
-  private async pace(): Promise<void> {
-    if (process.env.NODE_ENV === "test" || process.env.VITEST) return;
+  private async pace(role?: Role): Promise<void> {
+    if (role === "taxonomist" || process.env.NODE_ENV === "test" || process.env.VITEST) return;
     const minIntervalMs = 1500;
     const now = Date.now();
     const elapsed = now - GeminiLlm.lastCallTime;
@@ -346,15 +363,19 @@ export class GeminiLlm implements Llm {
     const model = this.models[args.role];
     const jsonSchema = { ...(z.toJSONSchema(args.schema) as Record<string, unknown>) };
     delete jsonSchema.$schema;
-    const { data, usedModel } = await this.callWithFallback(model, {
-      systemInstruction: { parts: [{ text: args.system }] },
-      contents: [{ role: "user", parts: [{ text: args.prompt }] }],
-      generationConfig: {
-        maxOutputTokens: args.maxTokens ?? 8000,
-        responseMimeType: "application/json",
-        responseJsonSchema: jsonSchema,
+    const { data, usedModel } = await this.callWithFallback(
+      model,
+      {
+        systemInstruction: { parts: [{ text: args.system }] },
+        contents: [{ role: "user", parts: [{ text: args.prompt }] }],
+        generationConfig: {
+          maxOutputTokens: args.maxTokens ?? 8000,
+          responseMimeType: "application/json",
+          responseJsonSchema: jsonSchema,
+        },
       },
-    });
+      args.role,
+    );
     const cand = data.candidates?.[0];
     await this.onUsage({
       role: args.role,
@@ -377,12 +398,16 @@ export class GeminiLlm implements Llm {
     let data: GeminiResponse;
     let usedModel = model;
     try {
-      const res = await this.callWithFallback(model, {
-        systemInstruction: { parts: [{ text: args.system }] },
-        contents: [{ role: "user", parts: [{ text: args.prompt }] }],
-        tools: [{ google_search: {} }],
-        generationConfig: { maxOutputTokens: 8000 },
-      });
+      const res = await this.callWithFallback(
+        model,
+        {
+          systemInstruction: { parts: [{ text: args.system }] },
+          contents: [{ role: "user", parts: [{ text: args.prompt }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { maxOutputTokens: 8000 },
+        },
+        args.role,
+      );
       data = res.data;
       usedModel = res.usedModel;
     } catch (err) {
@@ -412,7 +437,11 @@ export class GeminiLlm implements Llm {
     return { text, citations: [...citations.values()] };
   }
 
-  private async callWithFallback(primary: string, body: Record<string, unknown>): Promise<{ data: GeminiResponse; usedModel: string }> {
+  private async callWithFallback(
+    primary: string,
+    body: Record<string, unknown>,
+    role?: Role,
+  ): Promise<{ data: GeminiResponse; usedModel: string }> {
     if (!this.apiKey) throw new Error("GEMINI_API_KEY (or AI_API_KEY) is not set");
     const allCandidates = [primary, ...GEMINI_FALLBACKS.filter((m) => m !== primary)];
     let candidates = allCandidates.filter((m) => !this.unavailableModels.has(m));
@@ -424,7 +453,7 @@ export class GeminiLlm implements Llm {
     let lastRateLimitError: unknown;
     for (let i = 0; i < candidates.length; i++) {
       const model = candidates[i]!;
-      await this.pace();
+      await this.pace(role);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
       const res = await this.fetchImpl(url, {
         method: "POST",

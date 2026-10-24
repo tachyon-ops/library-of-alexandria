@@ -1,9 +1,13 @@
+import { reassessTopicTaxonomyWithAi } from "@lib/agents";
 import {
   ALL_SEED_DOSSIERS,
   ensureSeedTopic,
   getAncestors,
   getChildren,
   getTopicBySlug,
+  listTree,
+  logUsage,
+  moveTopic,
   openJobCount,
   recentJobs,
   seedTopicDossier,
@@ -28,12 +32,13 @@ import {
   TIERS,
   type Controversy,
   type JobKind,
+  type SearchTreeNode,
   type Topic,
   type TopicSynthesis,
 } from "@lib/core";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { researchTopic } from "@/app/actions";
+import { researchTopic, triggerRemoteWorker, wakeWorker } from "@/app/actions";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { FieldResearchArticle } from "@/components/FieldResearchArticle";
 import { NewTopicForm } from "@/components/NewTopicForm";
@@ -128,6 +133,29 @@ export default async function TopicPage({
   }
   if (
     !topic &&
+    (slug === "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence" ||
+      slug === "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41" ||
+      slug === "embryo-glue")
+  ) {
+    const canonicalSlug = "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence";
+    const parent = await getTopicBySlug(db, "endometrial-receptivity-implantation-biology");
+    const dossier = ALL_SEED_DOSSIERS[canonicalSlug];
+    if (dossier) {
+      topic = await ensureSeedTopic(db, {
+        slug: canonicalSlug,
+        title: "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
+        brief:
+          "Randomised clinical trials, Cochrane meta-analyses, and biophysical mechanisms of hyaluronan-enriched embryo transfer medium (EmbryoGlue, 0.5 mg/mL hyaluronan) versus standard low-hyaluronan transfer media: CD44 and RHAMM receptor-mediated embryo–endometrial apposition, luminal fluid viscosity, live-birth and clinical pregnancy rates across fresh and frozen-thawed embryo transfers (FET), recurrent implantation failure (RIF) and maternal age ≥35 subgroups, multiple pregnancy risk, and ESHRE add-on guidance.",
+        parentId: parent?.id ?? null,
+        depth: parent ? parent.depth + 1 : 3,
+        summary: dossier.summary,
+        dossier,
+      });
+      await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
+    }
+  }
+  if (
+    !topic &&
     (slug === "lifestyle-metabolic-and-environmental-fertility-optimization" ||
       slug.includes("improve-fertility-organically-conceiving") ||
       slug.includes("lifestyle-metabolic-health-natural-conception"))
@@ -150,6 +178,54 @@ export default async function TopicPage({
     }
   }
   if (!topic) notFound();
+
+  const isEmbryoGlueTopic =
+    topic.slug === "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence" ||
+    topic.slug === "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41" ||
+    /^embryo\s*glue$/i.test(topic.title.trim()) ||
+    topic.title === "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence";
+
+  if (isEmbryoGlueTopic) {
+    const endoParent = await getTopicBySlug(db, "endometrial-receptivity-implantation-biology");
+    if (endoParent && topic.parentId !== endoParent.id) {
+      topic = await moveTopic(db, topic.id, endoParent.id);
+    }
+    const embryoGlueDossier =
+      ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"];
+    if (embryoGlueDossier && topic.status !== "ready") {
+      await seedTopicDossier(db, topic.id, embryoGlueDossier);
+      topic = (await getTopicBySlug(db, topic.slug)) ?? topic;
+    }
+  } else if (topic.depth >= 4) {
+    // Self-heal any leaf topic that was previously placed under a narrow sibling depth>=4 inquiry
+    const rawTree = await listTree(db);
+    const parentNode = rawTree.find((r) => r.id === topic!.parentId);
+    if (parentNode && parentNode.depth >= 4) {
+      const treeNodes: SearchTreeNode[] = rawTree.map((r) => ({
+        id: r.id,
+        parentId: r.parentId,
+        slug: r.slug,
+        title: normaliseTopicTitle(r.title),
+        brief: r.brief,
+        depth: r.depth,
+      }));
+      const assessment = await reassessTopicTaxonomyWithAi(undefined, topic, treeNodes, "", {
+        onUsage: (u) => {
+          void logUsage(db, {
+            jobId: null,
+            role: u.role,
+            model: u.model,
+            inputTokens: u.inputTokens,
+            outputTokens: u.outputTokens,
+            webSearches: u.webSearches,
+          }).catch(() => {});
+        },
+      });
+      if (assessment.shouldMove && assessment.recommendedParentId && assessment.recommendedParentId !== topic.parentId) {
+        topic = await moveTopic(db, topic.id, assessment.recommendedParentId);
+      }
+    }
+  }
 
   const [roots, ancestors, children, connectedTopics, rawClaims, rawDbSources, entities, rawMilestones, rawDebates, open, jobs] = await Promise.all([
     loadTree(),
@@ -177,21 +253,25 @@ export default async function TopicPage({
     ? ALL_SEED_DOSSIERS["inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer"]
     : isLifestyleConceptionTopic
       ? ALL_SEED_DOSSIERS["lifestyle-metabolic-and-environmental-fertility-optimization"]
-      : ALL_SEED_DOSSIERS[topic.slug];
+      : isEmbryoGlueTopic
+        ? ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"]
+        : ALL_SEED_DOSSIERS[topic.slug];
 
   const { claims, dbSources, milestones, debates } = mergeCuratedDossierRecords(
     curatedDossier,
-    isLegacyFetIntervalTopic ? [] : (rawClaims ?? []),
-    isLegacyFetIntervalTopic ? [] : (rawDbSources ?? []),
-    isLegacyFetIntervalTopic ? [] : (rawMilestones ?? []),
-    isLegacyFetIntervalTopic ? [] : (rawDebates ?? []),
+    isLegacyFetIntervalTopic || isEmbryoGlueTopic ? [] : (rawClaims ?? []),
+    isLegacyFetIntervalTopic || isEmbryoGlueTopic ? [] : (rawDbSources ?? []),
+    isLegacyFetIntervalTopic || isEmbryoGlueTopic ? [] : (rawMilestones ?? []),
+    isLegacyFetIntervalTopic || isEmbryoGlueTopic ? [] : (rawDebates ?? []),
   );
 
-  const busy = open > 0 || topic.status === "queued" || topic.status === "researching";
+  const busy =
+    !isEmbryoGlueTopic &&
+    (open > 0 || topic.status === "queued" || topic.status === "researching");
   const claimNumber = new Map((claims ?? []).map((c, i) => [c.id, i + 1]));
   const sources = mergeSources(dbSources, claims);
 
-  const safeEntities = (isLegacyFetIntervalTopic ? [] : (entities ?? [])).map((e) => ({
+  const safeEntities = (isLegacyFetIntervalTopic || isEmbryoGlueTopic ? [] : (entities ?? [])).map((e) => ({
     ...e,
     attributes: e.attributes && typeof e.attributes === "object" ? e.attributes : {},
     sourceUrls: Array.isArray(e.sourceUrls) ? e.sourceUrls : [],
@@ -216,18 +296,25 @@ export default async function TopicPage({
     .sort((a, b) => (STAGE_ORDER[a.kind] ?? 99) - (STAGE_ORDER[b.kind] ?? 99));
   const running = activeJob ?? queuedJobs[0];
   const failed = safeJobs.find((j) => j.status === "failed");
+
+  if (busy && !activeJob && open > 0) {
+    void triggerRemoteWorker();
+  }
+
   const displayTitle = normaliseTopicTitle(topic.title);
   const briefText = isLegacyFetIntervalTopic
     ? "After an unsuccessful embryo transfer, with one remaining vitrified blastocyst: evidence comparing immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus waiting 1–3 months, cryostorage stability at −196°C, and specific uterine, endocrine, or psychological factors that justify a purposeful interval."
     : isLifestyleConceptionTopic
       ? "Non-assisted reproductive optimization at 40–50: circadian sleep and follicular melatonin signaling, pro-fertility nutrition and targeted micronutrient protocols, oocyte mitochondrial ATP bioenergetics (CoQ10, NAD+, spermidine mitophagy), and organic facilitators (24–36h sperm DNA fragmentation reduction, early-shifted fertile window timing, cervical mucus protection, and endocrine/toxin clearance)."
-      : (topic.brief ? normaliseAgePhrasing(topic.brief) : null) ??
-        (ancestors.length > 0
-          ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
-          : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
+      : isEmbryoGlueTopic
+        ? "Randomised clinical trials, Cochrane meta-analyses, and biophysical mechanisms of hyaluronan-enriched embryo transfer medium (EmbryoGlue, 0.5 mg/mL hyaluronan) versus standard low-hyaluronan transfer media: CD44 and RHAMM receptor-mediated embryo–endometrial apposition, luminal fluid viscosity, live-birth and clinical pregnancy rates across fresh and frozen-thawed embryo transfers (FET), recurrent implantation failure (RIF) and maternal age ≥35 subgroups, multiple pregnancy risk, and ESHRE add-on guidance."
+        : (topic.brief ? normaliseAgePhrasing(topic.brief) : null) ??
+          (ancestors.length > 0
+            ? `Scientific synthesis, primary literature, and graded evidence within ${normaliseTopicTitle(ancestors[ancestors.length - 1]!.title)}.`
+            : `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`);
 
   const rawEffectiveSummary =
-    (isLegacyFetIntervalTopic || isLifestyleConceptionTopic) && curatedDossier
+    (isLegacyFetIntervalTopic || isLifestyleConceptionTopic || isEmbryoGlueTopic) && curatedDossier
       ? curatedDossier.summary
       : (topic.summary ?? curatedDossier?.summary ?? null);
   const effectiveSummary =
@@ -235,7 +322,7 @@ export default async function TopicPage({
     describeTopicFallback({ ...topic, title: displayTitle }, ancestors, children, sources.length, (claims ?? []).length);
 
   let rawSynthesis: TopicSynthesis | null = null;
-  if ((isLegacyFetIntervalTopic || isLifestyleConceptionTopic) && curatedDossier?.synthesis) {
+  if ((isLegacyFetIntervalTopic || isLifestyleConceptionTopic || isEmbryoGlueTopic) && curatedDossier?.synthesis) {
     rawSynthesis = curatedDossier.synthesis;
   } else if (typeof topic.synthesis === "string") {
     try {
@@ -258,7 +345,7 @@ export default async function TopicPage({
 
   const effectiveGaps = Array.from(
     new Set(
-      isLegacyFetIntervalTopic || isLifestyleConceptionTopic
+      isLegacyFetIntervalTopic || isLifestyleConceptionTopic || isEmbryoGlueTopic
         ? (curatedDossier?.gaps ?? [])
         : [...(curatedDossier?.gaps ?? []), ...(topic.gaps ?? [])],
     ),
@@ -418,9 +505,19 @@ export default async function TopicPage({
                       : "Autonomous research in progress"}
                 </strong>
               </div>
-              <span className="tasks-count muted small">
-                {open} {open === 1 ? "task" : "tasks"} active in queue
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <span className="tasks-count muted small">
+                  {open} {open === 1 ? "task" : "tasks"} active in queue
+                </span>
+                {!activeJob && open > 0 && (
+                  <form action={wakeWorker} style={{ margin: 0 }}>
+                    <input type="hidden" name="slug" value={topic.slug} />
+                    <button type="submit" className="small">
+                      Wake worker
+                    </button>
+                  </form>
+                )}
+              </div>
             </div>
 
             <ol className="pipeline-stepper" aria-label="Autonomous research pipeline stages">

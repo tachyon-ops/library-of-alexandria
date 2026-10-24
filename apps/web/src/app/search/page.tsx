@@ -1,3 +1,4 @@
+import { resolveInquiryBranches } from "@lib/agents";
 import {
   CONTROVERSY_LABELS,
   TIER_LABELS,
@@ -6,7 +7,7 @@ import {
   type LibrarySearchResults,
   type SearchTreeNode,
 } from "@lib/core";
-import { listTree, searchLibrary } from "@lib/db";
+import { listTree, logUsage, searchLibrary } from "@lib/db";
 import Link from "next/link";
 import { organizeInquiry } from "@/app/actions";
 import { LibrarySearchForm } from "@/components/LibrarySearchForm";
@@ -77,7 +78,25 @@ export default async function SearchPage({
       }
     : null;
 
-  const synthesis = results && query ? synthesizeSearchBriefing(query, results, treeNodes) : null;
+  const aiBranches =
+    results && query
+      ? await resolveInquiryBranches(query, treeNodes, results.topics, {
+          onUsage: (u) => {
+            void logUsage(db, {
+              jobId: null,
+              role: u.role,
+              model: u.model,
+              inputTokens: u.inputTokens,
+              outputTokens: u.outputTokens,
+              webSearches: u.webSearches,
+            }).catch(() => {});
+          },
+          timeoutMs: 3200,
+        })
+      : undefined;
+
+  const synthesis =
+    results && query ? synthesizeSearchBriefing(query, results, treeNodes, aiBranches) : null;
 
   return (
     <main className="search-page">
@@ -355,6 +374,7 @@ export default async function SearchPage({
                       )}
                     </h3>
                     <p className="ai-branch-brief muted small">{branch.brief}</p>
+                    <p className="ai-branch-reason muted small">{branch.reason}</p>
                   </li>
                 ))}
               </ol>
@@ -362,6 +382,47 @@ export default async function SearchPage({
               <form action={organizeInquiry} className="new-topic search-spawn-form">
                 <input type="hidden" name="query" value={query} />
                 <input type="hidden" name="research" value="on" />
+                {synthesis.suggestedBranches.length === 1 && (
+                  <details className="search-customize-details">
+                    <summary className="small muted">
+                      Customize branch title or parent discipline
+                    </summary>
+                    <div className="search-customize-fields">
+                      <label className="small">
+                        <span>Branch title</span>
+                        <input
+                          type="text"
+                          name="customTitle"
+                          defaultValue={synthesis.suggestedBranch.title}
+                        />
+                      </label>
+                      <label className="small">
+                        <span>Parent discipline in the Tree of Knowledge</span>
+                        <select
+                          name="customParentId"
+                          defaultValue={synthesis.suggestedBranch.parentId ?? ""}
+                        >
+                          {treeNodes
+                            .filter((n) => n.depth <= 3 && n.id !== synthesis.suggestedBranch.existingTopicId)
+                            .map((n) => (
+                              <option key={n.id} value={n.id}>
+                                {"\u00A0".repeat(n.depth * 2)}
+                                {n.title}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                      <label className="small">
+                        <span>Research brief</span>
+                        <textarea
+                          name="customBrief"
+                          rows={3}
+                          defaultValue={synthesis.suggestedBranch.brief}
+                        />
+                      </label>
+                    </div>
+                  </details>
+                )}
                 <button type="submit" className="ai-organize-submit">
                   {synthesis.suggestedBranches.some((b) => !b.existingTopicSlug)
                     ? synthesis.suggestedBranches.length > 1

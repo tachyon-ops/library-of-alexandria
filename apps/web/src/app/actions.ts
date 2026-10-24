@@ -1,15 +1,19 @@
 "use server";
 
-import { inferBranchProposals, reassessTopicTaxonomy, type SearchTreeNode, type Topic } from "@lib/core";
+import { reassessTopicTaxonomyWithAi, resolveInquiryBranches } from "@lib/agents";
+import { type SearchTreeNode, type Topic } from "@lib/core";
 import {
+  ALL_SEED_DOSSIERS,
   createTopic,
   getChildren,
   getTopic,
   linkTopics,
   listTree,
+  logUsage,
   moveTopic,
   requestResearch,
   searchLibrary,
+  seedTopicDossier,
   setTopicSummaryIfEmpty,
 } from "@lib/db";
 import { revalidatePath } from "next/cache";
@@ -23,10 +27,15 @@ const autoDepth = () => Number(process.env.AUTO_EXPAND_DEPTH ?? 1);
  * `worker.yml` workflow immediately via `workflow_dispatch` so jobs start right
  * away instead of waiting for the 15-minute cron schedule.
  */
-async function triggerRemoteWorker(): Promise<void> {
-  const token = process.env.GITHUB_DISPATCH_TOKEN?.trim();
-  const repo = process.env.GITHUB_REPO?.trim();
-  if (!token || !repo) return;
+export async function triggerRemoteWorker(): Promise<void> {
+  const token = (
+    process.env.GITHUB_DISPATCH_TOKEN ??
+    process.env.GITHUB_TOKEN ??
+    process.env.GH_TOKEN ??
+    ""
+  ).trim();
+  if (!token) return;
+  const repo = process.env.GITHUB_REPO?.trim() || "tachyon-ops/library-of-alexandria";
   const ref = process.env.GITHUB_REF?.trim() || "master";
   try {
     await fetch(`https://api.github.com/repos/${repo}/actions/workflows/worker.yml/dispatches`, {
@@ -44,6 +53,15 @@ async function triggerRemoteWorker(): Promise<void> {
   }
 }
 
+export async function wakeWorker(formData?: FormData): Promise<void> {
+  await triggerRemoteWorker();
+  const slug = String(formData?.get("slug") ?? "").trim();
+  revalidatePath("/", "layout");
+  if (slug) {
+    revalidatePath(`/topic/${slug}`);
+  }
+}
+
 /**
  * AI Tree Organiser action: takes a natural-language question or inquiry, decomposes it
  * into 1, 2, 3, or more canonical scientific branches, places each under its proper
@@ -54,6 +72,9 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
   const rawQuery = String(formData.get("query") ?? formData.get("title") ?? "").trim();
   if (!rawQuery) return;
   const shouldResearch = formData.get("research") !== "off";
+  const customTitle = String(formData.get("customTitle") ?? "").trim();
+  const customParentId = String(formData.get("customParentId") ?? "").trim();
+  const customBrief = String(formData.get("customBrief") ?? "").trim();
 
   const db = sql();
   const [rawTree, rawResults] = await Promise.all([
@@ -70,8 +91,49 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
     depth: r.depth,
   }));
 
-  const proposals = inferBranchProposals(rawQuery, treeNodes, rawResults.topics);
+  const proposals = await resolveInquiryBranches(rawQuery, treeNodes, rawResults.topics, {
+    onUsage: (u) => {
+      void logUsage(db, {
+        jobId: null,
+        role: u.role,
+        model: u.model,
+        inputTokens: u.inputTokens,
+        outputTokens: u.outputTokens,
+        webSearches: u.webSearches,
+      }).catch(() => {});
+    },
+  });
+  let hasManualParentOverride = false;
+
+  if (proposals.length === 1) {
+    const first = proposals[0]!;
+    if (customTitle && customTitle.toLowerCase() !== first.title.toLowerCase()) {
+      const matchedByCustomTitle = treeNodes.find(
+        (n) => n.title.toLowerCase() === customTitle.toLowerCase(),
+      );
+      first.title = customTitle;
+      first.existingTopicId = matchedByCustomTitle?.id ?? null;
+      first.existingTopicSlug = matchedByCustomTitle?.slug ?? null;
+      if (!matchedByCustomTitle) {
+        first.canonicalSlug = null;
+      }
+    }
+    if (customParentId) {
+      const chosenParent = treeNodes.find((n) => n.id === customParentId);
+      if (chosenParent && chosenParent.id !== first.parentId) {
+        first.parentId = chosenParent.id;
+        first.parentTitle = chosenParent.title;
+        first.parentSlug = chosenParent.slug;
+        hasManualParentOverride = true;
+      }
+    }
+    if (customBrief) {
+      first.brief = customBrief;
+    }
+  }
+
   const organisedTopics: Topic[] = [];
+  const seededDossierTopicIds = new Set<string>();
 
   for (const proposal of proposals) {
     let topic: Topic | null = null;
@@ -92,6 +154,7 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
         title: proposal.title,
         brief: proposal.brief,
         parentId: proposal.parentId,
+        slug: proposal.canonicalSlug ?? null,
       });
       const parentPrefix = proposal.parentTitle ? ` under ${proposal.parentTitle}` : "";
       await setTopicSummaryIfEmpty(
@@ -99,14 +162,50 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
         topic.id,
         `${proposal.title} is a canonical scientific branch${parentPrefix} investigating ${proposal.brief.charAt(0).toLowerCase()}${proposal.brief.slice(1)}`,
       );
+    } else if (hasManualParentOverride && proposal.parentId && topic.parentId !== proposal.parentId) {
+      topic = await moveTopic(db, topic.id, proposal.parentId);
     } else {
-      const assessment = reassessTopicTaxonomy(topic, treeNodes);
+      const assessment = await reassessTopicTaxonomyWithAi(undefined, topic, treeNodes, "", {
+        onUsage: (u) => {
+          void logUsage(db, {
+            jobId: null,
+            role: u.role,
+            model: u.model,
+            inputTokens: u.inputTokens,
+            outputTokens: u.outputTokens,
+            webSearches: u.webSearches,
+          }).catch(() => {});
+        },
+      });
       if (assessment.shouldMove && assessment.recommendedParentId !== topic.parentId) {
         topic = await moveTopic(db, topic.id, assessment.recommendedParentId);
       }
       for (const link of assessment.crossLinks) {
         await linkTopics(db, topic.id, link.linkedTopicId, link.relation, link.note);
       }
+    }
+
+    if (proposal.crossLinkIds && proposal.crossLinkIds.length > 0) {
+      for (const crossId of proposal.crossLinkIds) {
+        if (crossId !== topic.id && crossId !== topic.parentId) {
+          await linkTopics(
+            db,
+            topic.id,
+            crossId,
+            "intersects",
+            `Cross-linked by AI Taxonomist for shared scientific mechanisms across ${topic.title}.`,
+          );
+        }
+      }
+    }
+
+    const matchingDossier =
+      (proposal.canonicalSlug ? ALL_SEED_DOSSIERS[proposal.canonicalSlug] : undefined) ??
+      ALL_SEED_DOSSIERS[topic.slug];
+    if (matchingDossier) {
+      await seedTopicDossier(db, topic.id, matchingDossier);
+      seededDossierTopicIds.add(topic.id);
+      topic = (await getTopic(db, topic.id)) ?? topic;
     }
 
     organisedTopics.push(topic);
@@ -130,10 +229,15 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
   }
 
   if (shouldResearch) {
+    let enqueuedAny = false;
     for (const t of organisedTopics) {
+      if (seededDossierTopicIds.has(t.id)) continue;
       await requestResearch(db, t.id, autoDepth());
+      enqueuedAny = true;
     }
-    await triggerRemoteWorker();
+    if (enqueuedAny) {
+      await triggerRemoteWorker();
+    }
   }
 
   revalidatePath("/", "layout");
@@ -149,6 +253,18 @@ export async function organizeInquiry(formData: FormData): Promise<void> {
 
 export async function startTopic(formData: FormData): Promise<void> {
   return organizeInquiry(formData);
+}
+
+export async function reparentTopic(formData: FormData): Promise<void> {
+  const topicId = String(formData.get("topicId") ?? "").trim();
+  const newParentId = String(formData.get("parentId") ?? "").trim();
+  if (!topicId || !newParentId) return;
+  const db = sql();
+  const topic = await getTopic(db, topicId);
+  if (!topic || topic.parentId === newParentId) return;
+  await moveTopic(db, topic.id, newParentId);
+  revalidatePath("/", "layout");
+  revalidatePath(`/topic/${topic.slug}`);
 }
 
 export async function researchTopic(formData: FormData): Promise<void> {
@@ -167,7 +283,18 @@ export async function researchTopic(formData: FormData): Promise<void> {
     brief: r.brief,
     depth: r.depth,
   }));
-  const assessment = reassessTopicTaxonomy(topic, treeNodes);
+  const assessment = await reassessTopicTaxonomyWithAi(undefined, topic, treeNodes, "", {
+    onUsage: (u) => {
+      void logUsage(db, {
+        jobId: null,
+        role: u.role,
+        model: u.model,
+        inputTokens: u.inputTokens,
+        outputTokens: u.outputTokens,
+        webSearches: u.webSearches,
+      }).catch(() => {});
+    },
+  });
   if (assessment.shouldMove && assessment.recommendedParentId !== topic.parentId) {
     await moveTopic(db, topic.id, assessment.recommendedParentId);
   }
@@ -179,5 +306,3 @@ export async function researchTopic(formData: FormData): Promise<void> {
   await triggerRemoteWorker();
   revalidatePath("/", "layout");
 }
-
-

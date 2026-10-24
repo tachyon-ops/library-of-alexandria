@@ -1,5 +1,5 @@
-import { planTopic, readSources, reviewTopic, scanWeb, type Llm } from "@lib/agents";
-import { buildDynamicFieldArticle, normaliseDesign, reassessTopicTaxonomy, tierForClaim, type StudyDesign } from "@lib/core";
+import { planTopic, readSources, reassessTopicTaxonomyWithAi, reviewTopic, scanWeb, type Llm } from "@lib/agents";
+import { buildDynamicFieldArticle, normaliseDesign, tierForClaim, type StudyDesign } from "@lib/core";
 import type { SourceAdapter } from "@lib/crawlers";
 import * as repo from "@lib/db";
 import type { Job, Sql } from "@lib/db";
@@ -254,7 +254,7 @@ async function reassessAndApplyTaxonomy(
   extraEvidenceText: string,
 ): Promise<void> {
   const tree = await repo.listTree(d.sql);
-  const assessment = reassessTopicTaxonomy(topic, tree, extraEvidenceText);
+  const assessment = await reassessTopicTaxonomyWithAi(d.llm, topic, tree, extraEvidenceText);
   if (assessment.shouldMove && assessment.recommendedParentId !== topic.parentId) {
     await repo.moveTopic(d.sql, topic.id, assessment.recommendedParentId);
     d.log(`taxonomy ${topic.slug}: ${assessment.reason}`);

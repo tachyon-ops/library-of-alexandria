@@ -5,16 +5,17 @@ description: How to change or add a Claude research role (scout, reader, web, sk
 
 # Agent roles and prompts
 
-## The four roles
+## The five roles
 
 | Role | File | Input | Output | Default model |
 | --- | --- | --- | --- | --- |
+| taxonomist | `taxonomist.ts` | search query / inquiry, tree nodes (depth ≤ 4), heuristic hints | 1..4 canonical branches (`title`, `brief`, `parentIndex`, `existingNodeIndex`, `crossLinkIndexes`, `reason`) | `gemini-2.5-flash-lite` / `claude-3-5-haiku-latest` |
 | scout | `scout.ts` | topic, path, existing children | sub-branches, literature/trial/web queries, frontier angles | `claude-sonnet-5-5` |
 | reader | `reader.ts` | up to 10 abstracts | per-source design and size, claims citing source indexes, milestones | `claude-haiku-5-5` |
 | web | `web.ts` | one web task | entities backed by returned citations | `claude-sonnet-5-5` |
 | skeptic | `skeptic.ts` | all claims of a topic | summary, gaps, merges, relabels, controversies | `claude-opus-5-5` |
 
-Models are set per role through `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC`.
+Models are set per role through `MODEL_TAXONOMIST`, `MODEL_SCOUT`, `MODEL_READER`, `MODEL_WEB`, `MODEL_SKEPTIC`.
 
 ## Prompt stance
 

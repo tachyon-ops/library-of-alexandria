@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildChildSlug,
   buildDynamicFieldArticle,
   extractSearchTerms,
   inferBranchProposal,
@@ -446,6 +447,72 @@ describe("helpers", () => {
     expect(fetIntervalProposals.length).toBeGreaterThanOrEqual(1);
     expect(fetIntervalProposals[0]!.title).toContain("Inter-Transfer Interval");
     expect(fetIntervalProposals[0]!.parentId).toBe("t-endo");
+
+    // Embryo Glue is placed under Endometrial Receptivity & Implantation Biology (even with legacy DB slugs)
+    // and never under a narrow depth-4 Blastocyst Morphological Grading sibling node that shares "embryo"
+    const liveLikeTreeNodes = [
+      ...treeNodes,
+      {
+        id: "t-endo-legacy",
+        parentId: "t-root",
+        slug: "human-fertility-uterine-receptivity-and-implantation-failure",
+        title: "Endometrial Receptivity & Implantation Biology",
+        brief: "Endometrial physiology, natural-cycle vs programmed embryo transfer",
+        depth: 3,
+      },
+      {
+        id: "t-grading-leaf",
+        parentId: "t-art",
+        slug: "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the",
+        title: "Blastocyst Morphological Grading (Gardner AA/BB) & Zygote Pronuclear Scoring (2PN/1PN)",
+        brief: "Synthesise the peer-reviewed record on embryo grading methods",
+        depth: 4,
+      },
+    ];
+    const embryoGlueProposal = inferBranchProposal("Embryo glue", liveLikeTreeNodes, [
+      {
+        id: "t-grading-leaf",
+        parentId: "t-art",
+        slug: "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the",
+        title: "Blastocyst Morphological Grading (Gardner AA/BB) & Zygote Pronuclear Scoring (2PN/1PN)",
+        brief: "Synthesise the peer-reviewed record on embryo grading methods",
+        summary: null,
+        status: "ready",
+        depth: 4,
+        claimCount: 12,
+      },
+    ]);
+    expect(embryoGlueProposal.parentId).toBe("t-endo-legacy");
+    expect(embryoGlueProposal.parentId).not.toBe("t-grading-leaf");
+    expect(embryoGlueProposal.title).toContain("EmbryoGlue");
+    expect(embryoGlueProposal.canonicalSlug).toBe(
+      "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+    );
+
+    // Reassessing a topic titled "Embryo Glue" misplaced under Blastocyst Grading re-routes it to Endometrial Receptivity
+    const misplacedEmbryoGlue = {
+      id: "t-embryo-glue-41",
+      parentId: "t-grading-leaf",
+      slug: "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41",
+      title: "Embryo Glue",
+      brief: "Synthesise the peer-reviewed record on Embryo glue",
+      depth: 4,
+    };
+    const glueReassessment = reassessTopicTaxonomy(misplacedEmbryoGlue, [
+      ...liveLikeTreeNodes,
+      misplacedEmbryoGlue,
+    ]);
+    expect(glueReassessment.shouldMove).toBe(true);
+    expect(glueReassessment.recommendedParentId).toBe("t-endo-legacy");
+
+    // buildChildSlug never truncates away the child's own slug when parentSlug is already 80 chars
+    const longParentSlug =
+      "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the";
+    expect(longParentSlug).toHaveLength(80);
+    const childSlug = buildChildSlug("Embryo Glue", longParentSlug);
+    expect(childSlug.length).toBeLessThanOrEqual(80);
+    expect(childSlug.endsWith("-embryo-glue")).toBe(true);
+    expect(childSlug).not.toBe(longParentSlug);
   });
 
   it("composes dynamic blog-style field research articles in both live-dispatch and reviewed monograph modes", () => {
@@ -636,7 +703,8 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(PHYSICS_FRONTIER_GRAVITY_DOSSIERS)).toHaveLength(4);
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(45);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(46);
+    expect(ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"]).toBeDefined();
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
       expect(treeSlugs.has(slug), `dossier slug ${slug} must exist in ENCYCLOPAEDIC_TRUNKS`).toBe(true);
