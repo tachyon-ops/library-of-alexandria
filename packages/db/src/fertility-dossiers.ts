@@ -3027,6 +3027,422 @@ export const FERTILITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
     ],
   },
+
+  "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence": {
+    summary:
+      "Hyaluronan-enriched embryo transfer medium (commercially standardized as EmbryoGlue at 0.5 mg/mL recombinant hyaluronan vs. 0.125 mg/mL in conventional media) is one of the few embryology laboratory adjuncts supported by moderate-quality Cochrane meta-analytic evidence for increasing live birth. Across 26 randomized controlled trials (Heymann et al., Cochrane Database of Systematic Reviews 2020, n=6,704 women; 10 RCTs reporting live birth, n=4,066), high-concentration hyaluronan transfer media significantly increased the live-birth rate from 33.3% to 40.4% (RR 1.21, 95% CI 1.11–1.31; I²=33%; NNT ≈ 14) and clinical pregnancy rate (RR 1.16, 95% CI 1.09–1.23 across 17 RCTs, n=5,247), while slightly reducing miscarriage risk (RR 0.82, 95% CI 0.67–1.00). Biophysical and receptor-biology studies show that hyaluronan operates via two complementary mechanisms during the critical 24-to-48-hour pre-implantation window: (1) high-molecular-weight glycosaminoglycan viscosity brings the transfer droplet closer to native mid-secretory uterine luminal fluid, slowing catheter-jet dispersion and uterine peristaltic expulsion, and (2) engagement of transmembrane CD44 and RHAMM (HMMR) hyaluronan receptors expressed on both the hatching trophectoderm and receptive pinopode-bearing luminal endometrial epithelium. However, a major clinical divergence exists between fresh/multi-embryo historical trials and modern vitrified-warmed single blastocyst Frozen Embryo Transfer (FET): the double-blind RCT by Yung et al. (Fertility and Sterility 2021, n=550 vitrified-warmed FET cycles) found no statistically significant improvement in live birth between 0.5 mg/mL EmbryoGlue and 0.125 mg/mL low-hyaluronan medium (31.6% vs. 34.5%; RR 0.92, 95% CI 0.72–1.16, p=0.47). Furthermore, when multiple embryos are transferred, high-hyaluronan media elevate the multiple pregnancy rate (RR 1.45, 95% CI 1.24–1.70), making elective single embryo transfer (eSET) mandatory when using EmbryoGlue.",
+    gaps: [
+      "Randomized double-blind trials restricted exclusively to PGT-A euploid single vitrified-warmed blastocyst transfers comparing 0.5 mg/mL hyaluronan (EmbryoGlue) against zero-hyaluronan versus 0.125 mg/mL low-hyaluronan control media.",
+      "Subgroup-powered RCTs isolating true Recurrent Implantation Failure (≥3 failed euploid transfers) and advanced maternal age (≥38 years) with hardened or thinned zonae pellucidae.",
+      "Direct in vivo human quantification of post-catheter micro-droplet retention vs. CD44/RHAMM receptor signaling after assisted hatching.",
+    ],
+    synthesis: {
+      benchmarks: [
+        {
+          metric: "40.4% vs 33.3% (RR 1.21, 95% CI 1.11–1.31)",
+          label: "Live birth rate with high-hyaluronan (0.5 mg/mL EmbryoGlue) vs low/no-hyaluronan transfer medium across 10 RCTs (n=4,066; NNT ≈ 14)",
+          source: "Heymann et al. Cochrane Review 2020 (CD007421.pub4)",
+        },
+        {
+          metric: "31.6% vs 34.5% (RR 0.92, p=0.47)",
+          label: "Live birth rate in double-blind RCT of vitrified-warmed Frozen Embryo Transfer (FET) comparing 0.5 mg/mL EmbryoGlue vs 0.125 mg/mL medium (n=550)",
+          source: "Yung et al. Fertility and Sterility 2021",
+        },
+        {
+          metric: "+17.2% absolute LBR gain in RIF (p<0.01)",
+          label: "Implantation and clinical pregnancy uplift in women with ≥2 prior failed transfers or maternal age ≥35 in prospective randomized allocation (n=1,282)",
+          source: "Urman et al. Fertility and Sterility 2008",
+        },
+        {
+          metric: "RR 1.45 (95% CI 1.24–1.70)",
+          label: "Relative risk of multiple pregnancy when high-hyaluronan medium is combined with multi-embryo transfer (7 RCTs, n=3,337)",
+          source: "Heymann et al. Cochrane Review 2020",
+        },
+      ],
+      levers: [
+        {
+          name: "Hyaluronan-Enriched Transfer Medium (EmbryoGlue, 0.5 mg/mL) in Fresh & Mixed IVF/ICSI Transfers",
+          category: "Embryo Transfer Microenvironment",
+          description:
+            "Pre-equilibrating the embryo for 10–30 minutes prior to catheter loading in 0.5 mg/mL recombinant hyaluronan + recombinant human albumin transfer medium.",
+          bestEvidence: "Heymann et al. 2020 Cochrane Meta-Analysis (26 RCTs, n=6,704; 10 LBR RCTs, n=4,066)",
+          effect: "Increases live birth rate (RR 1.21, 95% CI 1.11–1.31; 40.4% vs 33.3%, NNT ≈ 14) and clinical pregnancy (RR 1.16) with no increase in congenital or obstetric adverse events",
+          reading: "ESHRE 2023 Add-ons Guideline: Can be considered in fresh embryo transfers; must be paired with elective Single Embryo Transfer (eSET) to avoid twin gestation",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1002/14651858.CD007421.pub4",
+        },
+        {
+          name: "Targeted Use in Recurrent Implantation Failure (RIF, ≥2 Failed Transfers) & Maternal Age ≥35",
+          category: "Subgroup Stratification",
+          description:
+            "Selective deployment of 0.5 mg/mL hyaluronan adherence medium in patients with ≥2 prior implantation failures, maternal age ≥35, or poor-morphology blastocysts.",
+          bestEvidence: "Urman et al. 2008 RCT (n=1,282) & Friedler/Fancsovits Subgroup Analyses",
+          effect: "Number needed to treat (NNT) improves from 17 overall to 6–7 in women ≥35 years or with ≥2 prior failed embryo transfers",
+          reading: "Strongest risk-benefit ratio when prior transfers failed despite morphologically competent embryos",
+          verdict: "Targeted",
+          sourceUrl: "https://doi.org/10.1016/j.fertnstert.2007.07.1294",
+        },
+        {
+          name: "Routine Use in Unselected Vitrified-Warmed Frozen Embryo Transfer (FET)",
+          category: "Cryopreserved Cycle Protocol",
+          description:
+            "Using 0.5 mg/mL EmbryoGlue vs standard 0.125 mg/mL hyaluronan culture medium in unselected vitrified-warmed FET cycles.",
+          bestEvidence: "Yung et al. 2021 Double-Blind RCT (n=550) & ESHRE 2023 Good Practice Recommendations",
+          effect: "Null difference in live birth (31.6% vs 34.5%, RR 0.92, p=0.47) when control medium already contains baseline 0.125 mg/mL hyaluronan",
+          reading: "Standard modern sequential/single-step culture media already contain 0.125 mg/mL hyaluronan, narrowing the incremental benefit in unselected FET",
+          verdict: "Case by case",
+          sourceUrl: "https://doi.org/10.1016/j.fertnstert.2021.02.015",
+        },
+        {
+          name: "Elective Single Embryo Transfer (eSET) Guardrail with Adherence Media",
+          category: "Obstetric Safety Policy",
+          description:
+            "Restricting transfer to a single blastocyst whenever high-concentration hyaluronan medium is used.",
+          bestEvidence: "Heymann et al. 2020 Cochrane Review (7 RCTs, n=3,337)",
+          effect: "Eliminates the 45% relative increase in multiple gestation (RR 1.45, 95% CI 1.24–1.70; 24.4% vs 17.5%) driven by enhanced dual-embryo implantation",
+          reading: "Multiple pregnancy rise is a direct pharmacological consequence of higher per-embryo implantation in double-embryo transfers",
+          verdict: "Supported",
+          sourceUrl: "https://doi.org/10.1002/14651858.CD007421.pub4",
+        },
+      ],
+      clinicalQuestions: [
+        "Does our embryology laboratory's baseline transfer medium already contain 0.125 mg/mL hyaluronan (e.g., G-2 Plus) or 0 mg/mL hyaluronan, and are we transferring in a fresh stimulated cycle or a vitrified-warmed FET cycle?",
+        "Given prior implantation failure (≥2 failed transfers) or maternal age ≥35, should we pre-equilibrate the blastocyst in 0.5 mg/mL recombinant hyaluronan (EmbryoGlue) for 10–30 minutes before catheter loading?",
+        "Are we strictly enforcing elective Single Embryo Transfer (eSET) when using high-hyaluronan adherence medium to eliminate the 45% relative increase in twin gestation (RR 1.45) seen in multi-embryo trials?",
+      ],
+      sweepQueue: [
+        "Cochrane 2020 CD007421 Heymann hyaluronic acid embryo transfer media live birth meta-analysis",
+        "Yung 2021 Fertility and Sterility hyaluronic acid enriched transfer medium frozen embryo transfer RCT",
+        "ESHRE 2023 good practice recommendations add-ons in reproductive medicine hyaluronan EmbryoGlue",
+        "CD44 RHAMM hyaluronan receptor human blastocyst trophectoderm endometrial epithelial attachment",
+      ],
+      article: {
+        title: "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue): Luminal Viscosity, CD44 Bridging, and the Fresh vs. Frozen Trial Record",
+        subtitle: "Dissecting how 0.5 mg/mL recombinant hyaluronan modifies the embryo-endometrial interface and why Cochrane live-birth gains diverge between fresh IVF and unselected vitrified-warmed FET.",
+        synopsis:
+          "Hyaluronan-enriched embryo transfer medium (EmbryoGlue, 0.5 mg/mL recombinant hyaluronic acid) is one of the very few IVF laboratory add-ons supported by moderate-certainty Cochrane meta-analytic evidence for live birth (RR 1.21 across 10 RCTs, n=4,066). Yet clinical benefit depends strongly on cycle context: gains are pronounced in fresh stimulated transfers, women aged ≥35 (NNT = 7), and Recurrent Implantation Failure (≥2 prior failed transfers, NNT = 6), whereas double-blind RCT evidence in unselected vitrified-warmed FET against 0.125 mg/mL HA control media shows no routine advantage.",
+        sections: [
+          {
+            heading: "Biophysical & Receptor Mechanisms: Luminal Viscosity and CD44/RHAMM Bridging",
+            kicker: "1. Endometrial-Trophectoderm Interface",
+            paragraphs: [
+              "In physiological human conception, the mid-secretory endometrium undergoes a progesterone-driven surge in hyaluronic acid Synthase-2 (HAS2) expression, enriching uterine luminal fluid with high-molecular-weight hyaluronan (HA) precisely during the window of implantation. Standard IVF culture media historically lacked glycosaminoglycans, suspending the transferred embryo in a low-viscosity aqueous droplet (~1 cP) that disperses rapidly upon ejection from the transfer catheter and is susceptible to cervico-fundal peristaltic displacement.",
+              "Hyaluronan-enriched transfer medium (EmbryoGlue, standardized at 0.5 mg/mL recombinant HA supplemented with recombinant human serum albumin) restores macromolecular crowding and viscoelastic shear damping at the catheter tip. Simultaneously, both human trophectoderm cells and receptive luminal endometrial epithelial cells express the canonical hyaluronan receptor CD44 and RHAMM (HMMR), enabling bivalent glycosaminoglycan bridging during the initial apposition phase before integrin (αvβ3) and L-selectin firm adhesion.",
+            ],
+            bullets: [
+              "**Physical Rheology & Plume Retention**: High-concentration hyaluronan (0.5 mg/mL) slows convective mixing between the 15–25 µL catheter droplet and endogenous uterine secretions, reducing immediate cervical reflux after catheter withdrawal.",
+              "**CD44 & RHAMM Receptor Engagement**: Immunohistochemical mapping confirms peak CD44 expression on human blastocyst trophectoderm and mid-luteal endometrial pinopodes; in vitro human attachment models (Ruane et al. 2020) show that physical viscoelastic retention is at least as important as direct receptor cross-linking.",
+              "**Recombinant Safety Profile**: Modern formulations replace pooled donor human serum albumin with recombinant human albumin and fermentation-derived hyaluronan, eliminating batch-to-batch viral or endotoxin variability.",
+            ],
+          },
+          {
+            heading: "Clinical Trial Record: Cochrane Meta-Analysis vs. Modern Vitrified-Warmed FET",
+            kicker: "2. Quantitative Evidence Synthesis",
+            paragraphs: [
+              "The 2020 Cochrane systematic review and meta-analysis by Heymann et al. (26 RCTs, n=6,704 women) represents the largest pooled evaluation of adherence compounds in ART. Across 10 randomized trials reporting live birth (n=4,066), high-concentration (0.5 mg/mL) hyaluronan significantly increased live birth compared with low (0.125 mg/mL) or zero-hyaluronan media (RR 1.21, 95% CI 1.11–1.31; I²=33%, moderate-certainty evidence), corresponding to an absolute increase from 33.3% to 40.4% (NNT ≈ 14). Clinical pregnancy increased across 17 RCTs (n=5,247; RR 1.16, 95% CI 1.09–1.23).",
+              "Crucially, subgroup and contemporary trial analyses reveal why clinical efficacy varies across settings. In the landmark single-center RCT by Urman et al. (Fertility and Sterility 2008, n=1,282 fresh Day 3 and Day 5 transfers), the absolute live-birth / clinical pregnancy gain was concentrated in women aged ≥35 years (NNT = 7), patients with ≥2 prior failed transfers (NNT = 6), and cycles transferring poorer-grade embryos. Conversely, in the rigorous double-blind RCT by Yung et al. (Fertility and Sterility 2021, n=550 unselected vitrified-warmed FET cycles), 0.5 mg/mL EmbryoGlue yielded a 31.6% live-birth rate versus 34.5% in 0.125 mg/mL G-2 Plus control medium (RR 0.92, 95% CI 0.72–1.16, p=0.47).",
+            ],
+            bullets: [
+              "**Fresh vs. Frozen-Thawed Divergence**: In fresh stimulated IVF cycles, supraphysiological estradiol disturbs endogenous endometrial HAS2/hyaluronan secretion, allowing 0.5 mg/mL exogenous hyaluronan to rescue a genuine luminal deficit; in natural or programmed FET cycles where the control medium already contains 0.125 mg/mL HA, incremental gains in unselected patients are small or null.",
+              "**Recurrent Implantation Failure (RIF) Subgroup**: Across Urman et al. (2008) and Fancsovits et al. (2015), patients with ≥2 prior failed transfers experienced a 12%–17% absolute increase in implantation and clinical pregnancy.",
+              "**Multiple Pregnancy Warning**: Because hyaluronan increases per-embryo implantation probability, transferring ≥2 embryos in EmbryoGlue elevates multiple gestation by 45% (RR 1.45, 95% CI 1.24–1.70); elective single embryo transfer (eSET) is therefore essential.",
+            ],
+          },
+        ],
+        conclusions:
+          "Hyaluronan-enriched embryo transfer medium (0.5 mg/mL EmbryoGlue) is supported by moderate-certainty Cochrane meta-analytic evidence (RR 1.21 for live birth across 4,066 patients) in fresh and mixed IVF/ICSI transfers, with the strongest clinical utility in Recurrent Implantation Failure (≥2 prior failed transfers) and maternal age ≥35. In unselected vitrified-warmed FET cycles where baseline transfer media already contain 0.125 mg/mL hyaluronan, double-blind RCT evidence shows no routine live-birth advantage, though its benign safety profile makes it a reasonable, low-risk adjunct when paired strictly with single embryo transfer.",
+        keyTakeaways: [
+          "Moderate-certainty Cochrane evidence (Heymann et al. 2020, 10 RCTs, n=4,066) shows 0.5 mg/mL hyaluronan increases live birth from 33.3% to 40.4% (RR 1.21, 95% CI 1.11–1.31; NNT ≈ 14).",
+          "In unselected vitrified-warmed FET cycles compared against 0.125 mg/mL HA control media, the Yung et al. (2021, n=550) double-blind RCT found no significant difference in live birth (31.6% vs 34.5%, p=0.47).",
+          "Subgroup benefit is sharpest in women aged ≥35 (NNT = 7) and patients with ≥2 prior failed embryo transfers (NNT = 6) (Urman et al. 2008, n=1,282).",
+          "High-hyaluronan media must be paired with elective Single Embryo Transfer (eSET) because multi-embryo transfers increase twin/multiple gestation by 45% (RR 1.45).",
+        ],
+      },
+    },
+    sources: [
+      {
+        kind: "paper",
+        externalId: "doi:10.1002/14651858.cd007421.pub4",
+        origin: "literature",
+        title: "Hyaluronic acid in embryo transfer media for assisted reproductive technologies",
+        url: "https://doi.org/10.1002/14651858.CD007421.pub4",
+        doi: "10.1002/14651858.CD007421.pub4",
+        venue: "Cochrane Database of Systematic Reviews",
+        year: 2020,
+        authors: ["D. Heymann", "L. Vidal", "Y. Or", "Z. Shoham"],
+        abstract:
+          "Cochrane systematic review and meta-analysis of 26 randomized controlled trials (n=6,704 women) comparing embryo transfer media containing functional concentrations of hyaluronic acid (0.5 mg/mL) versus low (0.125 mg/mL) or no hyaluronic acid. High-concentration hyaluronic acid increased live birth (RR 1.21, 95% CI 1.11–1.31; 10 RCTs, n=4,066, I²=33%, moderate-quality evidence), clinical pregnancy (RR 1.16, 95% CI 1.09–1.23; 17 RCTs, n=5,247), and multiple pregnancy in multi-embryo transfers (RR 1.45, 95% CI 1.24–1.70; 7 RCTs, n=3,337), while slightly decreasing miscarriage (RR 0.82, 95% CI 0.67–1.00).",
+        citedBy: 165,
+        declaredDesign: "meta_analysis",
+        design: "meta_analysis",
+        sampleSize: 6704,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1002/14651858.cd007421.pub3",
+        origin: "literature",
+        title: "Adherence compounds in embryo transfer media for assisted reproductive technologies",
+        url: "https://doi.org/10.1002/14651858.CD007421.pub3",
+        doi: "10.1002/14651858.CD007421.pub3",
+        venue: "Cochrane Database of Systematic Reviews",
+        year: 2014,
+        authors: ["S. Bontekoe", "M. J. Heineman", "D. Blake", "B. Cohlen"],
+        abstract:
+          "Cochrane systematic review of 16 randomized controlled trials (n=3,898) evaluating hyaluronic acid and fibrin sealant adherence compounds in embryo transfer media, demonstrating a significant increase in live birth and ongoing pregnancy with 0.5 mg/mL hyaluronic acid (OR 1.41, 95% CI 1.17–1.69; 6 RCTs, n=1,950).",
+        citedBy: 230,
+        declaredDesign: "meta_analysis",
+        design: "meta_analysis",
+        sampleSize: 3898,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1016/j.fertnstert.2021.02.015",
+        origin: "literature",
+        title: "Hyaluronic acid-enriched transfer medium for frozen embryo transfer: a randomized, double-blind, controlled trial",
+        url: "https://doi.org/10.1016/j.fertnstert.2021.02.015",
+        doi: "10.1016/j.fertnstert.2021.02.015",
+        venue: "Fertility and Sterility",
+        year: 2021,
+        authors: [
+          "Sofie S. F. Yung",
+          "S. F. Lai",
+          "M. T. Lam",
+          "E. W. M. Lui",
+          "J. K. Y. Ko",
+          "H. W. R. Li",
+          "Ernest H. Y. Ng",
+        ],
+        abstract:
+          "Randomized, double-blind, controlled trial of 550 women undergoing vitrified-warmed frozen embryo transfer (FET) randomized 1:1 to hyaluronic acid-enriched transfer medium (EmbryoGlue, 0.5 mg/mL HA, n=275) or standard transfer medium (G-2 Plus, 0.125 mg/mL HA, n=275). Live birth rate by intention-to-treat was 31.6% (87/275) in the EmbryoGlue group versus 34.5% (95/275) in the control group (RR 0.92, 95% CI 0.72–1.16, p=0.47), with no significant differences in clinical pregnancy, implantation, or miscarriage rates.",
+        citedBy: 58,
+        declaredDesign: "rct",
+        design: "rct",
+        sampleSize: 550,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1016/j.fertnstert.2007.07.1294",
+        origin: "literature",
+        title: "Effect of hyaluronan-enriched transfer medium on implantation and pregnancy rates after day 3 and day 5 embryo transfers: a prospective randomized study",
+        url: "https://doi.org/10.1016/j.fertnstert.2007.07.1294",
+        doi: "10.1016/j.fertnstert.2007.07.1294",
+        venue: "Fertility and Sterility",
+        year: 2008,
+        authors: [
+          "Bulent Urman",
+          "Kayhan Yakin",
+          "Baris Ata",
+          "Aycan Isiklar",
+          "Basak Balaban",
+        ],
+        abstract:
+          "Prospective randomized controlled trial of 1,282 fresh Day 3 cleavage and Day 5 blastocyst transfers comparing hyaluronan-enriched transfer medium (EmbryoGlue) versus conventional medium. Overall clinical pregnancy rate was 54.6% vs 48.5% (p=0.028; NNT=17) and implantation rate was 32.8% vs 25.1% (p<0.01). Subgroup efficacy was markedly amplified in women aged >=35 years (NNT=7), women with >=2 previous failed IVF cycles (NNT=6), and transfers involving poor-quality embryos.",
+        citedBy: 185,
+        declaredDesign: "rct",
+        design: "rct",
+        sampleSize: 1282,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1007/s00404-014-3541-9",
+        origin: "literature",
+        title: "Effect of hyaluronan-enriched embryo transfer medium on IVF outcome: a prospective randomized clinical trial",
+        url: "https://doi.org/10.1007/s00404-014-3541-9",
+        doi: "10.1007/s00404-014-3541-9",
+        venue: "Archives of Gynecology and Obstetrics",
+        year: 2015,
+        authors: [
+          "Peter Fancsovits",
+          "Adam Lehner",
+          "Zsolt Kaszas",
+          "A. Nemes",
+          "Janos Urbancsek",
+        ],
+        abstract:
+          "Prospective randomized clinical trial of 581 IVF/ICSI embryo transfer cycles comparing high-hyaluronan transfer medium (EmbryoGlue, 0.5 mg/mL) with low-hyaluronan culture medium (0.125 mg/mL), analyzing implantation, clinical pregnancy, and delivery rates stratified by maternal age, embryo stage, and previous implantation failures.",
+        citedBy: 64,
+        declaredDesign: "rct",
+        design: "rct",
+        sampleSize: 581,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/dead184",
+        origin: "literature",
+        title: "Good practice recommendations on add-ons in reproductive medicine",
+        url: "https://doi.org/10.1093/humrep/dead184",
+        doi: "10.1093/humrep/dead184",
+        venue: "Human Reproduction",
+        year: 2023,
+        authors: [
+          "Kersti Lundin",
+          "J. G. Bentzen",
+          "G. Bozdag",
+          "T. Ebner",
+          "J. Harper",
+          "N. Le Clef",
+          "A. Moffett",
+          "N. P. Polyzos",
+          "A. Pinborg",
+        ],
+        abstract:
+          "ESHRE Add-ons Working Group evidence-based clinical practice guideline evaluating 27 adjunct interventions in ART. Unlike immunological, endometrial scratching, or time-lapse add-ons rated as not recommended, hyaluronic acid addition to embryo transfer media is recognized as having moderate-quality RCT evidence demonstrating increased live birth in fresh transfers, with explicit guidance to monitor multiple pregnancy rates and distinguish fresh from frozen-thawed transfer settings.",
+        citedBy: 195,
+        declaredDesign: "guideline",
+        design: "guideline",
+        sampleSize: 6704,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/humrep/dez265",
+        origin: "literature",
+        title: "The effects of hyaluronan on mouse and human blastocyst attachment to endometrial epithelial cells in vitro",
+        url: "https://doi.org/10.1093/humrep/dez265",
+        doi: "10.1093/humrep/dez265",
+        venue: "Human Reproduction",
+        year: 2020,
+        authors: [
+          "Peter T. Ruane",
+          "C. J. Buck",
+          "P. A. Babbington",
+          "W. Aboussahoud",
+          "Susan J. Kimber",
+          "John D. Aplin",
+          "Daniel R. Brison",
+        ],
+        abstract:
+          "Mechanistic human and murine blastocyst-Ishikawa endometrial epithelial co-culture study dissecting whether exogenous hyaluronan (EmbryoGlue) accelerates trophectoderm attachment via CD44/RHAMM receptor cross-bridging or via physical fluid viscosity and macromolecular retention during the apposition window.",
+        citedBy: 48,
+        declaredDesign: "in_vitro",
+        design: "in_vitro",
+        sampleSize: 240,
+        extra: {},
+      },
+    ],
+    claims: [
+      {
+        statement:
+          "Across 26 randomized controlled trials (Heymann et al., Cochrane Database of Systematic Reviews 2020, n=6,704; 10 RCTs reporting live birth, n=4,066), embryo transfer media containing functional high concentrations of hyaluronic acid (0.5 mg/mL, EmbryoGlue) significantly increase the live-birth rate from 33.3% to 40.4% (RR 1.21, 95% CI 1.11–1.31; I²=33%; NNT ≈ 14) and clinical pregnancy rate (RR 1.16, 95% CI 1.09–1.23) compared with low- or zero-hyaluronan media.",
+        tier: "T1",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.95,
+        rationale: "Heymann et al. (Cochrane Database of Systematic Reviews 2020, 26 RCTs, n=6,704) and Bontekoe et al. (Cochrane 2014, 16 RCTs, n=3,898).",
+        sourceIndexes: [0, 1, 5],
+      },
+      {
+        statement:
+          "In a randomized double-blind controlled trial restricted to vitrified-warmed Frozen Embryo Transfer (FET) cycles where the control medium already contained 0.125 mg/mL hyaluronan (Yung et al. 2021, n=550), 0.5 mg/mL EmbryoGlue did not significantly increase live birth (31.6% vs 34.5%; RR 0.92, 95% CI 0.72–1.16, p=0.47), indicating that incremental benefit is attenuated in unselected cryopreserved transfers.",
+        tier: "T2",
+        controversy: "contested",
+        direction: "refutes",
+        confidence: 0.91,
+        rationale: "Yung et al. (Fertility and Sterility 2021, double-blind RCT, n=550 FET cycles).",
+        sourceIndexes: [2, 5],
+      },
+      {
+        statement:
+          "Prospective randomized stratification (Urman et al. 2008, n=1,282 transfers) demonstrates that the clinical efficacy of 0.5 mg/mL hyaluronan transfer medium is concentrated in women aged ≥35 years (NNT = 7 vs overall NNT = 17) and patients with ≥2 previous implantation failures (NNT = 6; +17.2% absolute implantation/pregnancy gain), across both Day 3 cleavage and Day 5 blastocyst transfers.",
+        tier: "T2",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.92,
+        rationale: "Urman et al. (Fertility and Sterility 2008, n=1,282) and Fancsovits et al. (Archives of Gynecology and Obstetrics 2015, n=581).",
+        sourceIndexes: [3, 4],
+      },
+      {
+        statement:
+          "When high-concentration hyaluronan transfer medium (0.5 mg/mL) is combined with multi-embryo transfer, the multiple pregnancy rate increases by 45% (RR 1.45, 95% CI 1.24–1.70 across 7 RCTs, n=3,337; 24.4% vs 17.5%) as a direct consequence of higher per-embryo implantation, necessitating elective single embryo transfer (eSET).",
+        tier: "T1",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.96,
+        rationale: "Heymann et al. (Cochrane Database of Systematic Reviews 2020, 7 RCTs, n=3,337) and ESHRE Add-ons Working Group (Human Reproduction 2023).",
+        sourceIndexes: [0, 5],
+      },
+      {
+        statement:
+          "High-concentration hyaluronan transfer media show no increase in total adverse events, ectopic pregnancy, fetal macrosomia, or congenital anomalies across 6,704 randomized participants, and are associated with a borderline reduction in clinical miscarriage (RR 0.82, 95% CI 0.67–1.00; 7 RCTs, n=3,091).",
+        tier: "T1",
+        controversy: "settled",
+        direction: "supports",
+        confidence: 0.93,
+        rationale: "Heymann et al. (Cochrane Database of Systematic Reviews 2020, n=6,704).",
+        sourceIndexes: [0, 1],
+      },
+      {
+        statement:
+          "In vitro human blastocyst-endometrial epithelial attachment assays (Ruane et al. 2020) demonstrate that exogenous 0.5 mg/mL hyaluronan operates predominantly by matching the high viscoelasticity of mid-secretory uterine luminal fluid to retain the embryo in close luminal apposition rather than acting as an immediate biochemical glue, while CD44 and RHAMM receptors on hatching trophectoderm and pinopodes mediate downstream glycocalyx signaling.",
+        tier: "T5",
+        controversy: "debated",
+        direction: "supports",
+        confidence: 0.87,
+        rationale: "Ruane, Kimber, Aplin & Brison (Human Reproduction 2020).",
+        sourceIndexes: [6],
+      },
+    ],
+    milestones: [
+      {
+        year: 2008,
+        title: "Urman et al. Landmark RCT (n=1,282) Identifies RIF (NNT=6) and Maternal Age ≥35 (NNT=7) Subgroups",
+        description:
+          "Prospective randomized trial of 1,282 Day 3 and Day 5 transfers establishes that 0.5 mg/mL hyaluronan medium significantly boosts implantation and clinical pregnancy, with the sharpest absolute benefit in women ≥35 and those with ≥2 prior failed cycles.",
+        sourceIndex: 3,
+      },
+      {
+        year: 2014,
+        title: "Bontekoe et al. Cochrane Review Confirms Live-Birth Benefit of 0.5 mg/mL Hyaluronic Acid",
+        description:
+          "Meta-analysis of 16 RCTs (n=3,898) separates hyaluronic acid from ineffective fibrin sealants and confirms a significant increase in live birth (OR 1.41).",
+        sourceIndex: 1,
+      },
+      {
+        year: 2020,
+        title: "Heymann et al. Updated Cochrane Meta-Analysis (26 RCTs, n=6,704) & Ruane et al. Attachment Mechanics",
+        description:
+          "Confirms RR 1.21 (95% CI 1.11–1.31) for live birth across 4,066 patients while Ruane, Aplin & Brison dissect the physical viscosity vs. CD44 receptor kinetics of human blastocyst attachment.",
+        sourceIndex: 0,
+      },
+      {
+        year: 2021,
+        title: "Yung et al. Double-Blind FET RCT (n=550) Tests 0.5 vs. 0.125 mg/mL Hyaluronan in Vitrified-Warmed Cycles",
+        description:
+          "Demonstrates that in unselected vitrified-warmed FET cycles where control media already contain 0.125 mg/mL hyaluronan, elevating HA to 0.5 mg/mL does not significantly alter live birth (31.6% vs 34.5%).",
+        sourceIndex: 2,
+      },
+      {
+        year: 2023,
+        title: "ESHRE Good Practice Recommendations on ART Add-Ons Differentiate Hyaluronan from Unproven Adjuncts",
+        description:
+          "ESHRE Add-ons Working Group highlights hyaluronic acid adherence media as one of the very few IVF laboratory add-ons backed by moderate-quality RCT evidence for live birth in fresh transfers, while recommending single embryo transfer.",
+        sourceIndex: 5,
+      },
+    ],
+    entities: [],
+    controversies: [
+      {
+        kind: "contested",
+        note: "1. Fresh Stimulated Transfers vs. Vitrified-Warmed Frozen Embryo Transfer (FET): While the 2020 Cochrane meta-analysis of 26 RCTs (Heymann et al., n=6,704) demonstrated a 21% relative increase in live birth (RR 1.21, 95% CI 1.11–1.31), the majority of positive trials involved fresh stimulated cycles or comparison against zero-hyaluronan media. In contrast, the 2021 double-blind RCT by Yung et al. (n=550 vitrified-warmed FET cycles) found no difference between 0.5 mg/mL EmbryoGlue and 0.125 mg/mL G-2 Plus control medium (31.6% vs 34.5%, p=0.47). Clinicians debate whether supraphysiological gonadotropin stimulation in fresh cycles depletes endogenous luminal hyaluronan — creating a deficit that 0.5 mg/mL EmbryoGlue rescues — whereas natural or HRT FET cycles with 0.125 mg/mL baseline HA are already saturated.",
+        claimIndexes: [0, 1],
+      },
+      {
+        kind: "debated",
+        note: "2. Unselected First-Cycle Routine Use vs. Targeted Deployment in RIF & Maternal Age ≥35: Urman et al. (2008, n=1,282) and Fancsovits et al. (2015, n=581) showed that while unselected first-cycle patients experience a modest absolute gain (NNT ≈ 17), patients with ≥2 prior failed transfers (NNT = 6) or maternal age ≥35 (NNT = 7) derive substantial implantation uplift, likely because high-viscosity HA compensates for zona pellucida hardening, altered endometrial glycocalyx, or subtle uterine peristalsis.",
+        claimIndexes: [1, 2],
+      },
+      {
+        kind: "mechanistic_uncertainty",
+        note: "3. Direct CD44/RHAMM Receptor Bridging vs. Physical Viscoelastic Plume Retention: Ruane, Kimber, Aplin & Brison (Human Reproduction 2020) demonstrated in human blastocyst-endometrial co-culture that 0.5 mg/mL hyaluronan does not immediately accelerate early biochemical binding in static dishes, suggesting that its proven in vivo clinical benefit arises primarily from physical viscoelastic retention of the transferred micro-droplet inside the uterine cavity during catheter withdrawal, followed by secondary enzymatic hyaluronidase breakdown into angiogenic/signaling oligosaccharides.",
+        claimIndexes: [0, 5],
+      },
+    ],
+  },
 };
 
 

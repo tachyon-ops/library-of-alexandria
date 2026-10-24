@@ -106,8 +106,10 @@ export interface SuggestedBranch {
   parentTitle: string | null;
   parentSlug: string | null;
   reason: string;
+  canonicalSlug?: string | null;
   existingTopicId?: string | null;
   existingTopicSlug?: string | null;
+  crossLinkIds?: string[];
 }
 
 export interface SearchSynthesis {
@@ -337,6 +339,11 @@ const ACRONYM_CASE: Record<string, string> = {
   dfi: "DFI",
   zimot: "ZyMōt",
   zymot: "ZyMōt",
+  embryoglue: "EmbryoGlue",
+  rhamm: "RHAMM",
+  cd44: "CD44",
+  cd138: "CD138",
+  rif: "RIF",
   "1pn": "1PN",
   "2pn": "2PN",
   "0pn": "0PN",
@@ -477,6 +484,9 @@ function stripConversationalScaffolding(raw: string): string {
 export function suggestTopicTitle(query: string): string {
   const cleaned = stripConversationalScaffolding(query);
   const base = cleaned || query.trim().replace(/[?!.]+$/g, "") || "New Research Inquiry";
+  if (/^(?:embryo\s*glue|hyaluronan\s+(?:embryo\s+)?transfer\s+medi(?:um|a))$/i.test(base.trim())) {
+    return "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence";
+  }
   const words = base.split(/\s+/);
   const smallWords = new Set(["a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of", "on", "or", "the", "to", "vs", "with"]);
 
@@ -504,6 +514,104 @@ export function suggestTopicTitle(query: string): string {
     .slice(0, 90);
 }
 
+/**
+ * Canonical and legacy slug equivalences across earlier database seeds so taxonomy
+ * placement and protection work regardless of whether a node has its v0.1 legacy slug
+ * or its expanded encyclopaedic slug.
+ */
+const LEGACY_SLUG_ALIASES: Record<string, string[]> = {
+  "reproductive-medicine-human-fertility": ["human-fertility"],
+  "ovarian-reserve-oocyte-cryopreservation": [
+    "human-fertility-using-eggs-vitrified-at-a-younger-age",
+    "using-eggs-vitrified-at-a-younger-age",
+  ],
+  "assisted-reproductive-technology-gamete-donation": [
+    "human-fertility-donor-eggs-in-europe",
+    "donor-eggs-in-europe",
+  ],
+  "endometrial-receptivity-implantation-biology": [
+    "human-fertility-uterine-receptivity-and-implantation-failure",
+    "uterine-receptivity-and-implantation-failure",
+  ],
+  "andrology-male-factor-infertility": [
+    "human-fertility-male-factor-after-40",
+    "male-factor-after-40",
+    "male-reproductive-biology-andrology",
+  ],
+  "translational-geroprotective-reproductive-biology": [
+    "human-fertility-frontier-fertility-treatments",
+    "frontier-fertility-treatments",
+  ],
+  "advanced-maternal-age-pregnancy-after-40": [
+    "human-fertility-pregnancy-after-44",
+    "pregnancy-after-44",
+    "maternal-perinatal-epidemiology-advanced-age",
+    "maternal-fetal-medicine-obstetrics",
+  ],
+  "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence": [
+    "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41",
+  ],
+  "blastocyst-morphological-grading-gardner-criteria-morphokinetics": [
+    "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the",
+  ],
+  "zygote-pronuclear-scoring-2pn-1pn-3pn-fertilisation": [
+    "reproductive-medicine-human-fertility-1pn-2pn-what-grading-methods-are-there-for",
+  ],
+  "oocyte-nuclear-maturity-and-morphological-grading": [
+    "reproductive-medicine-human-fertility-oocytes-what-grading-methods-are-there-for",
+  ],
+  "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer": [
+    "endometrial-receptivity-implantation-biology-wait-a-few-months-and-take-opportun",
+  ],
+};
+
+/**
+ * Checks whether `nodeSlug` represents the target discipline `targetSlug` (or one of its
+ * known legacy aliases) without falsely matching child topics whose slug merely starts with
+ * `${parent.slug}-...`.
+ */
+export function nodeMatchesSlug(nodeSlug: string, targetSlug: string): boolean {
+  const candidates = [targetSlug, ...(LEGACY_SLUG_ALIASES[targetSlug] ?? [])];
+  for (const candidate of candidates) {
+    if (nodeSlug === candidate || nodeSlug.endsWith(`-${candidate}`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * High-frequency domain nouns that appear across many distinct sub-disciplines and therefore
+ * should never by themselves cause a narrow leaf inquiry (depth >= 4) to capture an unrelated
+ * sibling inquiry as its child.
+ */
+const BROAD_DOMAIN_TERMS = new Set([
+  "embryo",
+  "embryos",
+  "blastocyst",
+  "blastocysts",
+  "oocyte",
+  "oocytes",
+  "egg",
+  "eggs",
+  "sperm",
+  "fertility",
+  "infertility",
+  "reproductive",
+  "ivf",
+  "icsi",
+  "pregnancy",
+  "transfer",
+  "cycle",
+  "cycles",
+  "human",
+  "clinical",
+  "treatment",
+  "treatments",
+  "therapy",
+  "therapies",
+]);
+
 const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
   {
     slugSubstring: "mond-modified-newtonian-dynamics-and-galactic-rotation",
@@ -516,6 +624,10 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
   {
     slugSubstring: "dark-matter-adhoc-epistemology-and-gr-breakdown-limits",
     keywords: ["dark matter", "ad-hoc", "adhoc", "wide binary", "wide binaries", "chae", "hernandez", "wimp", "xenonnt", "lux-zeplin", "halo", "breakdown", "galaxy rotation"],
+  },
+  {
+    slugSubstring: "modified-emergent-and-frontier-gravity-theories",
+    keywords: ["mond", "milgrom", "quantised inertia", "quantized inertia", "mihsc", "unruh", "wide binary", "wide binaries", "dark matter", "btfr", "rotation curve", "emergent gravity", "verlinde"],
   },
   {
     slugSubstring: "string-theory-m-theory-and-holographic-duality",
@@ -606,6 +718,10 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
     keywords: ["gardner", "bb/aa", "aa/bb", "4aa", "4bb", "5aa", "3bb", "blastocyst grading", "embryo grading", "inner cell mass", "trophectoderm", "morphokinetics", "time-lapse"],
   },
   {
+    slugSubstring: "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+    keywords: ["embryo glue", "embryoglue", "hyaluronan", "hyaluronic acid", "adherence medium", "adherence media", "transfer medium", "transfer media", "cd44", "rhamm"],
+  },
+  {
     slugSubstring: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
     keywords: [
       "immediate fet",
@@ -630,7 +746,33 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
   },
   {
     slugSubstring: "endometrial-receptivity-implantation-biology",
-    keywords: ["endometrial", "endometrium", "uterine", "implantation", "fet", "luteal", "progesterone", "era", "adenomyosis", "endometriosis", "scratch", "hysteroscopy"],
+    keywords: [
+      "endometrial",
+      "endometrium",
+      "uterine",
+      "implantation",
+      "fet",
+      "luteal",
+      "progesterone",
+      "era",
+      "adenomyosis",
+      "endometriosis",
+      "scratch",
+      "hysteroscopy",
+      "embryo glue",
+      "embryoglue",
+      "hyaluronan",
+      "hyaluronic acid",
+      "transfer medium",
+      "transfer media",
+      "adherence medium",
+      "embryo transfer",
+      "rif",
+      "implantation failure",
+      "cd44",
+      "cd138",
+      "endometritis",
+    ],
   },
   {
     slugSubstring: "andrology-male-factor-infertility",
@@ -638,7 +780,7 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
   },
   {
     slugSubstring: "assisted-reproductive-technology-gamete-donation",
-    keywords: ["donor", "donation", "recipient", "oocyte donation", "spain", "portugal", "czech", "greece", "anonymity", "clinic", "immunology", "kir", "hla", "blastocyst", "embryo", "embryos", "gardner", "1pn", "2pn", "grading"],
+    keywords: ["donor", "donation", "recipient", "oocyte donation", "spain", "portugal", "czech", "greece", "anonymity", "clinic", "immunology", "kir", "hla", "blastocyst", "gardner", "1pn", "2pn", "grading", "pgt-a"],
   },
   {
     slugSubstring: "translational-geroprotective-reproductive-biology",
@@ -668,6 +810,23 @@ interface CanonicalFacetSpec {
  * raw conversational strings.
  */
 const CANONICAL_TOPIC_FACETS: CanonicalFacetSpec[] = [
+  {
+    slug: "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+    title: "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
+    brief:
+      "Randomised clinical trials, Cochrane meta-analyses, and biophysical mechanisms of hyaluronan-enriched embryo transfer medium (EmbryoGlue, 0.5 mg/mL hyaluronan) versus standard low-hyaluronan transfer media: CD44 and RHAMM receptor-mediated embryo–endometrial apposition, luminal fluid viscosity, live-birth and clinical pregnancy rates across fresh and frozen-thawed embryo transfers (FET), recurrent implantation failure (RIF) and maternal age ≥35 subgroups, multiple pregnancy risk, and ESHRE add-on guidance.",
+    parentSlugs: [
+      "endometrial-receptivity-implantation-biology",
+      "assisted-reproductive-technology-gamete-donation",
+      "reproductive-medicine-human-fertility",
+    ],
+    matches: (q, terms) =>
+      /\b(embryo\s*glue|embryoglue|hyaluronan|hyaluronic\s+acid|adherence\s+medi(?:um|a)|transfer\s+medi(?:um|a))\b/.test(q) ||
+      terms.has("embryoglue") ||
+      terms.has("hyaluronan") ||
+      (terms.has("glue") &&
+        (terms.has("embryo") || terms.has("embryos") || terms.has("transfer") || terms.has("fet") || terms.has("ivf") || terms.has("implantation"))),
+  },
   {
     slug: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
     title: "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
@@ -924,24 +1083,45 @@ function scoreNodeForQuery(
   terms: string[],
   matchedTopicIds: Set<string>,
 ): number {
-  const hay = `${node.title} ${node.brief ?? ""} ${node.slug}`.toLowerCase();
+  const titleLower = node.title.toLowerCase();
+  const briefLower = (node.brief ?? "").toLowerCase();
   let score = 0;
+  let specificTermMatches = 0;
+
   for (const term of terms) {
     if (term.length < 3 && !ACRONYM_CASE[term]) continue;
-    if (hay.includes(term)) score += 3;
+    const isBroad = BROAD_DOMAIN_TERMS.has(term);
+    if (titleLower.includes(term)) {
+      score += isBroad ? 1 : 5;
+      if (!isBroad) specificTermMatches++;
+    } else if (briefLower.includes(term)) {
+      score += isBroad ? 1 : 3;
+      if (!isBroad) specificTermMatches++;
+    }
   }
+
   for (const hint of DOMAIN_HINTS) {
-    if (node.slug.includes(hint.slugSubstring)) {
+    if (nodeMatchesSlug(node.slug, hint.slugSubstring)) {
       for (const kw of hint.keywords) {
-        if (queryLower.includes(kw)) score += 5;
+        if (queryLower.includes(kw)) {
+          const isBroadKw = BROAD_DOMAIN_TERMS.has(kw);
+          score += isBroadKw ? 2 : 6;
+          if (!isBroadKw) specificTermMatches++;
+        }
       }
     }
   }
+
+  // Narrow depth >= 4 inquiries must never capture sibling inquiries based solely on broad nouns like "embryo"
+  if (node.depth >= 4 && specificTermMatches === 0) {
+    return 0;
+  }
+
   if (matchedTopicIds.has(node.id) && score > 0) {
     score += 4;
   }
   if (score > 0 && node.depth >= 1 && node.depth <= 3) {
-    score += 1;
+    score += 3;
   }
   return score;
 }
@@ -964,6 +1144,7 @@ function buildSingleBranchProposal(
       parentTitle: null,
       parentSlug: null,
       reason: "Creates a new root discipline in the Tree of Knowledge.",
+      canonicalSlug: null,
       existingTopicId: null,
       existingTopicSlug: null,
     };
@@ -986,6 +1167,7 @@ function buildSingleBranchProposal(
       parentTitle: parent?.title ?? null,
       parentSlug: parent?.slug ?? null,
       reason: `Canonical branch already present in the Tree of Knowledge${parent ? ` under ${parent.title}` : ""}.`,
+      canonicalSlug: existingExact.slug,
       existingTopicId: existingExact.id,
       existingTopicSlug: existingExact.slug,
     };
@@ -1002,10 +1184,10 @@ function buildSingleBranchProposal(
     }
   }
 
-  // If no domain hint or multi-term overlap matched, fall back to a matched topic from search
+  // If no domain hint or multi-term overlap matched, fall back to a matched canonical discipline (depth <= 3) from search
   if (!bestNode) {
     for (const matched of matchedTopics) {
-      const eligible = eligibleNodes.find((n) => n.id === matched.id);
+      const eligible = eligibleNodes.find((n) => n.id === matched.id && n.depth <= 3);
       if (eligible) {
         return {
           title,
@@ -1014,6 +1196,7 @@ function buildSingleBranchProposal(
           parentTitle: eligible.title,
           parentSlug: eligible.slug,
           reason: `Placed by AI under ${eligible.title} based on archive proximity.`,
+          canonicalSlug: null,
           existingTopicId: null,
           existingTopicSlug: null,
         };
@@ -1029,13 +1212,14 @@ function buildSingleBranchProposal(
       parentTitle: bestNode.title,
       parentSlug: bestNode.slug,
       reason: `Placed by AI under ${bestNode.title} based on scientific domain taxonomy.`,
+      canonicalSlug: null,
       existingTopicId: null,
       existingTopicSlug: null,
     };
   }
 
   const fallback =
-    eligibleNodes.find((n) => n.slug.includes("reproductive-medicine-human-fertility")) ??
+    eligibleNodes.find((n) => nodeMatchesSlug(n.slug, "reproductive-medicine-human-fertility")) ??
     eligibleNodes.find((n) => n.depth === 0) ??
     eligibleNodes[0]!;
 
@@ -1046,6 +1230,7 @@ function buildSingleBranchProposal(
     parentTitle: fallback.title,
     parentSlug: fallback.slug,
     reason: `Placed by AI under ${fallback.title}.`,
+    canonicalSlug: null,
     existingTopicId: null,
     existingTopicSlug: null,
   };
@@ -1099,7 +1284,9 @@ export function inferBranchProposals(
     usedTitles.add(facet.title.toLowerCase());
 
     const existingNode = treeNodes.find(
-      (n) => n.slug === facet.slug || n.slug.endsWith(`-${facet.slug}`) || n.title.toLowerCase() === facet.title.toLowerCase(),
+      (n) =>
+        nodeMatchesSlug(n.slug, facet.slug) ||
+        n.title.toLowerCase() === facet.title.toLowerCase(),
     );
     const existingParent = existingNode?.parentId
       ? treeNodes.find((n) => n.id === existingNode.parentId) ?? null
@@ -1110,7 +1297,7 @@ export function inferBranchProposals(
       const found = eligibleNodes.find(
         (n) =>
           n.id !== existingNode?.id &&
-          (n.slug === candidateSlug || n.slug.includes(candidateSlug)),
+          nodeMatchesSlug(n.slug, candidateSlug),
       );
       if (found) {
         parentNode = found;
@@ -1134,6 +1321,7 @@ export function inferBranchProposals(
       reason: existingNode
         ? `Canonical discipline already organised under ${parentNode?.title ?? "the Tree of Knowledge"}.`
         : `Organised by AI under ${parentNode?.title ?? "the Tree of Knowledge"} using canonical scientific taxonomy.`,
+      canonicalSlug: facet.slug,
       existingTopicId: existingNode?.id ?? null,
       existingTopicSlug: existingNode?.slug ?? null,
     });
@@ -1307,9 +1495,9 @@ export function reassessTopicTaxonomy(
   }));
 
   // Protected structural trunks stay where they are, while still receiving cross-discipline links
-  const isProtectedTrunk =
-    PROTECTED_TAXONOMY_SLUGS.has(topic.slug) ||
-    Array.from(PROTECTED_TAXONOMY_SLUGS).some((s) => topic.slug.endsWith(`-${s}`));
+  const isProtectedTrunk = Array.from(PROTECTED_TAXONOMY_SLUGS).some((s) =>
+    nodeMatchesSlug(topic.slug, s),
+  );
 
   if (isProtectedTrunk || eligibleParents.length === 0) {
     return {
@@ -1326,12 +1514,12 @@ export function reassessTopicTaxonomy(
 
   // 1. Check canonical scientific facets first
   for (const facet of CANONICAL_TOPIC_FACETS) {
-    const slugMatches = topic.slug === facet.slug || topic.slug.endsWith(`-${facet.slug}`);
+    const slugMatches = nodeMatchesSlug(topic.slug, facet.slug);
     if (!slugMatches && !facet.matches(lowerText, termSet)) continue;
 
     for (const candidateSlug of facet.parentSlugs) {
-      const canonicalParent = eligibleParents.find(
-        (n) => n.slug === candidateSlug || n.slug.includes(candidateSlug),
+      const canonicalParent = eligibleParents.find((n) =>
+        nodeMatchesSlug(n.slug, candidateSlug),
       );
       if (canonicalParent) {
         const shouldMove = topic.parentId !== canonicalParent.id;
@@ -1381,6 +1569,12 @@ export function reassessTopicTaxonomy(
 
   const isOrphanRoot = topic.parentId === null && bestScore >= 5;
   const currentParentUnrelated = currentScore === 0 && bestScore >= 6;
+  const isEscapingNarrowSiblingParent = Boolean(
+    currentParent &&
+      currentParent.depth >= 4 &&
+      bestCandidate.depth <= 3 &&
+      bestScore > currentScore,
+  );
   const isMoreSpecificChildOfCurrent =
     bestCandidate.parentId === topic.parentId && bestScore >= currentScore + 5;
   const isStrongerAcrossTree = bestScore >= currentScore + 10;
@@ -1388,6 +1582,7 @@ export function reassessTopicTaxonomy(
   const shouldMove =
     isOrphanRoot ||
     currentParentUnrelated ||
+    isEscapingNarrowSiblingParent ||
     isMoreSpecificChildOfCurrent ||
     isStrongerAcrossTree;
 
@@ -1414,9 +1609,13 @@ export function synthesizeSearchBriefing(
   query: string,
   results: LibrarySearchResults,
   treeNodes: SearchTreeNode[],
+  precomputedBranches?: SuggestedBranch[],
 ): SearchSynthesis {
   const terms = results.terms.length > 0 ? results.terms : extractSearchTerms(query);
-  const suggestedBranches = inferBranchProposals(query, treeNodes, results.topics);
+  const suggestedBranches =
+    precomputedBranches && precomputedBranches.length > 0
+      ? precomputedBranches
+      : inferBranchProposals(query, treeNodes, results.topics);
   const suggestedBranch = suggestedBranches[0]!;
 
   const sortedClaims = [...results.claims].sort(

@@ -5,6 +5,7 @@ export {
   DEFAULT_MODELS,
   FallbackLlm,
   GeminiLlm,
+  hasLlmConfigured,
   modelsFromEnv,
   OpenAiCompatibleLlm,
   providerFromEnv,
@@ -14,6 +15,13 @@ export {
   type Role,
   type Usage,
 } from "./llm";
+export {
+  classifyInquiry,
+  reassessTopicTaxonomyWithAi,
+  resolveInquiryBranches,
+  TaxonomySchema,
+  type TaxonomyPlan,
+} from "./taxonomist";
 export { planTopic, PlanSchema, type Plan } from "./scout";
 export { readSources, ReadingSchema, type Reading, type ReadableSource } from "./reader";
 export { scanWeb, EntitiesSchema, type FoundEntity } from "./web";
