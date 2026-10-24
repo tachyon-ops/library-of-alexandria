@@ -28,6 +28,8 @@ import {
 import {
   buildDynamicFieldArticle,
   CONTROVERSY_LABELS,
+  resolveTopicFromUrlSegments,
+  shortTopicSegment,
   TIER_LABELS,
   TIERS,
   type Controversy,
@@ -37,13 +39,20 @@ import {
   type TopicSynthesis,
 } from "@lib/core";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { researchTopic, triggerRemoteWorker, wakeWorker } from "@/app/actions";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { FieldResearchArticle } from "@/components/FieldResearchArticle";
 import { NewTopicForm } from "@/components/NewTopicForm";
 import { Tree } from "@/components/Tree";
-import { loadTree, normaliseAgePhrasing, normaliseTopicSynthesis, normaliseTopicTitle, sql } from "@/lib/data";
+import {
+  loadTree,
+  normaliseAgePhrasing,
+  normaliseTopicSynthesis,
+  normaliseTopicTitle,
+  normaliseTreeRows,
+  sql,
+} from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -107,19 +116,41 @@ export default async function TopicPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string[] }>;
   searchParams?: Promise<{ spawned?: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlugParam } = await params;
+  const slugSegments = (Array.isArray(rawSlugParam) ? rawSlugParam : [rawSlugParam])
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (slugSegments.length === 0) notFound();
+
+  const requestedPath = slugSegments.join("/");
+  const lastSegment = slugSegments[slugSegments.length - 1]!;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const db = sql();
-  let topic = await getTopicBySlug(db, slug);
-  if (!topic && slug === "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer") {
+
+  let rawTree = await listTree(db);
+  const { nodes: initialNormalisedNodes } = normaliseTreeRows(rawTree);
+  const resolved = resolveTopicFromUrlSegments(slugSegments, initialNormalisedNodes);
+  const candidateSlug = resolved.canonicalSeedSlug ?? resolved.node?.slug ?? lastSegment;
+
+  let topic =
+    (resolved.node ? await getTopicBySlug(db, resolved.node.slug) : null) ??
+    (await getTopicBySlug(db, candidateSlug)) ??
+    (await getTopicBySlug(db, lastSegment));
+
+  if (
+    !topic &&
+    (candidateSlug === "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer" ||
+      lastSegment === "fet-transfer-interval")
+  ) {
+    const canonicalSlug = "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer";
     const parent = await getTopicBySlug(db, "endometrial-receptivity-implantation-biology");
-    const dossier = ALL_SEED_DOSSIERS[slug];
+    const dossier = ALL_SEED_DOSSIERS[canonicalSlug];
     if (dossier) {
       topic = await ensureSeedTopic(db, {
-        slug,
+        slug: canonicalSlug,
         title: "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
         brief:
           "Immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus multi-month delayed transfer after a failed embryo transfer or retrieval, cryostorage duration safety at −196°C, HPO-axis washout from programmed HRT to natural ovulatory cycles, CD138 chronic endometritis clearance, and strategic optimization before transferring a final remaining embryo.",
@@ -129,13 +160,15 @@ export default async function TopicPage({
         dossier,
       });
       await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
+      rawTree = await listTree(db);
     }
   }
   if (
     !topic &&
-    (slug === "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence" ||
-      slug === "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41" ||
-      slug === "embryo-glue")
+    (candidateSlug === "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence" ||
+      lastSegment === "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41" ||
+      lastSegment === "embryo-glue" ||
+      lastSegment === "embryoglue")
   ) {
     const canonicalSlug = "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence";
     const parent = await getTopicBySlug(db, "endometrial-receptivity-implantation-biology");
@@ -152,13 +185,15 @@ export default async function TopicPage({
         dossier,
       });
       await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
+      rawTree = await listTree(db);
     }
   }
   if (
     !topic &&
-    (slug === "lifestyle-metabolic-and-environmental-fertility-optimization" ||
-      slug.includes("improve-fertility-organically-conceiving") ||
-      slug.includes("lifestyle-metabolic-health-natural-conception"))
+    (candidateSlug === "lifestyle-metabolic-and-environmental-fertility-optimization" ||
+      lastSegment === "natural-conception-lifestyle" ||
+      lastSegment.includes("improve-fertility-organically-conceiving") ||
+      lastSegment.includes("lifestyle-metabolic-health-natural-conception"))
   ) {
     const canonicalSlug = "lifestyle-metabolic-and-environmental-fertility-optimization";
     const parent = await getTopicBySlug(db, "reproductive-medicine-human-fertility");
@@ -175,6 +210,7 @@ export default async function TopicPage({
         dossier,
       });
       await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
+      rawTree = await listTree(db);
     }
   }
   if (!topic) notFound();
@@ -189,16 +225,17 @@ export default async function TopicPage({
     const endoParent = await getTopicBySlug(db, "endometrial-receptivity-implantation-biology");
     if (endoParent && topic.parentId !== endoParent.id) {
       topic = await moveTopic(db, topic.id, endoParent.id);
+      rawTree = await listTree(db);
     }
     const embryoGlueDossier =
       ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"];
     if (embryoGlueDossier && topic.status !== "ready") {
       await seedTopicDossier(db, topic.id, embryoGlueDossier);
       topic = (await getTopicBySlug(db, topic.slug)) ?? topic;
+      rawTree = await listTree(db);
     }
   } else if (topic.depth >= 4) {
     // Self-heal any leaf topic that was previously placed under a narrow sibling depth>=4 inquiry
-    const rawTree = await listTree(db);
     const parentNode = rawTree.find((r) => r.id === topic!.parentId);
     if (parentNode && parentNode.depth >= 4) {
       const treeNodes: SearchTreeNode[] = rawTree.map((r) => ({
@@ -223,11 +260,27 @@ export default async function TopicPage({
       });
       if (assessment.shouldMove && assessment.recommendedParentId && assessment.recommendedParentId !== topic.parentId) {
         topic = await moveTopic(db, topic.id, assessment.recommendedParentId);
+        rawTree = await listTree(db);
       }
     }
   }
 
-  const [roots, ancestors, children, connectedTopics, rawClaims, rawDbSources, entities, rawMilestones, rawDebates, open, jobs] = await Promise.all([
+  const { byId: nestedById, byRawSlug: nestedBySlug } = normaliseTreeRows(rawTree);
+  const toNestedPath = (rawSlug: string, id?: string | null): string => {
+    if (id && nestedById.has(id)) return nestedById.get(id)!;
+    if (nestedBySlug.has(rawSlug)) return nestedBySlug.get(rawSlug)!;
+    return shortTopicSegment(rawSlug, normaliseTopicTitle(topic.title));
+  };
+
+  const canonicalNestedSlug = toNestedPath(topic.slug, topic.id);
+  if (requestedPath !== canonicalNestedSlug) {
+    const spawnedQuery = resolvedSearchParams?.spawned
+      ? `?spawned=${encodeURIComponent(resolvedSearchParams.spawned)}`
+      : "";
+    redirect(`/topic/${canonicalNestedSlug}${spawnedQuery}`);
+  }
+
+  const [roots, rawAncestors, rawChildren, connectedTopics, rawClaims, rawDbSources, entities, rawMilestones, rawDebates, open, jobs] = await Promise.all([
     loadTree(),
     getAncestors(db, topic.id),
     getChildren(db, topic.id),
@@ -240,6 +293,15 @@ export default async function TopicPage({
     openJobCount(db, topic.id),
     recentJobs(db, topic.id, 8),
   ]);
+
+  const ancestors = rawAncestors.map((a) => ({
+    ...a,
+    slug: toNestedPath(a.slug, a.id),
+  }));
+  const children = rawChildren.map((c) => ({
+    ...c,
+    slug: toNestedPath(c.slug, c.id),
+  }));
 
   const isLegacyFetIntervalTopic =
     topic.slug === "advanced-maternal-age-pregnancy-after-40-frontier-studies-on-40-fertility-and-ne-41";
@@ -281,10 +343,12 @@ export default async function TopicPage({
     isLegacyFetIntervalTopic
       ? {
           ...l,
+          slug: toNestedPath(l.slug, l.id),
           note: "Connects immediate next-menstrual-cycle Frozen Embryo Transfer versus a 1–3 month interval for a vitrified blastocyst at −196°C with modifiable endometrial receptivity factors.",
         }
       : {
           ...l,
+          slug: toNestedPath(l.slug, l.id),
           note: l.note ? normaliseAgePhrasing(l.note) : null,
         },
   );
@@ -412,7 +476,7 @@ export default async function TopicPage({
   indexTreeNodes(roots, null);
 
   const spawnedBranches = spawnedSlugs
-    .map((s) => treeNodeBySlug.get(s))
+    .map((s) => treeNodeBySlug.get(toNestedPath(s)) ?? treeNodeBySlug.get(s))
     .filter((n): n is { slug: string; title: string; parentTitle: string | null } => Boolean(n));
 
   const monograph = buildDynamicFieldArticle({
@@ -435,7 +499,7 @@ export default async function TopicPage({
     <main className="topic-layout">
       <AutoRefresh active={busy} />
       <nav className="side" aria-label="Library tree">
-        <Tree roots={roots} activeSlug={topic.slug} />
+        <Tree roots={roots} activeSlug={canonicalNestedSlug} />
       </nav>
 
       <article className="topic">
@@ -449,13 +513,13 @@ export default async function TopicPage({
             </div>
             <ul className="spawned-branches-list">
               {spawnedBranches.map((b, idx) => (
-                <li key={b.slug} className={b.slug === topic.slug ? "is-current" : ""}>
+                <li key={b.slug} className={b.slug === canonicalNestedSlug ? "is-current" : ""}>
                   <span className="spawned-index">{idx + 1}.</span>
                   <Link href={`/topic/${b.slug}?spawned=${encodeURIComponent(spawnedSlugs.join(","))}`}>
                     {b.title}
                   </Link>
                   {b.parentTitle && <span className="muted small"> · under {b.parentTitle}</span>}
-                  {b.slug === topic.slug && <span className="spawned-current-tag">viewing</span>}
+                  {b.slug === canonicalNestedSlug && <span className="spawned-current-tag">viewing</span>}
                 </li>
               ))}
             </ul>
@@ -511,7 +575,7 @@ export default async function TopicPage({
                 </span>
                 {!activeJob && open > 0 && (
                   <form action={wakeWorker} style={{ margin: 0 }}>
-                    <input type="hidden" name="slug" value={topic.slug} />
+                    <input type="hidden" name="slug" value={canonicalNestedSlug} />
                     <button type="submit" className="small">
                       Wake worker
                     </button>

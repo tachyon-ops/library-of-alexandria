@@ -1,6 +1,7 @@
 import { resolveInquiryBranches } from "@lib/agents";
 import {
   CONTROVERSY_LABELS,
+  sanitizePublicInquiry,
   TIER_LABELS,
   synthesizeSearchBriefing,
   type Controversy,
@@ -11,7 +12,7 @@ import { listTree, logUsage, searchLibrary } from "@lib/db";
 import Link from "next/link";
 import { organizeInquiry } from "@/app/actions";
 import { LibrarySearchForm } from "@/components/LibrarySearchForm";
-import { normaliseAgePhrasing, normaliseTopicTitle, sql } from "@/lib/data";
+import { normaliseAgePhrasing, normaliseTopicTitle, normaliseTreeRows, sql } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export default async function SearchPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const params = await searchParams;
-  const query = (params.q ?? "").trim();
+  const query = sanitizePublicInquiry((params.q ?? "").trim());
   const db = sql();
 
   const [rawTree, rawResults] = await Promise.all([
@@ -42,16 +43,23 @@ export default async function SearchPage({
     query ? searchLibrary(db, query, 24) : Promise.resolve(null),
   ]);
 
-  const treeNodes: SearchTreeNode[] = rawTree.map((r) => ({
+  const { nodes: normalisedTree, byId: pathById, byRawSlug: pathBySlug } = normaliseTreeRows(rawTree);
+  const toNestedPath = (rawSlug: string | null | undefined, id?: string | null): string => {
+    if (id && pathById.has(id)) return pathById.get(id)!;
+    if (rawSlug && pathBySlug.has(rawSlug)) return pathBySlug.get(rawSlug)!;
+    return rawSlug ?? "";
+  };
+
+  const treeNodes: SearchTreeNode[] = normalisedTree.map((r) => ({
     id: r.id,
     parentId: r.parentId,
     slug: r.slug,
-    title: normaliseTopicTitle(r.title),
-    brief: r.brief ? normaliseAgePhrasing(r.brief) : null,
+    title: r.title,
+    brief: r.brief,
     depth: r.depth,
   }));
 
-  const results: LibrarySearchResults | null = rawResults
+  const baseResults: LibrarySearchResults | null = rawResults
     ? {
         ...rawResults,
         topics: rawResults.topics.map((t) => ({
@@ -79,8 +87,8 @@ export default async function SearchPage({
     : null;
 
   const aiBranches =
-    results && query
-      ? await resolveInquiryBranches(query, treeNodes, results.topics, {
+    baseResults && query
+      ? await resolveInquiryBranches(query, treeNodes, baseResults.topics, {
           onUsage: (u) => {
             void logUsage(db, {
               jobId: null,
@@ -95,8 +103,71 @@ export default async function SearchPage({
         })
       : undefined;
 
-  const synthesis =
-    results && query ? synthesizeSearchBriefing(query, results, treeNodes, aiBranches) : null;
+  const rawSynthesis =
+    baseResults && query ? synthesizeSearchBriefing(query, baseResults, treeNodes, aiBranches) : null;
+
+  const results: LibrarySearchResults | null = baseResults
+    ? {
+        ...baseResults,
+        topics: baseResults.topics.map((t) => ({
+          ...t,
+          slug: toNestedPath(t.slug, t.id),
+        })),
+        claims: baseResults.claims.map((c) => ({
+          ...c,
+          topicSlug: toNestedPath(c.topicSlug),
+        })),
+        sources: baseResults.sources.map((s) => ({
+          ...s,
+          topics: s.topics.map((t) => ({
+            ...t,
+            slug: toNestedPath(t.slug),
+          })),
+        })),
+        entities: baseResults.entities.map((e) => ({
+          ...e,
+          topicSlug: toNestedPath(e.topicSlug),
+        })),
+      }
+    : null;
+
+  const mapBranchSlugs = <
+    B extends {
+      parentId: string | null;
+      parentSlug: string | null;
+      existingTopicId?: string | null;
+      existingTopicSlug?: string | null;
+    },
+  >(
+    b: B,
+  ): B => ({
+    ...b,
+    parentSlug: b.parentSlug ? toNestedPath(b.parentSlug, b.parentId) : null,
+    existingTopicSlug: b.existingTopicSlug
+      ? toNestedPath(b.existingTopicSlug, b.existingTopicId)
+      : null,
+  });
+
+  const synthesis = rawSynthesis
+    ? {
+        ...rawSynthesis,
+        citations: rawSynthesis.citations.map((c) =>
+          c.isInternal && c.url.startsWith("/topic/")
+            ? { ...c, url: `/topic/${toNestedPath(c.url.slice("/topic/".length))}` }
+            : c,
+        ),
+        matchedLevers: rawSynthesis.matchedLevers.map((l) => ({
+          ...l,
+          topicSlug: toNestedPath(l.topicSlug),
+        })),
+        matchedBenchmarks: rawSynthesis.matchedBenchmarks.map((bm) => ({
+          ...bm,
+          topicSlug: toNestedPath(bm.topicSlug),
+        })),
+        suggestedBranch: mapBranchSlugs(rawSynthesis.suggestedBranch),
+        suggestedBranches: rawSynthesis.suggestedBranches.map(mapBranchSlugs),
+      }
+    : null;
 
   return (
     <main className="search-page">
@@ -273,9 +344,21 @@ export default async function SearchPage({
                             .join(" · ")}
                         </span>
                       </div>
-                      {s.abstract && (
+                      {(s.doi || s.url) && (
                         <p className="search-source-abstract muted small">
-                          {s.abstract.length > 280 ? `${s.abstract.slice(0, 280)}…` : s.abstract}
+                          {s.doi ? (
+                            <>
+                              <a href={`https://doi.org/${s.doi}`} target="_blank" rel="noopener noreferrer">
+                                DOI: {s.doi}
+                              </a>
+                              {" · "}
+                            </>
+                          ) : null}
+                          {s.url ? (
+                            <a href={s.url} target="_blank" rel="noopener noreferrer">
+                              Read abstract &amp; full text at official source ↗
+                            </a>
+                          ) : null}
                         </p>
                       )}
                       {s.topics.length > 0 && (
