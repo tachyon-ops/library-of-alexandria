@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { z } from "zod";
 import {
+  classifyInquiry,
   EntitiesSchema,
   FallbackLlm,
   GeminiLlm,
@@ -9,8 +10,11 @@ import {
   PlanSchema,
   providerFromEnv,
   ReadingSchema,
+  reassessTopicTaxonomyWithAi,
+  resolveInquiryBranches,
   ReviewSchema,
   reviewTopic,
+  TaxonomySchema,
   type Llm,
   type Usage,
 } from "@lib/agents";
@@ -267,6 +271,106 @@ describe("agent validation", () => {
     };
     const chained = new FallbackLlm(rateLimitedPrimary, unauthorizedSecondary);
     await expect(chained.structured({ role: "scout", system: "s", prompt: "p", schema: PlanSchema })).rejects.toThrow(/Gemini 429/);
+  });
+
+  it("classifies inquiries and re-routes depth-4 sibling misplacements with the fast AI Taxonomist role", async () => {
+    expect(modelsFromEnv({ GEMINI_API_KEY: "g-key" } as never).taxonomist).toBe("gemini-2.5-flash-lite");
+    expect(modelsFromEnv({ ANTHROPIC_API_KEY: "a-key" } as never).taxonomist).toBe("claude-3-5-haiku-latest");
+
+    const treeNodes = [
+      {
+        id: "t-root",
+        parentId: null,
+        slug: "reproductive-medicine-human-fertility",
+        title: "Reproductive Medicine & Human Fertility",
+        brief: "Root fertility branch",
+        depth: 2,
+      },
+      {
+        id: "t-art",
+        parentId: "t-root",
+        slug: "assisted-reproductive-technology-gamete-donation",
+        title: "Assisted Reproductive Technology & Gamete Donation",
+        brief: "IVF, ICSI, blastocyst culture",
+        depth: 3,
+      },
+      {
+        id: "t-endo",
+        parentId: "t-root",
+        slug: "endometrial-receptivity-implantation-biology",
+        title: "Endometrial Receptivity & Implantation Biology",
+        brief: "Endometrial physiology, implantation window, transfer media",
+        depth: 3,
+      },
+      {
+        id: "t-grading",
+        parentId: "t-art",
+        slug: "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the",
+        title: "Blastocyst Morphological Grading (Gardner AA/BB System)",
+        brief: "ICM and trophectoderm grading",
+        depth: 4,
+      },
+    ];
+
+    const taxonomistCalls: string[] = [];
+    const mockTaxonomistLlm: Llm = {
+      async structured<T>(args: { role: string; schema: z.ZodType<T> }): Promise<T> {
+        taxonomistCalls.push(args.role);
+        if ((args.schema as unknown) === TaxonomySchema) {
+          return args.schema.parse({
+            branches: [
+              {
+                title: "Uterine Peristalsis, Atosiban Oxytocin Receptor Antagonism & Embryo Transfer Contractility",
+                brief: "Myometrial junctional-zone wave frequency during embryo transfer and oxytocin/vasopressin V1a/OTR blockade with atosiban.",
+                // Even if an LLM accidentally returns a depth-4 index (3), classifyInquiry promotes it to its depth-3 umbrella or keeps depth<=3
+                parentIndex: 2,
+                existingNodeIndex: -1,
+                crossLinkIndexes: [1],
+                reason: "Myometrial contractility and atosiban transfer modulation govern endometrial implantation mechanics.",
+              },
+            ],
+          });
+        }
+        throw new Error("unexpected schema");
+      },
+      async webResearch() {
+        return { text: "", citations: [] };
+      },
+    };
+
+    const branches = await classifyInquiry(mockTaxonomistLlm, {
+      query: "Does atosiban stop uterine contractions during embryo transfer?",
+      treeNodes,
+    });
+    expect(taxonomistCalls).toEqual(["taxonomist"]);
+    expect(branches).toHaveLength(1);
+    expect(branches[0]!.parentId).toBe("t-endo");
+    expect(branches[0]!.title).toContain("Atosiban");
+    expect(branches[0]!.crossLinkIds).toEqual(["t-art"]);
+
+    // When a novel topic with zero keyword overlap is misplaced under a depth-4 sibling node, reassessTopicTaxonomyWithAi consults the AI Taxonomist
+    const misplacedAtosiban = {
+      id: "t-atosiban-leaf",
+      parentId: "t-grading",
+      slug: "atosiban-myometrial-v1a-blockade",
+      title: "Atosiban Myometrial V1a Blockade",
+      brief: "Oxytocin and vasopressin receptor antagonism in junctional-zone peristalsis",
+      depth: 5,
+    };
+    const reassessment = await reassessTopicTaxonomyWithAi(
+      mockTaxonomistLlm,
+      misplacedAtosiban,
+      [...treeNodes, misplacedAtosiban],
+    );
+    expect(reassessment.shouldMove).toBe(true);
+    expect(reassessment.recommendedParentId).toBe("t-endo");
+    expect(reassessment.reason).toContain("AI Taxonomist");
+
+    // Offline / no-key fallback returns deterministic branches without throwing
+    const fallbackBranches = await resolveInquiryBranches("Embryo glue", treeNodes, [], {
+      env: {} as NodeJS.ProcessEnv,
+    });
+    expect(fallbackBranches[0]!.parentId).toBe("t-endo");
   });
 });
 

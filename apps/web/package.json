@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@lib/agents": "*",
     "@lib/core": "*",
     "@lib/db": "*",
     "next": "^16.4.0",

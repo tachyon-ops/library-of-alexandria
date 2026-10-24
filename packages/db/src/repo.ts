@@ -1,4 +1,5 @@
 import {
+  buildChildSlug,
   extractSearchTerms,
   slugify,
   type Controversy,
@@ -34,10 +35,10 @@ export interface TreeNode {
 
 export async function createTopic(
   sql: Sql,
-  input: { title: string; brief?: string | null; parentId?: string | null },
+  input: { title: string; brief?: string | null; parentId?: string | null; slug?: string | null },
 ): Promise<Topic> {
   const parent = input.parentId ? await getTopic(sql, input.parentId) : null;
-  const base = slugify(parent ? `${parent.slug}-${input.title}` : input.title);
+  const base = input.slug ? slugify(input.slug) : buildChildSlug(input.title, parent?.slug);
   let slug = base;
   for (let n = 2; (await sql`SELECT 1 FROM topics WHERE slug = ${slug}`).length > 0; n++) slug = `${base}-${n}`;
   const [row] = await sql<Topic[]>`
@@ -102,6 +103,18 @@ const SLUG_PAIRS: [string, string][] = [
   [
     "reproductive-medicine-human-fertility-improve-fertility-organically-conceiving-b",
     "lifestyle-metabolic-and-environmental-fertility-optimization",
+  ],
+  [
+    "reproductive-medicine-human-fertility-bb-aa-1pn-2pn-what-grading-methods-are-the-41",
+    "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+  ],
+  [
+    "embryo-glue",
+    "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+  ],
+  [
+    "endometrial-receptivity-implantation-biology-embryo-glue",
+    "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
   ],
 ];
 
@@ -409,24 +422,7 @@ export async function topicSources(sql: Sql, topicId: string): Promise<SourceVie
   if (inherited.length > 0) {
     return inherited.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
   }
-  const fromAncestors = await sql<SourceView[]>`
-    WITH RECURSIVE up AS (
-      SELECT parent_id AS id FROM topics WHERE id = ${topicId} AND parent_id IS NOT NULL
-      UNION ALL
-      SELECT t.parent_id AS id FROM topics t JOIN up ON t.id = up.id WHERE t.parent_id IS NOT NULL
-    )
-    SELECT DISTINCT ON (s.id)
-      s.id, s.kind, s.origin, s.title,
-      COALESCE(s.url, CASE WHEN s.doi IS NOT NULL THEN 'https://doi.org/' || s.doi ELSE NULL END) AS url,
-      s.doi, s.venue, s.year, s.authors, s.cited_by,
-      COALESCE(s.design, s.declared_design) AS design
-    FROM sources s
-    WHERE s.id IN (
-      SELECT ts.source_id FROM topic_sources ts WHERE ts.topic_id IN (SELECT id FROM up)
-      UNION
-      SELECT cs.source_id FROM claim_sources cs JOIN claims c ON c.id = cs.claim_id WHERE c.topic_id IN (SELECT id FROM up) AND NOT c.superseded
-    )`;
-  return fromAncestors.sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || (b.citedBy ?? 0) - (a.citedBy ?? 0));
+  return [];
 }
 
 /** Stores sources once (matched by origin id or DOI) and links them to the topic. Returns stored ids. */
@@ -707,15 +703,15 @@ export async function claimNextJob(sql: Sql): Promise<Job | null> {
       WHERE j.status = 'queued' AND j.run_after <= now()
       ORDER BY
         COALESCE((j.payload->>'autoSpawned')::boolean, false) ASC,
-        COALESCE(t.depth, 0) ASC,
         CASE j.kind
-          WHEN 'harvest' THEN 0
-          WHEN 'scan'    THEN 1
-          WHEN 'review'  THEN 2
-          WHEN 'extract' THEN 3
-          WHEN 'plan'    THEN 4
+          WHEN 'plan'    THEN 0
+          WHEN 'harvest' THEN 1
+          WHEN 'scan'    THEN 2
+          WHEN 'review'  THEN 3
+          WHEN 'extract' THEN 4
           ELSE 5
         END,
+        CASE WHEN COALESCE((j.payload->>'autoSpawned')::boolean, false) THEN COALESCE(t.depth, 0) ELSE 0 END ASC,
         COALESCE((j.payload->>'read')::int, 0) DESC,
         j.run_after,
         j.id
@@ -805,6 +801,13 @@ export async function logUsage(
   await sql`
     INSERT INTO llm_usage (job_id, role, model, input_tokens, output_tokens, web_searches)
     VALUES (${u.jobId}, ${u.role}, ${u.model}, ${u.inputTokens}, ${u.outputTokens}, ${u.webSearches})`;
+}
+
+export async function recordUsage(
+  sql: Sql,
+  u: { jobId?: string | null; role: string; model: string; inputTokens: number; outputTokens: number; webSearches: number },
+): Promise<void> {
+  await logUsage(sql, { ...u, jobId: u.jobId ?? null });
 }
 
 export async function llmCallsToday(sql: Sql): Promise<number> {

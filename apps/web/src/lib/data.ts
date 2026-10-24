@@ -36,6 +36,12 @@ const LEGACY_TITLE_MAP: Record<string, string> = {
     "Blastocyst Morphological Grading (Gardner AA/BB) & Zygote Pronuclear Scoring (2PN/1PN)",
   "Consecutive or Spaced Out +40s yo female IVF Cycles":
     "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
+  "Embryo Glue":
+    "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
+  "Embryo glue":
+    "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
+  "EmbryoGlue":
+    "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
 };
 
 /**

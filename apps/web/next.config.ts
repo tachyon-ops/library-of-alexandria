@@ -9,7 +9,7 @@ try {
 
 const config: NextConfig = {
   // Workspace packages ship TypeScript source; Next compiles them.
-  transpilePackages: ["@lib/core", "@lib/db"],
+  transpilePackages: ["@lib/agents", "@lib/core", "@lib/db"],
   serverExternalPackages: ["postgres"],
   outputFileTracingRoot: root,
   turbopack: { root },

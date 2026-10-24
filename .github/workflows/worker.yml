@@ -2,6 +2,8 @@ name: Research Worker
 
 on:
   workflow_dispatch:
+  push:
+    branches: [master, develop]
   schedule:
     - cron: "*/15 * * * *"
 
@@ -31,6 +33,7 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       GITHUB_MODELS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+      MODEL_TAXONOMIST: ${{ secrets.MODEL_TAXONOMIST }}
       MODEL_SCOUT: ${{ secrets.MODEL_SCOUT }}
       MODEL_READER: ${{ secrets.MODEL_READER }}
       MODEL_SKEPTIC: ${{ secrets.MODEL_SKEPTIC }}

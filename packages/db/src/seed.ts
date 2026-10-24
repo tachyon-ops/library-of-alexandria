@@ -278,13 +278,19 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 slug: "endometrial-receptivity-implantation-biology",
                 title: "Endometrial Receptivity & Implantation Biology",
                 brief:
-                  "Endometrial physiology, natural-cycle versus programmed embryo transfer, inter-transfer intervals (immediate vs. delayed FET and endometrial reset), recurrent implantation failure, reproductive immunology, and maternal-fetal microRNA exchange.",
+                  "Endometrial physiology, natural-cycle versus programmed embryo transfer, hyaluronan-enriched adherence media (EmbryoGlue), inter-transfer intervals (immediate vs. delayed FET and endometrial reset), recurrent implantation failure, reproductive immunology, and maternal-fetal microRNA exchange.",
                 children: [
                   {
                     slug: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
                     title: "Inter-Transfer Interval: Immediate vs. Delayed Frozen Embryo Transfer (FET) & Endometrial Reset",
                     brief:
                       "Immediate next-menstrual-cycle Frozen Embryo Transfer (FET) versus multi-month delayed transfer after a failed embryo transfer or retrieval, cryostorage duration safety at −196°C, HPO-axis washout from programmed HRT to natural ovulatory cycles, CD138 chronic endometritis clearance, and strategic optimization before transferring a final remaining embryo.",
+                  },
+                  {
+                    slug: "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+                    title: "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
+                    brief:
+                      "Randomised clinical trials, Cochrane meta-analyses, and biophysical mechanisms of hyaluronan-enriched embryo transfer medium (EmbryoGlue, 0.5 mg/mL hyaluronan) versus standard low-hyaluronan transfer media: CD44 and RHAMM receptor-mediated embryo–endometrial apposition, luminal fluid viscosity, live-birth and clinical pregnancy rates across fresh and frozen-thawed embryo transfers (FET), recurrent implantation failure (RIF) and maternal age ≥35 subgroups, multiple pregnancy risk, and ESHRE add-on guidance.",
                   },
                 ],
               },
@@ -1038,6 +1044,18 @@ export const CROSS_DISCIPLINE_LINKS: {
     slugB: "sperm-chromatin-integrity-dna-fragmentation-diagnostics",
     relation: "bridges",
     note: "Connects 24–36 hour short ejaculatory abstinence, scrotal thermoregulation (<34.5°C), circadian sleep (7–8h), and L-carnitine/NAC/lycopene supplementation directly to Sperm DNA Fragmentation Index (DFI) reduction.",
+  },
+  {
+    slugA: "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+    slugB: "inter-transfer-interval-immediate-vs-delayed-frozen-embryo-transfer",
+    relation: "intersects",
+    note: "Links 0.5 mg/mL hyaluronan adherence media (EmbryoGlue) in fresh vs. vitrified-warmed FET cycles with post-failure endometrial reset and single-blastocyst transfer protocols.",
+  },
+  {
+    slugA: "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+    slugB: "assisted-reproductive-technology-gamete-donation",
+    relation: "bridges",
+    note: "Connects embryology laboratory transfer media rheology (0.5 mg/mL vs. 0.125 mg/mL hyaluronan) and elective single embryo transfer (eSET) policy directly to luminal endometrial apposition.",
   },
 ];
 
