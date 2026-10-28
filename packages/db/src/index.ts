@@ -2,6 +2,7 @@ export { createLogicalBackup, exportLogicalSqlDump, type LogicalBackupResult } f
 export { getSql, type Sql } from "./client";
 export { ECONOMICS_FINANCE_DOSSIERS } from "./economics-finance-dossiers";
 export { FERTILITY_SEED_DOSSIERS } from "./fertility-dossiers";
+export { LONGEVITY_SEED_DOSSIERS } from "./longevity-dossiers";
 export { MATH_SEED_DOSSIERS } from "./math-dossiers";
 export { migrate } from "./migrate";
 export { PHYSICS_CLASSICAL_DOSSIERS } from "./physics-classical-dossiers";
