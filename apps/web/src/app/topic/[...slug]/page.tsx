@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { reassessTopicTaxonomyWithAi } from "@lib/agents";
 import {
   ALL_SEED_DOSSIERS,
+  ENCYCLOPAEDIC_TRUNKS,
   ensureSeedTopic,
   getAncestors,
   getChildren,
@@ -23,6 +24,7 @@ import {
   type EntityView,
   type MilestoneView,
   type SeedDossier,
+  type SeedNode,
   type SourceView,
   type TopicLinkView,
 } from "@lib/db";
@@ -404,6 +406,43 @@ export default async function TopicPage({
         dossier,
       });
       await seedTopicDossier(db, topic.id, dossier, { populateTopicFields: false });
+      rawTree = await listTree(db);
+    }
+  }
+  if (!topic) {
+    const findLineage = (nodes: SeedNode[], target: string, trail: SeedNode[] = []): SeedNode[] | null => {
+      for (const n of nodes) {
+        const nextTrail = [...trail, n];
+        if (n.slug === target) return nextTrail;
+        if (n.children) {
+          const found = findLineage(n.children, target, nextTrail);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    const lineage = findLineage(ENCYCLOPAEDIC_TRUNKS, candidateSlug) ?? findLineage(ENCYCLOPAEDIC_TRUNKS, lastSegment);
+    if (lineage && lineage.length > 0) {
+      let parentId: string | null = null;
+      let currentDepth = 0;
+      for (const seedNode of lineage) {
+        const dossier = ALL_SEED_DOSSIERS[seedNode.slug];
+        const ensured = await ensureSeedTopic(db, {
+          slug: seedNode.slug,
+          title: seedNode.title,
+          brief: seedNode.brief,
+          parentId,
+          depth: currentDepth,
+          summary: dossier?.summary ?? `${seedNode.title} investigates ${seedNode.brief}`,
+          dossier,
+        });
+        if (dossier) {
+          await seedTopicDossier(db, ensured.id, dossier, { populateTopicFields: false });
+        }
+        parentId = ensured.id;
+        currentDepth = ensured.depth + 1;
+        topic = ensured;
+      }
       rawTree = await listTree(db);
     }
   }
