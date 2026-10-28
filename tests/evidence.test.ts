@@ -203,6 +203,81 @@ describe("helpers", () => {
     const anyWord = lookupGlossaryTerm("uncharacteristically");
     expect(anyWord).not.toBeNull();
     expect(anyWord?.synopsis.length).toBeGreaterThan(10);
+
+    // Geroscience & Epigenetic Clocks: DNAm, CpG, GrimAge2, DunedinPACE, OSKM, uPAR, PGC-1α
+    const dnam = lookupGlossaryTerm(
+      "DNAm",
+      "CpG & DNAm (Cytosine-phosphate-Guanine Dinucleotide & DNA Methylation): Chemical methyl tags attached to cytosine bases along DNA.",
+    );
+    expect(dnam?.term).toContain("DNA Methylation");
+    expect(dnam?.synopsis).toContain("5-methylcytosine");
+    expect(dnam?.synopsis).not.toContain('English term ("dnam")');
+
+    const cpg = lookupGlossaryTerm("CpG");
+    expect(cpg?.term).toContain("CpG Dinucleotides");
+    expect(cpg?.synopsis).toContain("Cytosine-phosphate-Guanine");
+
+    const grimage = lookupGlossaryTerm("GrimAge2");
+    expect(grimage?.term).toContain("GrimAge2");
+    expect(grimage?.synopsis).toContain("GDF-15");
+
+    const dunedin = lookupGlossaryTerm("DunedinPACE");
+    expect(dunedin?.term).toContain("DunedinPACE");
+    expect(dunedin?.synopsis).toContain("velocity of biological aging");
+
+    const oskm = lookupGlossaryTerm("OSKM");
+    expect(oskm?.term).toContain("Yamanaka");
+    expect(oskm?.synopsis).toContain("Oct4, Sox2, Klf4, c-Myc");
+
+    const upar = lookupGlossaryTerm("uPAR");
+    expect(upar?.term).toContain("uPAR CAR-T");
+    expect(upar?.synopsis).toContain("Urokinase Plasminogen Activator Receptor");
+
+    // Greek-letter biomarkers & fertility terms
+    const pgc1a = lookupGlossaryTerm("PGC-1α");
+    expect(pgc1a?.term).toContain("PGC-1α");
+    expect(pgc1a?.synopsis).toContain("mitochondrial biogenesis");
+
+    const tnfa = lookupGlossaryTerm("TNF-α");
+    expect(tnfa?.term).toContain("TNF-α");
+
+    const hnf4a = lookupGlossaryTerm("HNF-4α");
+    expect(hnf4a?.term).toContain("HNF-4α");
+    expect(hnf4a?.synopsis).toContain("Sex Hormone-Binding Globulin");
+
+    const embryoglue = lookupGlossaryTerm("EmbryoGlue");
+    expect(embryoglue?.term).toContain("EmbryoGlue");
+    expect(embryoglue?.synopsis).toContain("hyaluronan");
+
+    const myoInositol = lookupGlossaryTerm("myo-inositol");
+    expect(myoInositol?.term).toContain("Myo-Inositol");
+    expect(myoInositol?.synopsis).not.toContain('modifying "inositol"');
+
+    const presto = lookupGlossaryTerm("PRESTO");
+    expect(presto?.term).toContain("PRESTO");
+    expect(presto?.synopsis).not.toContain('modifying "sto"');
+
+    // ClinicalTrials.gov registry IDs & inline paired/equation acronym definitions
+    const nct = lookupGlossaryTerm("NCT00427193");
+    expect(nct?.domain).toBe("Clinical Trial Registry");
+    expect(nct?.synopsis).toContain("ClinicalTrials.gov");
+
+    const inlinePaired = lookupGlossaryTerm(
+      "Q2",
+      "Q1 & Q2 (First-Quartile Control & Second-Quartile Intervention): Custom cohort stratification used in this pilot protocol.",
+    );
+    expect(inlinePaired?.term).toContain("Second-Quartile Intervention (Q2)");
+    expect(inlinePaired?.synopsis).toContain("Custom cohort stratification");
+
+    // Regression checks against bogus morphological prefix splits and circular fallbacks
+    for (const token of ["pregnancy", "proteins", "Cytosine", "methylation", "rates", "species"]) {
+      const entry = lookupGlossaryTerm(token);
+      expect(entry).not.toBeNull();
+      expect(entry?.synopsis).not.toContain("English term (");
+      expect(entry?.synopsis).not.toContain("modifying");
+      expect(entry?.synopsis).not.toContain('Base form: "rat"');
+      expect(entry?.synopsis).not.toContain('Base form: "specy"');
+    }
   });
   it("extracts search terms, decomposes multi-topic questions into canonical branches, and synthesises grounded briefings", () => {
     expect(extractSearchTerms("What is the evidence on rapamycin for ovarian reserve after 40?")).toEqual([
