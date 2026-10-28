@@ -1058,6 +1058,7 @@ export async function isSeedComplete(
     dossierSlugs: string[];
     dossierMinClaims: number;
     dossierMinSources: number;
+    dossierMinControversies?: number;
   },
 ): Promise<boolean> {
   if (expectation.slugs.length === 0) return false;
@@ -1067,6 +1068,7 @@ export async function isSeedComplete(
     readyDossiers: number;
     dossierClaims: number;
     dossierSources: number;
+    dossierControversies: number;
   }[]>`
     SELECT
       (SELECT count(*)::int FROM topics WHERE slug = ANY(${expectation.slugs}::text[])) AS matched_slugs,
@@ -1089,14 +1091,21 @@ export async function isSeedComplete(
         FROM topic_sources ts
         JOIN topics t ON t.id = ts.topic_id
         WHERE t.slug = ANY(${expectation.dossierSlugs}::text[])
-      ) AS dossier_sources`;
+      ) AS dossier_sources,
+      (
+        SELECT count(*)::int
+        FROM controversies cv
+        JOIN topics t ON t.id = cv.topic_id
+        WHERE t.slug = ANY(${expectation.dossierSlugs}::text[])
+      ) AS dossier_controversies`;
   if (!row) return false;
   return (
     row.matchedSlugs >= expectation.slugs.length &&
     row.totalLinks >= expectation.minLinks &&
     row.readyDossiers >= expectation.dossierSlugs.length &&
     row.dossierClaims >= expectation.dossierMinClaims &&
-    row.dossierSources >= expectation.dossierMinSources
+    row.dossierSources >= expectation.dossierMinSources &&
+    row.dossierControversies >= (expectation.dossierMinControversies ?? 0)
   );
 }
 

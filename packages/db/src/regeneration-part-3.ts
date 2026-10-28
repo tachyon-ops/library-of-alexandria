@@ -516,6 +516,11 @@ export const REGENERATION_PART_3_DOSSIERS: Record<string, SeedDossier> = {
         note: "Prolonged Mitogenic Stimulation vs. Ventricular Arrhythmia & Dedifferentiation Risk: While transient or graded Hippo inhibition (AAV9-SAV1 shRNA in Liu et al., Sci Transl Med 2021; single-dose Agrin in Bassat et al., Nature 2017) improved porcine and murine LVEF without fatal arrhythmias, persistent viral overexpression of microRNA-199a in pig hearts (Gabisonia et al., Nature 2019) or chronic unrestrained YAP5SA/caERBB2 expression causes progressive sarcomere dissolution, accumulation of poorly differentiated mononucleated myoblasts, and fatal ventricular fibrillation — proving that clinical cardiac regeneration requires tightly bounded pulse kinetics or self-limiting adaptor knockdown.",
         claimIndexes: [0, 1, 3],
       },
+      {
+        kind: "contested",
+        note: "The Piero Anversa c-Kit+ Cardiac Stem Cell Scandal (31 Retractions) & Molkentin (Nature 2014) Lineage-Tracing Refutation: For over a decade (2001–2014), cardiac regenerative medicine was diverted by claims from Piero Anversa's laboratory (New York Medical College / Harvard Medical School & Brigham and Women's Hospital; Beltrami, Anversa et al., Cell 2003) that adult mammalian hearts harbor resident c-Kit+ multipotent cardiac stem cells that regenerate myocardium after infarction — spawning the SCIPIO clinical trial and hundreds of millions of dollars in NIH funding. Rigorous genetic Cre/loxP lineage tracing by Jeffery Molkentin's lab (van Berlo et al., Nature 2014; doi:10.1038/nature13309) and Bin Zhou's lab (Sultana et al., Circulation 2015) proved that endogenous c-Kit+ cells generate <0.03% of new cardiomyocytes (merely forming endothelial cells), Harvard/Brigham requested the retraction of 31 Anversa papers in 2018 for data fabrication and paid $10M to settle DOJ False Claims Act charges, and the NIA halted the CONCERT-HF c-Kit trial — establishing that true adult heart regeneration must come from dividing pre-existing cardiomyocytes (via Hippo–YAP/TAZ, Agrin, or metabolic reprogramming) rather than nonexistent c-Kit+ cardiac stem cells.",
+        claimIndexes: [0, 1],
+      },
     ],
   },
 

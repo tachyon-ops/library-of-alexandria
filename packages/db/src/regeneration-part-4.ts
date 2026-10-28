@@ -382,6 +382,11 @@ export const REGENERATION_PART_4_DOSSIERS: Record<string, SeedDossier> = {
         note: "Systemic Pro-Angiogenic Therapy vs. Occult Tumor Progression & Vascular Leakage: Historically, clinical medicine viewed VEGF-A through the lens of oncology (anti-VEGF bevacizumab to starve tumors) and ophthalmology (anti-VEGF ranibizumab/aflibercept for wet AMD), raising concern that systemic VEGF elevation or NAD+-driven neovascularization might accelerate occult neoplasms or cause vascular edema. However, Grunewald & Keshet (Science 2021) demonstrated that physiological (~2-fold) VEGF-A restoration merely corrects an age-acquired sFlt-1 decoy deficit without inducing hyperpermeability, and actually reduced spontaneous tumor incidence in aged mice — likely by preventing tissue hypoxia, improving immune cell trafficking, and suppressing hypoxia-selected malignant clones.",
         claimIndexes: [0, 1],
       },
+      {
+        kind: "commercial_hype",
+        note: "Das & Sinclair (Cell 2018) Endothelial NMN Claims vs. NIA ITP Lifespan Failure & Metro Biotech (MIB-626) FDA Drug Preclusion: While Das, Sinclair et al. (Cell 2018) reported dramatic 56%–80% treadmill endurance gains and doubled skeletal muscle capillarity in 20-month-old inbred C57BL/6J mice given 400 mg/kg/day NMN + NaHS, independent biogerontologists (Charles Brenner, Matt Kaeberlein) noted that standalone NAD+ precursors failed to extend median or maximum lifespan in genetically heterogeneous UM-HET3 mice in the multi-site NIA Interventions Testing Program (Harrison et al., Aging Cell 2021), that human oral NMN trials show modest metabolic/insulin-sensitivity effects rather than 80% endurance leaps, and that David Sinclair's company Metro International Biotech triggered the FDA's November 2022 §201(ff)(3)(B) drug-preclusion ruling against OTC NMN dietary supplements to protect its proprietary crystalline β-NMN drug candidate (MIB-626).",
+        claimIndexes: [1],
+      },
     ],
   },
 
