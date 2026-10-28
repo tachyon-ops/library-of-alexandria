@@ -1,5 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import {
+  CORE_SEO_KEYWORDS,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TAGLINE,
+} from "@lib/core";
 import { LibrarySearchForm } from "@/components/LibrarySearchForm";
 import { WordSynopsis } from "@/components/WordSynopsis";
 import {
@@ -8,12 +14,78 @@ import {
   GITHUB_SPONSORS_URL,
   PAYPAL_DONATE_URL,
 } from "@/lib/data";
+import { getSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Alexander's Library",
-  description: "A tree of knowledge filled from the open scientific record, with the strength of every claim shown.",
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f4ef" },
+    { media: "(prefers-color-scheme: dark)", color: "#121417" },
+  ],
 };
+
+export function generateMetadata(): Metadata {
+  const siteUrl = getSiteUrl();
+  const defaultTitle = `${SITE_NAME} — ${SITE_TAGLINE}`;
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: defaultTitle,
+      template: `%s — ${SITE_NAME}`,
+    },
+    description: SITE_DESCRIPTION,
+    applicationName: SITE_NAME,
+    authors: [{ name: "Nuno Ribeiro", url: AUTHOR_SITE_URL }],
+    creator: "Nuno Ribeiro (@tachyon-ops)",
+    publisher: SITE_NAME,
+    category: "science",
+    keywords: CORE_SEO_KEYWORDS,
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    alternates: {
+      canonical: "/",
+      types: {
+        "application/rss+xml": [
+          {
+            url: "/feed.xml",
+            title: `${SITE_NAME} — Scientific Branches & Monographs RSS Feed`,
+          },
+        ],
+      },
+    },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: "en_US",
+      url: siteUrl,
+      title: defaultTitle,
+      description: SITE_DESCRIPTION,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: defaultTitle,
+      description: SITE_DESCRIPTION,
+      creator: "@tachyon_ops",
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,6 +96,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Public+Sans:wght@400;500;600&display=swap"
+        />
+        <link
+          rel="search"
+          type="application/opensearchdescription+xml"
+          title={SITE_NAME}
+          href="/opensearch.xml"
+        />
+        <link
+          rel="alternate"
+          type="text/plain"
+          title="LLMs.txt Machine-Readable Scientific Index"
+          href="/llms.txt"
         />
       </head>
       <body>

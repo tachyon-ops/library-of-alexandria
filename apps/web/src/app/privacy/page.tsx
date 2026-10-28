@@ -1,21 +1,46 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { buildPrivacyJsonLd, serializeJsonLd } from "@lib/core";
 import { AUTHOR_SITE_URL, GITHUB_PROFILE_URL } from "@/lib/data";
+import { getSiteUrl } from "@/lib/seo";
+
+const PRIVACY_TITLE = "Legal, Copyright & Privacy Notice";
+const PRIVACY_DESCRIPTION =
+  "Open-access bibliographic compliance, non-hosting of copyrighted full texts, medical disclaimer, and GDPR / Swiss FADP privacy notice for Alexander's Library.";
 
 export const metadata: Metadata = {
-  title: "Legal, Copyright & Privacy Notice — Alexander's Library",
-  description:
-    "Open-access bibliographic compliance, non-hosting of copyrighted full texts, medical disclaimer, and GDPR / Swiss FADP privacy notice for Alexander's Library.",
+  title: PRIVACY_TITLE,
+  description: PRIVACY_DESCRIPTION,
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    type: "website",
+    url: "/privacy",
+    title: `${PRIVACY_TITLE} — Alexander's Library`,
+    description: PRIVACY_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${PRIVACY_TITLE} — Alexander's Library`,
+    description: PRIVACY_DESCRIPTION,
+  },
 };
 
 export default function PrivacyPage() {
+  const jsonLd = buildPrivacyJsonLd({ siteUrl: getSiteUrl() });
+
   return (
     <main className="chronicle">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       <article className="chronicle-folio">
-        <p className="trail">
+        <nav aria-label="Breadcrumb" className="trail">
           <Link href="/">Library</Link>
           <span> / Legal, Copyright &amp; Privacy Notice</span>
-        </p>
+        </nav>
 
         <header className="chronicle-header">
           <p className="chronicle-kicker">Public Archive Governance · Compliance &amp; Provenance</p>

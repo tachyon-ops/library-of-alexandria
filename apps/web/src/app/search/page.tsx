@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { resolveInquiryBranches } from "@lib/agents";
 import {
   CONTROVERSY_LABELS,
   sanitizePublicInquiry,
+  SITE_NAME,
   TIER_LABELS,
+  truncateSeoText,
   synthesizeSearchBriefing,
   type Controversy,
   type LibrarySearchResults,
@@ -15,6 +18,45 @@ import { LibrarySearchForm } from "@/components/LibrarySearchForm";
 import { normaliseAgePhrasing, normaliseTopicTitle, normaliseTreeRows, sql } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const query = sanitizePublicInquiry((params.q ?? "").trim());
+  const baseTitle = query ? `${truncateSeoText(query, 68)} — Scientific Search` : "Search the Scientific Record";
+  const description = query
+    ? truncateSeoText(
+        `Grounded scientific synthesis, graded T1–T6 findings, peer-reviewed papers, and clinical trials for "${query}" in ${SITE_NAME}.`,
+        160,
+      )
+    : "Search graded T1–T6 scientific findings, peer-reviewed papers, clinical trials, and decision ledgers across Alexander's Library.";
+
+  return {
+    title: baseTitle,
+    description,
+    alternates: {
+      canonical: "/search",
+    },
+    openGraph: {
+      type: "website",
+      url: "/search",
+      title: `${baseTitle} — ${SITE_NAME}`,
+      description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${baseTitle} — ${SITE_NAME}`,
+      description,
+    },
+    robots: {
+      index: !query,
+      follow: true,
+    },
+  };
+}
 
 function parseJsonArray<T>(val: unknown): T[] {
   if (Array.isArray(val)) return val as T[];
