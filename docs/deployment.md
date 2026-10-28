@@ -133,6 +133,7 @@ You can also trigger a worker run manually anytime from the **Actions → Resear
 2. Set **Root Directory** to `apps/web` and **Production Branch** to `master` (with preview deployments on `develop` / PRs).
 3. Add the following Environment Variables in Vercel:
    - `DATABASE_URL` — the same Neon Postgres connection string.
+   - `NEXT_PUBLIC_SITE_URL` — your custom domain once connected (e.g. `https://yourdomain.org`; when left blank, Vercel's `VERCEL_PROJECT_PRODUCTION_URL` is used automatically).
    - `AUTO_EXPAND_DEPTH` — `1` (optional default).
    - *(Optional, for instant worker wakeup when clicking "Research this topic")*:
      - `GITHUB_REPO` — `tachyon-ops/library-of-alexandria`

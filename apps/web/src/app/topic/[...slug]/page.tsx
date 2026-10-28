@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { reassessTopicTaxonomyWithAi } from "@lib/agents";
 import {
   ALL_SEED_DOSSIERS,
@@ -27,14 +28,18 @@ import {
 } from "@lib/db";
 import {
   buildDynamicFieldArticle,
+  buildTopicJsonLd,
+  buildTopicSeoMetadata,
   CONTROVERSY_LABELS,
   resolveTopicFromUrlSegments,
+  serializeJsonLd,
   shortTopicSegment,
   TIER_LABELS,
   TIERS,
   type Controversy,
   type JobKind,
   type SearchTreeNode,
+  type Tier,
   type Topic,
   type TopicSynthesis,
 } from "@lib/core";
@@ -53,6 +58,7 @@ import {
   normaliseTreeRows,
   sql,
 } from "@/lib/data";
+import { getSiteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -110,6 +116,194 @@ function formatJobTime(d: Date | string | number | null | undefined): string {
   } catch {
     return "";
   }
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string[] }>;
+  searchParams?: Promise<{ spawned?: string }>;
+}): Promise<Metadata> {
+  const { slug: rawSlugParam } = await params;
+  const slugSegments = (Array.isArray(rawSlugParam) ? rawSlugParam : [rawSlugParam])
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (slugSegments.length === 0) {
+    return { title: "Topic Not Found", robots: { index: false, follow: false } };
+  }
+
+  const lastSegment = slugSegments[slugSegments.length - 1]!;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const hasSpawnedParam = Boolean(resolvedSearchParams?.spawned?.trim());
+  const siteUrl = getSiteUrl();
+  const db = sql();
+
+  let rawTree: Awaited<ReturnType<typeof listTree>> = [];
+  try {
+    rawTree = await listTree(db);
+  } catch {
+    rawTree = [];
+  }
+
+  const { nodes: normalisedNodes, byId: nestedById, byRawSlug: nestedBySlug } = normaliseTreeRows(rawTree);
+  const resolved = resolveTopicFromUrlSegments(slugSegments, normalisedNodes);
+  const candidateSlug = resolved.canonicalSeedSlug ?? resolved.node?.slug ?? lastSegment;
+
+  let topic: Topic | null = null;
+  try {
+    topic =
+      (resolved.node ? await getTopicBySlug(db, resolved.node.slug) : null) ??
+      (await getTopicBySlug(db, candidateSlug)) ??
+      (await getTopicBySlug(db, lastSegment));
+  } catch {
+    topic = null;
+  }
+
+  const curatedDossier = ALL_SEED_DOSSIERS[topic?.slug ?? candidateSlug];
+  if (!topic && !curatedDossier) {
+    return { title: "Topic Not Found", robots: { index: false, follow: false } };
+  }
+
+  const toNestedPath = (rawSlug: string, id?: string | null): string => {
+    if (id && nestedById.has(id)) return nestedById.get(id)!;
+    if (nestedBySlug.has(rawSlug)) return nestedBySlug.get(rawSlug)!;
+    return shortTopicSegment(rawSlug, normaliseTopicTitle(topic?.title ?? rawSlug));
+  };
+
+  const canonicalNestedSlug = topic ? toNestedPath(topic.slug, topic.id) : slugSegments.join("/");
+
+  const [rawAncestors, rawChildren, rawClaims, rawDbSources] = topic
+    ? await Promise.all([
+        getAncestors(db, topic.id).catch(() => []),
+        getChildren(db, topic.id).catch(() => []),
+        topicClaims(db, topic.id).catch(() => []),
+        topicSources(db, topic.id).catch(() => []),
+      ])
+    : [[], [], [], []];
+
+  const ancestors = rawAncestors.map((a) => ({
+    title: normaliseTopicTitle(a.title),
+    slug: toNestedPath(a.slug, a.id),
+  }));
+  const children = rawChildren.map((c) => ({
+    title: normaliseTopicTitle(c.title),
+    slug: toNestedPath(c.slug, c.id),
+    brief: c.brief ? normaliseAgePhrasing(c.brief) : null,
+  }));
+
+  const { claims, dbSources } = mergeCuratedDossierRecords(curatedDossier, rawClaims, rawDbSources, [], []);
+  const sources = mergeSources(dbSources, claims);
+
+  const displayTitle = normaliseTopicTitle(topic?.title ?? candidateSlug.replace(/-/g, " "));
+  const briefText =
+    (topic?.brief ? normaliseAgePhrasing(topic.brief) : null) ??
+    (curatedDossier?.summary ? normaliseAgePhrasing(curatedDossier.summary) : null) ??
+    `Scientific synthesis, primary literature, and graded evidence across ${displayTitle}.`;
+  const effectiveSummary =
+    (curatedDossier?.summary ? normaliseAgePhrasing(curatedDossier.summary) : null) ??
+    (topic?.summary ? normaliseAgePhrasing(topic.summary) : null) ??
+    briefText;
+
+  let rawSynthesis: TopicSynthesis | null = curatedDossier?.synthesis ?? null;
+  if (!rawSynthesis && topic?.synthesis) {
+    if (typeof topic.synthesis === "string") {
+      try {
+        rawSynthesis = JSON.parse(topic.synthesis);
+      } catch {
+        rawSynthesis = null;
+      }
+    } else if (typeof topic.synthesis === "object") {
+      rawSynthesis = topic.synthesis;
+    }
+  }
+  const synthesis = normaliseTopicSynthesis(rawSynthesis);
+  const tierOrder: Tier[] = ["T1", "T2", "T3", "T4", "T5", "T6"];
+  const bestTier = tierOrder.find((t) => claims.some((c) => c.tier === t)) ?? null;
+  const slugLower = (topic?.slug ?? candidateSlug).toLowerCase();
+  const isClinicalTopic =
+    slugLower.includes("medicine") ||
+    slugLower.includes("fertility") ||
+    slugLower.includes("ovarian") ||
+    slugLower.includes("endometrial") ||
+    slugLower.includes("andrology") ||
+    slugLower.includes("maternal") ||
+    slugLower.includes("gamete") ||
+    slugLower.includes("reproductive") ||
+    slugLower.includes("geroscience") ||
+    slugLower.includes("neuroscience") ||
+    ancestors.some((a) => a.slug.includes("medicine") || a.slug.includes("fertility") || a.slug.includes("biomedicine"));
+
+  const seo = buildTopicSeoMetadata({
+    siteUrl,
+    canonicalPath: canonicalNestedSlug,
+    title: displayTitle,
+    brief: briefText,
+    summary: effectiveSummary,
+    status: topic?.status ?? "ready",
+    lastResearchedAt: topic?.lastResearchedAt ?? null,
+    ancestors,
+    children,
+    sourcesCount: sources.length,
+    claimsCount: claims.length,
+    bestTier,
+    isClinicalTopic,
+    monograph: synthesis?.article ?? null,
+    levers: synthesis?.levers ?? [],
+    sources: sources.map((s) => ({
+      title: s.title,
+      doi: s.doi,
+      year: s.year,
+      authors: s.authors,
+      url: s.url,
+      venue: s.venue,
+    })),
+  });
+
+  const ogImageUrl = `/og/${canonicalNestedSlug}`;
+
+  return {
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
+    category: isClinicalTopic ? "medical" : "science",
+    alternates: {
+      canonical: seo.canonicalRelativePath,
+    },
+    openGraph: {
+      type: "article",
+      url: seo.canonicalUrl,
+      title: seo.socialTitle,
+      description: seo.socialDescription,
+      section: seo.section,
+      tags: seo.keywords.slice(0, 12),
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: seo.socialTitle,
+        },
+      ],
+      ...(seo.publishedIso
+        ? {
+            publishedTime: seo.publishedIso,
+            modifiedTime: seo.publishedIso,
+          }
+        : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: seo.socialTitle,
+      description: seo.socialDescription,
+      images: [ogImageUrl],
+    },
+    robots: {
+      index: !hasSpawnedParam,
+      follow: true,
+    },
+    other: seo.scholarlyMeta,
+  };
 }
 
 export default async function TopicPage({
@@ -495,8 +689,38 @@ export default async function TopicPage({
     entities: safeEntities,
   });
 
+  const topicJsonLd = buildTopicJsonLd({
+    siteUrl: getSiteUrl(),
+    canonicalPath: canonicalNestedSlug,
+    title: displayTitle,
+    brief: briefText,
+    summary: effectiveSummary,
+    status: topic.status === "idle" && curatedDossier ? "ready" : topic.status,
+    lastResearchedAt: topic.lastResearchedAt,
+    ancestors: ancestors.map((a) => ({ title: normaliseTopicTitle(a.title), slug: a.slug })),
+    children: children.map((c) => ({ title: normaliseTopicTitle(c.title), slug: c.slug, brief: c.brief })),
+    sourcesCount: sources.length,
+    claimsCount: (claims ?? []).length,
+    bestTier: monograph.bestTier,
+    isClinicalTopic,
+    monograph,
+    levers,
+    sources: sources.map((s) => ({
+      title: s.title,
+      doi: s.doi,
+      year: s.year,
+      authors: s.authors,
+      url: s.url,
+      venue: s.venue,
+    })),
+  });
+
   return (
     <main className="topic-layout">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(topicJsonLd) }}
+      />
       <AutoRefresh active={busy} />
       <nav className="side" aria-label="Library tree">
         <Tree roots={roots} activeSlug={canonicalNestedSlug} />
@@ -525,7 +749,7 @@ export default async function TopicPage({
             </ul>
           </section>
         )}
-        <p className="trail">
+        <nav aria-label="Breadcrumb" className="trail">
           <Link href="/">Library</Link>
           {ancestors.map((a) => (
             <span key={a.id}>
@@ -533,7 +757,7 @@ export default async function TopicPage({
               <Link href={`/topic/${a.slug}`}>{normaliseTopicTitle(a.title)}</Link>
             </span>
           ))}
-        </p>
+        </nav>
         <h1>{displayTitle}</h1>
         <p className="brief">{briefText}</p>
 

@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildAboutJsonLd,
+  buildCanonicalUrl,
   buildChildSlug,
   buildDynamicFieldArticle,
+  buildLlmsTxt,
   buildNestedTopicPaths,
+  buildOpenSearchXml,
+  buildPrivacyJsonLd,
+  buildRssFeedXml,
+  buildTopicJsonLd,
+  buildTopicSeoMetadata,
+  buildWebSiteJsonLd,
   extractSearchTerms,
   inferBranchProposal,
   inferBranchProposals,
@@ -10,16 +19,19 @@ import {
   lookupGlossaryTerm,
   normaliseDesign,
   normaliseDoi,
+  normaliseSiteUrl,
   reassessTopicTaxonomy,
   resolveTopicFromUrlSegments,
   sanitizePublicInquiry,
   selectBestDictionaryDefinition,
+  serializeJsonLd,
   shortTopicSegment,
   slugify,
   suggestTopicTitle,
   synthesizeSearchBriefing,
   tierForClaim,
   tierForSource,
+  truncateSeoText,
 } from "@lib/core";
 import {
   ALL_SEED_DOSSIERS,
@@ -753,7 +765,7 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(PHYSICS_FRONTIER_GRAVITY_DOSSIERS)).toHaveLength(4);
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(46);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(52);
     expect(ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"]).toBeDefined();
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
@@ -834,5 +846,172 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(lifestyle.summary).toContain("spermidine");
   });
 });
+
+describe("SEO metadata, JSON-LD structured data, and crawler discovery", () => {
+  it("normalises bare domains, localhost, and configured URLs into clean origins and canonical URLs", () => {
+    expect(normaliseSiteUrl("newdomain.org/")).toBe("https://newdomain.org");
+    expect(normaliseSiteUrl("https://www.alexanderslibrary.org/topic/foo?bar=1")).toBe(
+      "https://www.alexanderslibrary.org",
+    );
+    expect(normaliseSiteUrl("localhost:3000/")).toBe("http://localhost:3000");
+    expect(normaliseSiteUrl("127.0.0.1:4000")).toBe("http://127.0.0.1:4000");
+    expect(normaliseSiteUrl("")).toBe("https://alexanderslibrary.org");
+
+    expect(
+      buildCanonicalUrl(
+        "newdomain.org",
+        "/topic/natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue/?spawned=foo#sources",
+      ),
+    ).toBe(
+      "https://newdomain.org/topic/natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+    );
+    expect(buildCanonicalUrl("https://newdomain.org/", "/")).toBe("https://newdomain.org");
+    expect(truncateSeoText("Short summary.", 160)).toBe("Short summary.");
+    expect(truncateSeoText("A ".repeat(120), 80).length).toBeLessThanOrEqual(80);
+  });
+
+  it("builds topic SEO metadata, HighWire/Dublin Core citation tags, and JSON-LD graphs", () => {
+    const seo = buildTopicSeoMetadata({
+      siteUrl: "https://newdomain.org",
+      canonicalPath: "natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+      title: "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
+      brief:
+        "Randomised clinical trials and Cochrane meta-analyses of 0.5 mg/mL hyaluronan embryo transfer media.",
+      summary:
+        "High-concentration hyaluronan transfer medium (0.5 mg/mL) increases clinical live-birth rates in fresh and vitrified-warmed transfers.",
+      status: "ready",
+      lastResearchedAt: "2026-10-24T12:00:00Z",
+      ancestors: [
+        { title: "Natural & Life Sciences", slug: "natural-sciences" },
+        { title: "Medicine, Health & Longevity", slug: "natural-sciences/biomedicine" },
+        {
+          title: "Reproductive Medicine & Human Fertility",
+          slug: "natural-sciences/biomedicine/reproductive-medicine",
+        },
+        {
+          title: "Endometrial Receptivity & Implantation Biology",
+          slug: "natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity",
+        },
+      ],
+      children: [],
+      sourcesCount: 9,
+      claimsCount: 6,
+      bestTier: "T1",
+      isClinicalTopic: true,
+      levers: [
+        {
+          name: "0.5 mg/mL Hyaluronan Transfer Medium (EmbryoGlue)",
+          category: "Embryo Transfer Media",
+          verdict: "Supported",
+          effect: "+4% to +7% absolute live-birth gain (RR 1.21)",
+        },
+      ],
+      sources: [
+        {
+          title: "Hyaluronic acid in embryo transfer media for assisted reproductive technologies",
+          doi: "10.1002/14651858.cd007421.pub4",
+          year: 2020,
+          authors: ["Heymann D", "Vidal L", "Or Y"],
+          venue: "Cochrane Database of Systematic Reviews",
+        },
+      ],
+    });
+
+    expect(seo.canonicalUrl).toBe(
+      "https://newdomain.org/topic/natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+    );
+    expect(seo.canonicalRelativePath).toBe(
+      "/topic/natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+    );
+    expect(seo.socialTitle).toContain("T1 Graded Scientific Synthesis");
+    expect(seo.description).toContain("Peak T1");
+    expect(seo.description.length).toBeLessThanOrEqual(160);
+    expect(seo.scholarlyMeta["DC.title"]).toContain("EmbryoGlue");
+    expect(seo.scholarlyMeta.citation_public_url).toBe(seo.canonicalUrl);
+    expect(seo.scholarlyMeta.citation_reference).toEqual([
+      expect.stringContaining("10.1002/14651858.cd007421.pub4"),
+    ]);
+
+    const jsonLd = buildTopicJsonLd({
+      siteUrl: "https://newdomain.org",
+      canonicalPath: "natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity/embryoglue",
+      title: "Hyaluronan-Enriched Embryo Transfer Media (EmbryoGlue) & Implantation Adherence",
+      brief: "Randomised clinical trials and Cochrane meta-analyses of 0.5 mg/mL hyaluronan embryo transfer media.",
+      status: "ready",
+      ancestors: [
+        { title: "Natural & Life Sciences", slug: "natural-sciences" },
+        {
+          title: "Endometrial Receptivity & Implantation Biology",
+          slug: "natural-sciences/biomedicine/reproductive-medicine/endometrial-receptivity",
+        },
+      ],
+      sourcesCount: 9,
+      claimsCount: 6,
+      bestTier: "T1",
+      isClinicalTopic: true,
+      sources: [
+        {
+          title: "Hyaluronic acid in embryo transfer media for assisted reproductive technologies",
+          doi: "10.1002/14651858.cd007421.pub4",
+          year: 2020,
+          authors: ["Heymann D"],
+          venue: "Cochrane Database of Systematic Reviews",
+        },
+      ],
+    });
+
+    const serialized = serializeJsonLd(jsonLd);
+    expect(serialized).toContain("ScholarlyArticle");
+    expect(serialized).toContain("MedicalWebPage");
+    expect(serialized).toContain("BreadcrumbList");
+    expect(serialized).toContain("https://doi.org/10.1002/14651858.cd007421.pub4");
+
+    // Verify XSS escaping in serializeJsonLd
+    expect(serializeJsonLd({ text: "</script><script>alert(1)</script>" })).not.toContain("</script>");
+
+    const webSiteLd = buildWebSiteJsonLd({
+      siteUrl: "https://newdomain.org",
+      rootTopics: [{ title: "Natural & Life Sciences", slug: "natural-sciences", brief: "Root" }],
+    });
+    expect(serializeJsonLd(webSiteLd)).toContain("SearchAction");
+    expect(serializeJsonLd(buildAboutJsonLd({ siteUrl: "https://newdomain.org" }))).toContain("Gilgamesh");
+    expect(serializeJsonLd(buildPrivacyJsonLd({ siteUrl: "https://newdomain.org" }))).toContain("Privacy Notice");
+  });
+
+  it("generates llms.txt, RSS 2.0 XML feed, and OpenSearch XML description for any domain", () => {
+    const llms = buildLlmsTxt({
+      siteUrl: "https://newdomain.org",
+      nodes: [
+        {
+          slug: "natural-and-life-sciences",
+          nestedPath: "natural-sciences",
+          title: "Natural & Life Sciences",
+          brief: "Physics, chemistry, biology, and biomedicine.",
+          depth: 0,
+        },
+      ],
+    });
+    expect(llms).toContain("# Alexander's Library");
+    expect(llms).toContain("https://newdomain.org/topic/natural-sciences");
+    expect(llms).toContain("T1 (Synthesis of trials)");
+
+    const rss = buildRssFeedXml({
+      siteUrl: "https://newdomain.org",
+      items: [
+        {
+          title: "Natural & Life Sciences",
+          nestedPath: "natural-sciences",
+          description: "Physics, chemistry, biology, and biomedicine.",
+        },
+      ],
+    });
+    expect(rss).toContain("<rss version=\"2.0\"");
+    expect(rss).toContain("https://newdomain.org/topic/natural-sciences");
+
+    const openSearch = buildOpenSearchXml({ siteUrl: "https://newdomain.org" });
+    expect(openSearch).toContain("https://newdomain.org/search?q={searchTerms}");
+  });
+});
+
 
 

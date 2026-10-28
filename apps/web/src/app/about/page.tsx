@@ -1,21 +1,55 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { buildAboutJsonLd, serializeJsonLd } from "@lib/core";
 import {
   AUTHOR_SITE_URL,
   GITHUB_PROFILE_URL,
   GITHUB_SPONSORS_URL,
   PAYPAL_DONATE_URL,
 } from "@/lib/data";
+import { getSiteUrl } from "@/lib/seo";
+
+const ABOUT_TITLE = "The Search for the Elixir of Youth";
+const ABOUT_DESCRIPTION =
+  "From the Sumerian Epic of Gilgamesh and the scrolls of Alexandria to the Scientific and Information Revolutions: why the Tree of Knowledge exists, with primary sources and academic citations.";
 
 export const metadata: Metadata = {
-  title: "The Search for the Elixir of Youth — Alexander's Library",
-  description:
-    "From the Sumerian Epic of Gilgamesh and the scrolls of Alexandria to the Scientific and Information Revolutions: why the Tree of Knowledge exists, with primary sources and academic citations.",
+  title: ABOUT_TITLE,
+  description: ABOUT_DESCRIPTION,
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    type: "article",
+    url: "/about",
+    title: `${ABOUT_TITLE} — Alexander's Library`,
+    description: ABOUT_DESCRIPTION,
+    images: [
+      {
+        url: "/archival-library.jpg",
+        width: 1408,
+        height: 768,
+        alt: "Ex Libris Bibliotheca Alexandrina — Tree of Knowledge frontispiece",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${ABOUT_TITLE} — Alexander's Library`,
+    description: ABOUT_DESCRIPTION,
+    images: ["/archival-library.jpg"],
+  },
 };
 
 export default function AboutPage() {
+  const jsonLd = buildAboutJsonLd({ siteUrl: getSiteUrl(), authorUrl: AUTHOR_SITE_URL });
+
   return (
     <main className="chronicle">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       <article className="chronicle-folio">
         <header className="chronicle-header">
           <p className="chronicle-kicker">Ex Libris · Bibliotheca Alexandrina</p>
