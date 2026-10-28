@@ -19,7 +19,7 @@ export async function GET(): Promise<Response> {
       nestedPath: n.nestedPath,
       description:
         n.brief ??
-        `Scientific synthesis, primary literature, and graded evidence for ${n.title} in Alexander's Library.`,
+        `Scientific synthesis, primary literature, and graded evidence for ${n.title} in Library of Alexandria.`,
       category: n.rootTitle,
     })),
   });

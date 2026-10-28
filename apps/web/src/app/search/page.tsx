@@ -32,7 +32,7 @@ export async function generateMetadata({
         `Grounded scientific synthesis, graded T1–T6 findings, peer-reviewed papers, and clinical trials for "${query}" in ${SITE_NAME}.`,
         160,
       )
-    : "Search graded T1–T6 scientific findings, peer-reviewed papers, clinical trials, and decision ledgers across Alexander's Library.";
+    : `Search graded T1–T6 scientific findings, peer-reviewed papers, clinical trials, and decision ledgers across ${SITE_NAME}.`;
 
   return {
     title: baseTitle,

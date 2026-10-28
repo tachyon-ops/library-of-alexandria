@@ -114,7 +114,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <header className="masthead">
           <div className="masthead-brand">
             <Link href="/" className="wordmark">
-              Alexander&rsquo;s Library
+              Library of Alexandria
             </Link>
             <p className="masthead-note">
               The search for the elixir of youth — what the record says, and how strongly.{" "}
