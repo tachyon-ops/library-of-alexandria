@@ -8,11 +8,13 @@ import { PHYSICS_CLASSICAL_DOSSIERS } from "./physics-classical-dossiers";
 import { PHYSICS_FRONTIER_GRAVITY_DOSSIERS } from "./physics-frontier-gravity-dossiers";
 import { PHYSICS_GRAVITY_STRING_DOSSIERS } from "./physics-gravity-string-dossiers";
 import { PHYSICS_QUANTUM_DOSSIERS } from "./physics-quantum-dossiers";
+import { REGENERATION_SEED_DOSSIERS } from "./regeneration-dossiers";
 import { ensureSeedTopic, getTopicBySlug, isSeedComplete, linkTopics, type SeedDossier, seedTopicDossier } from "./repo";
 
 export const ALL_SEED_DOSSIERS: Record<string, SeedDossier> = {
   ...FERTILITY_SEED_DOSSIERS,
   ...LONGEVITY_SEED_DOSSIERS,
+  ...REGENERATION_SEED_DOSSIERS,
   ...PHYSICS_CLASSICAL_DOSSIERS,
   ...PHYSICS_QUANTUM_DOSSIERS,
   ...PHYSICS_GRAVITY_STRING_DOSSIERS,
@@ -474,6 +476,12 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                     brief:
                       "Circadian active-phase feeding (+35% vs +10% mouse lifespan; Acosta-Rodríguez & Takahashi Science 2022), the 2-year NIH CALERIE Phase 2 human RCT (14% CR slows DunedinPACE by 2%–3% and regenerates the thymus via PLA2G7 suppression; Waziry Nat Aging 2023; Spadaro & Dixit Science 2022), and 5-day Fasting-Mimicking Diet cycles (−2.5 yr human biological age; Brandhorst, Levine & Longo Nat Commun 2024).",
                   },
+                  {
+                    slug: "endogenous-geroprotective-metabolites-taurine-akg-ergothioneine-and-h2s",
+                    title: "Endogenous Longevity Metabolites: Taurine Deficiency Reversal, Calcium α-Ketoglutarate (Ca-AKG), Ergothioneine (SLC22A4) & Hydrogen Sulfide (H2S)",
+                    brief:
+                      "Reversal of >80% age-related taurine depletion (+10%–12% mouse lifespan & primate healthspan; Singh & Yadav Science 2023), Calcium α-Ketoglutarate TET/JMJD3 cosubstrate & 41%–46% morbidity compression (Asadi Shahmirzadi & Kennedy Cell Metab 2020), Ergothioneine OCTN1/SLC22A4 cytoprotection (HR 0.79 CV mortality; Smith 2020; Katsube 2024), and CSE-derived H2S protein persulfidation.",
+                  },
                 ],
               },
               {
@@ -526,6 +534,96 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 brief:
                   "Elite VO2max 80% all-cause mortality reduction (HR 0.20, n=122,007; Mandsager & Jaber JAMA Netw Open 2018), 2-year Norwegian 4×4 HIIT reversal of middle-aged cardiac left ventricular stiffness (−25%; Howden & Levine Circulation 2018), late-life resistance training reversal of muscle epigenetic clocks (Murach & Horvath Aging Cell 2022), Finnish dry sauna HSP70 hormesis (−40% mortality, −65% dementia; Laukkanen 2015), and cold-shock RBM3 synaptic protection.",
               },
+              {
+                slug: "developmental-bioelectricity-morphogenetic-fields-and-levin-anatomical-homeostasis",
+                title: "Developmental Bioelectricity, Resting Potential (Vmem) Morphogenetic Codes & Anatomical Homeostasis (Michael Levin / Tufts)",
+                brief:
+                  "Non-neural gap-junction (Connexin/Innexin) resting membrane voltage (Vmem) pattern memories and top-down morphogenetic fields (TAME; Levin Cell 2021), 24-hour 5-drug BioDome bioreactor regeneration of adult Xenopus hindlimbs over 18 months (Murugan & Levin Sci Adv 2022), progesterone BioDome limb regeneration (Herrera-Rincon 2018), permanent two-headed planarian bioelectric memory (Durant & Levin Biophys J 2017), and morphostasis decay aging theory.",
+                children: [
+                  {
+                    slug: "xenobots-anthrobots-cancer-bioelectric-normalization-and-synthetic-living-machines",
+                    title: "Anthrobots, Xenobots, Bioelectric Cancer Normalization & Self-Assembling Synthetic Living Machines",
+                    brief:
+                      "Self-assembling adult human tracheal epithelial Anthrobots that bridge and heal scratched human neural tissue without genetic modification (Gumuskaya & Levin Adv Sci 2023), AI-designed self-replicating Xenopus Xenobots (Kriegman, Bongard & Levin PNAS 2020/2021), and hyperpolarizing ion-channel/optogenetic normalization of KRAS/Gli1 tumors (Chernet & Levin Oncotarget 2016).",
+                  },
+                ],
+              },
+              {
+                slug: "epimorphic-limb-regeneration-axolotl-blastema-and-scarless-acomys-healing",
+                title: "Epimorphic Limb Regeneration, Axolotl Blastema Dedifferentiation, Positional Memory & Spiny Mouse (Acomys) Scarless Healing",
+                brief:
+                  "Lineage-restricted axolotl blastema dedifferentiation and Meis1/Prod1/RA positional memory (Kragl & Tanaka Nature 2009; Gerber Science 2018), obligatory macrophage clearance of blastema senescent cells (Godwin PNAS 2013; Yun & Brockes eLife 2015), African Spiny Mouse (Acomys) ERK-YAP scarless mammalian organ regeneration (Seifert Nature 2012 / Science 2023), and sequential BMP2→BMP9 mammalian joint regeneration (Yu & Muneoka Nature 2019).",
+                children: [
+                  {
+                    slug: "mammalian-skeletal-ending-cartilage-regeneration-and-focal-adhesion-mechanotherapy",
+                    title: "Mammalian Articular Cartilage, Bone & Dermal Regeneration: BMP2/VEGFR1 Stem Cell Reprogramming, FAK/Verteporfin Scarless Healing & 15-PGDH Inhibition",
+                    brief:
+                      "Resident adult skeletal stem cell reprogramming into hyaline articular cartilage via BMP2 + soluble VEGFR1 (Murphy, Chan & Longaker Nat Med 2020), Verteporfin YAP-blockade scarless skin and hair-follicle regeneration in mice and pigs (Mascharak & Longaker Science 2021), and 15-PGDH gerozyme inhibition (SW033291) to restore PGE2 and rejuvenate aged muscle and bone marrow (Palla & Blau Science 2021).",
+                  },
+                ],
+              },
+              {
+                slug: "hippo-yap-taz-pathway-cardiomyocyte-proliferation-and-organ-regeneration",
+                title: "Hippo–YAP/TAZ Signaling, Adult Cardiomyocyte Proliferation, Agrin/ERBB2 & Mammalian Heart and Liver Regeneration",
+                brief:
+                  "Post-infarction adult heart regeneration via AAV9-Sav1 Hippo knockdown in mice and pigs (Leach & Martin Nature 2017; Liu Sci Transl Med 2021), neonatal ECM Agrin and transient ERBB2 cardiomyocyte dedifferentiation (Bassat & Tzahor Nature 2017), reversible MST1/2 kinase inhibition (XMU-MP-1) for liver and intestinal regeneration (Fan & Zhou Sci Transl Med 2016), and Cpt1b fatty-acid oxidation blockade (Bae & Sadek Nature 2023).",
+              },
+              {
+                slug: "vascular-endothelial-aging-vegf-microcirculation-and-nitric-oxide-rejuvenation",
+                title: "Vascular Endothelial Aging, Microvascular Capillary Rarefaction, VEGF-A Lifespan Extension & Nitric Oxide–SIRT1 Rejuvenation",
+                brief:
+                  "Counteracting age-related sFlt-1 decoy trapping with 2-fold systemic VEGF-A to prevent capillary rarefaction and extend mouse lifespan by 48% in males and 39% in females (Grunewald & Keshet Science 2021), endothelial NAD+–SIRT1–H2S capillary restoration (+56%–80% endurance; Das & Sinclair Cell 2018), and CD31high/Emcnhigh Type H osteogenic capillaries (Kusumbe & Adams Nature 2014/2016).",
+                children: [
+                  {
+                    slug: "klotho-fgf23-mineral-metabolism-and-renal-cardiovascular-longevity",
+                    title: "The α-Klotho / FGF23 Endocrine Axis, Phosphate Toxicity, Renal Tubule Regeneration & Systemic Anti-Fibrotic Longevity",
+                    brief:
+                      "Discovery of the Klotho anti-aging hormone (+20%–30.8% mouse lifespan; Kuro-o Nature 1997; Kurosu Science 2005), the mammalian Phosphate Toxicity aging law via renal FGF23–Klotho NaPi-2a/2c clearance, and soluble α-Klotho decoy blockade of TGF-βR2, Wnt, and IGF-1R to reverse renal and cardiovascular fibrosis.",
+                  },
+                ],
+              },
+              {
+                slug: "line1-retrotransposons-cgas-sting-and-nlrp3-sterile-inflammaging",
+                title: "LINE-1 Retrotransposon De-Repression, Cytoplasmic Chromatin, cGAS–STING Type-I Interferon & NLRP3 Inflammasome Blockade",
+                brief:
+                  "Late-senescence LINE-1 retrotransposon de-repression and cytoplasmic cDNA interferon SASP reversed by Lamivudine/3TC (De Cecco & Sedivy Nature 2019; Simon & Gorbunova Cell Metab 2019), small-molecule H-151 STING blockade against leaked mtDNA neuroinflammation (Gulen & Ablasser Nature 2023), and NLRP3 inflammasome restraint by β-hydroxybutyrate (Youm & Dixit Nat Med 2015).",
+              },
+              {
+                slug: "gut-microbiome-longevity-centenarian-isoallolca-akkermansia-and-young-fmt",
+                title: "Microbiome-Driven Longevity: Centenarian Secondary Bile Acids (IsoalloLCA), Akkermansia muciniphila, Indoles & Young Fecal Microbiota Transfer",
+                brief:
+                  "Japanese centenarian Odoribacteraceae synthesis of antimicrobial/Treg-inducing isoalloLCA (Sato & Honda Nature 2021), gut compositional uniqueness and microbial indole survival signatures (Wilmanski & Price Nat Metab 2021), young-to-aged microbiota transfer reversal of hippocampal neuroinflammation (Boehme & Cryan Nat Aging 2021), and Akkermansia muciniphila lifespan extension (+13.5%; Bárcena & López-Otín Nat Med 2019).",
+              },
+              {
+                slug: "membrane-pacemaker-peroxidation-index-elovl2-plasmalogens-and-ferroptosis",
+                title: "The Membrane Pacemaker Theory of Aging, ELOVL2 Epigenetic Rescue, Plasmalogens & Ferroptosis (GPX4) Restraint",
+                brief:
+                  "Cross-species inverse scaling of maximum lifespan with mitochondrial Membrane Peroxidation Index (Hulbert 2007), epigenetic rescue of ELOVL2 promoter hypermethylation to restore retinal ultra-long-chain PUFAs and vision (Chen & Skowronska-Krawczyk Aging Cell 2020), vinyl-ether plasmalogens, and 1.75M-lifespan GWAS iron/heme ferroptosis restraint (Timmers & Deelen Nat Commun 2020; Stockwell Cell 2022).",
+              },
+              {
+                slug: "nuclear-lamina-architecture-lamin-a-sirt7-and-heterochromatin-maintenance",
+                title: "Nuclear Lamina Architecture (Lamin A/C, B1), Progerin Base-Editing Reversal, NAT10/Remodelin & Heterochromatin Maintenance",
+                brief:
+                  "In vivo Adenine Base Editing of LMNA c.1824C>T extending HGPS mouse lifespan by +140% to normal old age (Koblan, Collins & Liu Nature 2021), cryptic progerin splicing in normal human aging (Scaffidi & Misteli Science 2006), NAT10 inhibition with Remodelin to detach SUN1 microtubule tension (Larrieu & Jackson Science 2014), and SIRT7/WRN heterochromatin tethering.",
+              },
+              {
+                slug: "whole-organ-bioengineering-decellularized-scaffolds-3d-bioprinting-and-xenotransplantation",
+                title: "Whole-Organ Replacement: Perfusion Decellularized Scaffolds, SWIFT Vascularized 3D Bioprinting & 69-Edit CRISPR Xenotransplantation",
+                brief:
+                  "Whole-heart and kidney perfusion decellularization and iPSC recellularization (Ott & Taylor Nat Med 2008/2013), intravascular stereolithography and SWIFT sacrificial 3D bioprinting in cardiac organoid matrices (Grigoryan & Miller Science 2019; Skylar-Scott & Lewis Sci Adv 2019), and 69-edit CRISPR porcine kidney xenotransplantation sustaining primate life for 758 days (Anand, Kawai, Qin & Church Nature 2023).",
+              },
+              {
+                slug: "transcriptional-elongation-speed-rna-pol-ii-splicing-fidelity-and-ribosomal-aging",
+                title: "RNA Polymerase II Elongation Speed, Alternative Splicing Fidelity (SFA-1/SRSF), Resveralogue Spliceosome Reset & Ribosomal Pausing",
+                brief:
+                  "Cross-species age-related acceleration of RNA Polymerase II elongation speed and lifespan extension (+10%–20%) by slowing Pol II or restoring Histone H3 (Debès, Partridge & Beyer Nature 2023), SFA-1 spliceosome fidelity in dietary restriction (Heintz & Mair Nature 2017), resveralogue SRSF/TERT splicing reset (Latorre & Harries 2017), and cotranslational ribosome collision quality control (Stein & Frydman Nature 2022).",
+              },
+              {
+                slug: "organ-cryopreservation-nanowarming-vitrification-and-metabolic-torpor-biostasis",
+                title: "Cryobiology, Ice-Free Organ Vitrification & RF Nanowarming (100-Day Kidney Transplant), Ultrasound-Induced Torpor & Reversible Biostasis",
+                brief:
+                  "Life-sustaining transplantation of rat kidneys vitrified for 100 days at −150°C and rewarmed uniformly via radiofrequency iron-oxide nanowarming (Han, Finger & Bischof Nat Commun 2023), non-invasive preoptic ultrasound-induced synthetic torpor via TRPM2 (Yang & Chen Nat Metab 2023; Hrvatin & Greenberg Nature 2020), and complete epigenetic clock arrest during mammalian hibernation (Pinho & Horvath Nat Ecol Evol 2022).",
+              },
             ],
           },
           {
@@ -539,6 +637,12 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 title: "Brain Aging, Glymphatic Amyloid/Tau Clearance, α-Klotho, PF4 & Neural Stem Cell Rejuvenation",
                 brief:
                   "Slow-wave N3 sleep 60% interstitial expansion and astrocytic AQP4 glymphatic β-amyloid clearance (Xie & Nedergaard Science 2013), 40 Hz VIP-interneuron gamma glymphatic washout (Murdock & Tsai Nature 2024), single low-dose α-Klotho cognitive enhancement in aged rhesus macaques (Castner & Dubal Nature Aging 2023), Platelet Factor 4 (PF4) synaptic rejuvenation (Villeda Nature 2023), and myeloid PGE2-EP2 metabolic reset (Minhas & Andreasson Nature 2021).",
+              },
+              {
+                slug: "sensory-organ-regeneration-cochlear-hair-cells-and-retinal-muller-glia",
+                title: "Sensory Organ Regeneration: Cochlear Hair Cell Reprogramming (CHIR99021 + VPA), Retinal Müller Glia (ASCL1) & Otoferlin Gene Therapy",
+                brief:
+                  "Clonal expansion (>2,000-fold) and hair-cell differentiation of adult mammalian Lgr5+ cochlear supporting cells via CHIR99021 + Valproic Acid (McLean, Edge, Langer & Karp Cell Rep 2017), in vivo ASCL1 + HDACi reprogramming of adult mammalian retinal Müller glia into light-responsive neurons (Jorstad & Reh Nature 2017; Todd PNAS 2022), and human AAV1-OTOF congenital deafness reversal (Lv & Shu Lancet 2024).",
               },
             ],
           },
@@ -1338,6 +1442,102 @@ export const CROSS_DISCIPLINE_LINKS: {
     slugB: "thermodynamics-statistical-mechanics-and-entropy",
     relation: "intersects",
     note: "Biological aging reflects open-system non-equilibrium thermodynamic entropy accumulation across genomic, epigenetic, and extracellular matrix networks, countered by ATP-driven maintenance and repair.",
+  },
+  {
+    slugA: "developmental-bioelectricity-morphogenetic-fields-and-levin-anatomical-homeostasis",
+    slugB: "information-theory-cybernetics-and-rhetoric",
+    relation: "bridges",
+    note: "Michael Levin's Technological Approach to Mind Everywhere (TAME) models gap-junction-coupled somatic resting potential (Vmem) networks as Wienerian cybernetic homeostats that store a non-genetic anatomical target morphology and minimize morphogenetic error.",
+  },
+  {
+    slugA: "developmental-bioelectricity-morphogenetic-fields-and-levin-anatomical-homeostasis",
+    slugB: "electrodynamics-maxwell-equations-and-classical-fields",
+    relation: "bridges",
+    note: "Nernst–Planck electrodiffusion and Goldman–Hodgkin–Katz resting membrane voltage (Vmem) gradients across gap-junction-coupled tissues act as macroscopic physical bioelectric fields guiding embryogenesis and limb regeneration (Murugan & Levin, Science Advances 2022).",
+  },
+  {
+    slugA: "xenobots-anthrobots-cancer-bioelectric-normalization-and-synthetic-living-machines",
+    slugB: "logic-computation-information-artificial-intelligence",
+    relation: "bridges",
+    note: "Evolutionary multi-objective AI algorithms (Kriegman, Bongard & Levin, PNAS 2020/2021) design living Xenopus cellular configurations (Xenobots) capable of kinematic self-replication, while adult human epithelial cells self-assemble into neural-healing Anthrobots (Gumuskaya & Levin, Advanced Science 2023).",
+  },
+  {
+    slugA: "epimorphic-limb-regeneration-axolotl-blastema-and-scarless-acomys-healing",
+    slugB: "cellular-senescence-sasp-senolytics-and-senomorphics",
+    relation: "bridges",
+    note: "Salamander blastemas transiently induce senescent cells to secrete regenerative Wnt/FGF morphogens and then clear 100% of them via macrophage surveillance so senescent cells never accumulate with age (Yun & Brockes, eLife 2015; Godwin, PNAS 2013).",
+  },
+  {
+    slugA: "mammalian-skeletal-ending-cartilage-regeneration-and-focal-adhesion-mechanotherapy",
+    slugB: "hippo-yap-taz-pathway-cardiomyocyte-proliferation-and-organ-regeneration",
+    relation: "bridges",
+    note: "YAP/TAZ mechanotransduction exhibits tissue-specific duality: nuclear YAP activation unlocks adult cardiomyocyte and liver regeneration (Martin, Nature 2017), whereas Verteporfin YAP inhibition in dermal fibroblasts prevents Engrailed-1 fibrotic scarring and regenerates hair follicles (Longaker, Science 2021).",
+  },
+  {
+    slugA: "partial-cellular-reprogramming-yamanaka-factors-and-epigenetic-reset",
+    slugB: "sensory-organ-regeneration-cochlear-hair-cells-and-retinal-muller-glia",
+    relation: "bridges",
+    note: "AAV-OSK partial reprogramming regenerates crushed retinal ganglion axons (Lu & Sinclair, Nature 2020), complementing ASCL1 + HDACi reprogramming of endogenous adult retinal Müller glia into light-responsive neurons (Jorstad & Reh, Nature 2017) and CHIR99021 + VPA cochlear hair cell regeneration (McLean & Edge, Cell Reports 2017).",
+  },
+  {
+    slugA: "vascular-endothelial-aging-vegf-microcirculation-and-nitric-oxide-rejuvenation",
+    slugB: "nad-metabolism-sirtuins-cd38-inhibition-and-mitochondrial-rejuvenation",
+    relation: "bridges",
+    note: "NMN + hydrogen sulfide (NaHS) activates endothelial SIRT1 to reverse microvascular capillary rarefaction and increase aged mouse endurance by 56%–80% (Das & Sinclair, Cell 2018), synergizing with systemic VEGF-A lifespan extension (+48% male lifespan; Grunewald & Keshet, Science 2021).",
+  },
+  {
+    slugA: "klotho-fgf23-mineral-metabolism-and-renal-cardiovascular-longevity",
+    slugB: "brain-aging-glymphatic-clearance-klotho-and-neuro-rejuvenation",
+    relation: "bridges",
+    note: "Soluble α-Klotho acts both systemically as an anti-fibrotic TGF-βR2/Wnt/IGF-1R decoy and FGF23 phosphaturic coreceptor (+20%–30.8% lifespan; Kurosu & Kuro-o, Science 2005) and centrally via PF4 to enhance aged primate working memory (Castner & Dubal, Nature Aging 2023).",
+  },
+  {
+    slugA: "line1-retrotransposons-cgas-sting-and-nlrp3-sterile-inflammaging",
+    slugB: "cellular-senescence-sasp-senolytics-and-senomorphics",
+    relation: "bridges",
+    note: "De-repression of nuclear LINE-1 retrotransposons in late senescence synthesizes cytoplasmic cDNA that triggers cGAS–STING Type-I Interferon inflammaging, reversible by nucleoside reverse-transcriptase inhibitor Lamivudine/3TC (De Cecco & Sedivy, Nature 2019) or STING inhibitor H-151 (Gulen & Ablasser, Nature 2023).",
+  },
+  {
+    slugA: "endogenous-geroprotective-metabolites-taurine-akg-ergothioneine-and-h2s",
+    slugB: "epigenetic-clocks-dna-methylation-and-biological-age-biomarkers",
+    relation: "bridges",
+    note: "Calcium α-ketoglutarate (Ca-AKG) serves as the obligate cosubstrate for TET1–3 DNA demethylases and JMJD3 histone demethylases, compressing mouse late-life morbidity by 41%–46% (Asadi Shahmirzadi & Kennedy, Cell Metabolism 2020), while taurine repletion extends mammalian lifespan by 10%–12% (Singh & Yadav, Science 2023).",
+  },
+  {
+    slugA: "gut-microbiome-longevity-centenarian-isoallolca-akkermansia-and-young-fmt",
+    slugB: "blue-zones-high-fertility-populations-and-reproductive-longevity-genetics",
+    relation: "bridges",
+    note: "Japanese centenarian gut microbiomes harbor Odoribacteraceae that synthesize bactericidal/Treg-inducing isoalloLCA bile acids (Sato & Honda, Nature 2021) alongside high-uniqueness microbial indole production (Wilmanski & Price, Nature Metabolism 2021).",
+  },
+  {
+    slugA: "membrane-pacemaker-peroxidation-index-elovl2-plasmalogens-and-ferroptosis",
+    slugB: "comparative-longevity-genomics-naked-mole-rats-bowhead-whales-and-centenarians",
+    relation: "bridges",
+    note: "Across naked mole-rats, echidnas, bowhead whales, and humans, maximum species lifespan scales inversely (R² > 0.85) with the mitochondrial phospholipid Peroxidation Index (Hulbert 2007) and systemic iron/ferroptosis burden (Timmers & Deelen, Nature Communications 2020).",
+  },
+  {
+    slugA: "nuclear-lamina-architecture-lamin-a-sirt7-and-heterochromatin-maintenance",
+    slugB: "epigenetic-clocks-dna-methylation-and-biological-age-biomarkers",
+    relation: "bridges",
+    note: "Cryptic LMNA splicing into Progerin and Lamin B1 depletion detach peripheral heterochromatin (LADs) during normal human aging (Scaffidi & Misteli, Science 2006), while in vivo Adenine Base Editing of LMNA extends progeroid mouse lifespan by 140% (Koblan, Collins & Liu, Nature 2021).",
+  },
+  {
+    slugA: "whole-organ-bioengineering-decellularized-scaffolds-3d-bioprinting-and-xenotransplantation",
+    slugB: "organ-cryopreservation-nanowarming-vitrification-and-metabolic-torpor-biostasis",
+    relation: "bridges",
+    note: "Ending the human organ shortage combines 69-edit CRISPR porcine xenotransplantation (758-day primate survival; Anand & Church, Nature 2023) and SWIFT 3D bioprinting (Skylar-Scott & Lewis, 2019) with 100-day ice-free organ vitrification and radiofrequency nanowarming (Han, Finger & Bischof, Nature Communications 2023).",
+  },
+  {
+    slugA: "organ-cryopreservation-nanowarming-vitrification-and-metabolic-torpor-biostasis",
+    slugB: "ovarian-reserve-oocyte-cryopreservation",
+    relation: "bridges",
+    note: "Scales the physical principles of ultra-rapid ice-free vitrification from Metaphase II oocytes and blastocysts (Kuwayama 2005) to whole vascularized kidneys via silica-coated iron-oxide nanoparticle RF nanowarming (Han & Bischof, Nature Communications 2023).",
+  },
+  {
+    slugA: "transcriptional-elongation-speed-rna-pol-ii-splicing-fidelity-and-ribosomal-aging",
+    slugB: "telomere-dynamics-telomerase-tert-and-replicative-immortality",
+    relation: "bridges",
+    note: "Restoring youthful RNA Pol II elongation speed (Debès, Partridge & Beyer, Nature 2023) and SRSF/HNRNP spliceosome fidelity with resveralogues rescues full-length catalytic hTERT splicing and elongates aged human fibroblast telomeres (Latorre & Harries, 2017).",
   },
 ];
 
