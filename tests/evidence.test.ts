@@ -44,6 +44,7 @@ import {
   PHYSICS_FRONTIER_GRAVITY_DOSSIERS,
   PHYSICS_GRAVITY_STRING_DOSSIERS,
   PHYSICS_QUANTUM_DOSSIERS,
+  REGENERATION_SEED_DOSSIERS,
   type SeedNode,
 } from "@lib/db";
 
@@ -767,7 +768,8 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(LONGEVITY_SEED_DOSSIERS)).toHaveLength(18);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(70);
+    expect(Object.keys(REGENERATION_SEED_DOSSIERS)).toHaveLength(16);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(86);
     expect(ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"]).toBeDefined();
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {

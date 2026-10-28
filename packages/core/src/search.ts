@@ -894,8 +894,72 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
     keywords: ["glymphatic", "aquaporin-4", "aqp4", "klotho", "meningeal lymphatic", "40 hz", "ep2", "brain aging", "nedergaard", "dubal"],
   },
   {
+    slugSubstring: "developmental-bioelectricity-morphogenetic-fields-and-levin-anatomical-homeostasis",
+    keywords: ["michael levin", "michel levin", "levin", "tufts", "truffts", "wyss", "bioelectricity", "bioelectric", "vmem", "morphogenetic field", "anatomical homeostasis", "biodome", "planaria", "planarian", "gap junction", "cognitive light cone", "tame"],
+  },
+  {
+    slugSubstring: "xenobots-anthrobots-cancer-bioelectric-normalization-and-synthetic-living-machines",
+    keywords: ["xenobot", "xenobots", "anthrobot", "anthrobots", "living machine", "living robots", "biobot", "cancer normalization", "bioelectric cancer", "bongard", "kriegman", "gumuskaya"],
+  },
+  {
+    slugSubstring: "epimorphic-limb-regeneration-axolotl-blastema-and-scarless-acomys-healing",
+    keywords: ["axolotl", "salamander", "blastema", "limb regeneration", "epimorphic", "acomys", "spiny mouse", "scarless", "tanaka", "seifert", "positional memory"],
+  },
+  {
+    slugSubstring: "mammalian-skeletal-ending-cartilage-regeneration-and-focal-adhesion-mechanotherapy",
+    keywords: ["verteporfin", "15-pgdh", "pgdh", "sw033291", "gerozyme", "hyaline cartilage", "skeletal stem cell", "longaker", "helen blau", "engrailed-1", "pge2"],
+  },
+  {
+    slugSubstring: "hippo-yap-taz-pathway-cardiomyocyte-proliferation-and-organ-regeneration",
+    keywords: ["hippo", "yap", "taz", "sav1", "salvador", "cardiomyocyte proliferation", "heart regeneration", "agrin", "erbb2", "xmu-mp-1", "james martin", "tzahor"],
+  },
+  {
+    slugSubstring: "sensory-organ-regeneration-cochlear-hair-cells-and-retinal-muller-glia",
+    keywords: ["cochlear", "hair cell", "hearing regeneration", "chir99021", "valproic acid", "muller glia", "ascl1", "retinal regeneration", "otoferlin", "otof"],
+  },
+  {
+    slugSubstring: "vascular-endothelial-aging-vegf-microcirculation-and-nitric-oxide-rejuvenation",
+    keywords: ["vegf", "capillary rarefaction", "microcirculation", "sflt-1", "keshet", "type h vessel", "nitric oxide", "enos", "nahs"],
+  },
+  {
+    slugSubstring: "klotho-fgf23-mineral-metabolism-and-renal-cardiovascular-longevity",
+    keywords: ["klotho", "alpha-klotho", "fgf23", "phosphate toxicity", "kuro-o", "calciprotein", "renal fibrosis"],
+  },
+  {
+    slugSubstring: "line1-retrotransposons-cgas-sting-and-nlrp3-sterile-inflammaging",
+    keywords: ["line-1", "line1", "retrotransposon", "lamivudine", "3tc", "cgas", "sting", "h-151", "nlrp3", "inflammasome", "sedivy"],
+  },
+  {
+    slugSubstring: "endogenous-geroprotective-metabolites-taurine-akg-ergothioneine-and-h2s",
+    keywords: ["taurine", "alpha-ketoglutarate", "ca-akg", "akg", "ergothioneine", "slc22a4", "octn1", "hydrogen sulfide", "h2s", "persulfidation"],
+  },
+  {
+    slugSubstring: "gut-microbiome-longevity-centenarian-isoallolca-akkermansia-and-young-fmt",
+    keywords: ["isoallolca", "akkermansia", "fecal microbiota", "fmt", "odoribacteraceae", "centenarian microbiome", "indole"],
+  },
+  {
+    slugSubstring: "membrane-pacemaker-peroxidation-index-elovl2-plasmalogens-and-ferroptosis",
+    keywords: ["membrane pacemaker", "peroxidation index", "elovl2", "plasmalogen", "ferroptosis", "gpx4", "hulbert"],
+  },
+  {
+    slugSubstring: "nuclear-lamina-architecture-lamin-a-sirt7-and-heterochromatin-maintenance",
+    keywords: ["progeria", "progerin", "hgps", "lamin a", "lmna", "lamin b1", "remodelin", "nat10", "base editing", "david liu", "sirt7"],
+  },
+  {
+    slugSubstring: "whole-organ-bioengineering-decellularized-scaffolds-3d-bioprinting-and-xenotransplantation",
+    keywords: ["decellularized", "recellularization", "bioprinting", "swift", "xenotransplantation", "egenesis", "george church", "porcine kidney", "harald ott"],
+  },
+  {
+    slugSubstring: "transcriptional-elongation-speed-rna-pol-ii-splicing-fidelity-and-ribosomal-aging",
+    keywords: ["rna polymerase ii", "pol ii", "transcriptional elongation", "splicing fidelity", "sfa-1", "resveralogue", "ribosome pausing", "ribosome collision"],
+  },
+  {
+    slugSubstring: "organ-cryopreservation-nanowarming-vitrification-and-metabolic-torpor-biostasis",
+    keywords: ["nanowarming", "organ vitrification", "organ cryopreservation", "torpor", "hibernation", "biostasis", "bischof", "trpm2"],
+  },
+  {
     slugSubstring: "geroscience-cellular-senescence-longevity-biology",
-    keywords: ["aging", "ageing", "longevity", "biological clock", "reversing aging", "age reversal", "healthspan", "lifespan", "geroscience", "rejuvenation"],
+    keywords: ["aging", "ageing", "longevity", "biological clock", "reversing aging", "age reversal", "healthspan", "lifespan", "geroscience", "rejuvenation", "regeneration"],
   },
 ];
 
@@ -1230,6 +1294,45 @@ const CANONICAL_TOPIC_FACETS: CanonicalFacetSpec[] = [
     parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
     matches: (q) =>
       /\b(thymic\s+regeneration|thymus\s+regeneration|thymic\s+involution|\btriim\b|immunosenescence|inflammaging)\b/.test(q),
+  },
+  {
+    slug: "developmental-bioelectricity-morphogenetic-fields-and-levin-anatomical-homeostasis",
+    title: "Developmental Bioelectricity, Resting Potential (Vmem) Morphogenetic Codes & Anatomical Homeostasis (Michael Levin / Tufts)",
+    brief:
+      "Non-neural gap-junction (Connexin/Innexin) resting membrane voltage (Vmem) pattern memories and top-down morphogenetic fields (TAME; Levin Cell 2021), 24-hour 5-drug BioDome bioreactor regeneration of adult Xenopus hindlimbs over 18 months (Murugan & Levin Sci Adv 2022), progesterone BioDome limb regeneration (Herrera-Rincon 2018), permanent two-headed planarian bioelectric memory (Durant & Levin Biophys J 2017), and morphostasis decay aging theory.",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(michael\s+levin|michel\s+levin|\blevin\b|tufts|truffts|bioelectric(?:ity)?|\bvmem\b|morphogenetic\s+field|biodome|planaria(?:n)?|anatomical\s+homeostasis)\b/.test(q),
+  },
+  {
+    slug: "xenobots-anthrobots-cancer-bioelectric-normalization-and-synthetic-living-machines",
+    title: "Anthrobots, Xenobots, Bioelectric Cancer Normalization & Self-Assembling Synthetic Living Machines",
+    brief:
+      "Self-assembling adult human tracheal epithelial Anthrobots that bridge and heal scratched human neural tissue without genetic modification (Gumuskaya & Levin Adv Sci 2023), AI-designed self-replicating Xenopus Xenobots (Kriegman, Bongard & Levin PNAS 2020/2021), and hyperpolarizing ion-channel/optogenetic normalization of KRAS/Gli1 tumors (Chernet & Levin Oncotarget 2016).",
+    parentSlugs: [
+      "developmental-bioelectricity-morphogenetic-fields-and-levin-anatomical-homeostasis",
+      "geroscience-cellular-senescence-longevity-biology",
+    ],
+    matches: (q) =>
+      /\b(xenobots?|anthrobots?|biobots?|synthetic\s+living\s+machines?|cancer\s+normalization|bioelectric\s+cancer)\b/.test(q),
+  },
+  {
+    slug: "epimorphic-limb-regeneration-axolotl-blastema-and-scarless-acomys-healing",
+    title: "Epimorphic Limb Regeneration, Axolotl Blastema Dedifferentiation, Positional Memory & Spiny Mouse (Acomys) Scarless Healing",
+    brief:
+      "Lineage-restricted axolotl blastema dedifferentiation and Meis1/Prod1/RA positional memory (Kragl & Tanaka Nature 2009; Gerber Science 2018), obligatory macrophage clearance of blastema senescent cells (Godwin PNAS 2013; Yun & Brockes eLife 2015), African Spiny Mouse (Acomys) ERK-YAP scarless mammalian organ regeneration (Seifert Nature 2012 / Science 2023), and sequential BMP2→BMP9 mammalian joint regeneration (Yu & Muneoka Nature 2019).",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(axolotls?|blastema|salamander\s+regeneration|acomys|spiny\s+mouse|limb\s+regeneration|epimorphic)\b/.test(q),
+  },
+  {
+    slug: "hippo-yap-taz-pathway-cardiomyocyte-proliferation-and-organ-regeneration",
+    title: "Hippo–YAP/TAZ Signaling, Adult Cardiomyocyte Proliferation, Agrin/ERBB2 & Mammalian Heart and Liver Regeneration",
+    brief:
+      "Post-infarction adult heart regeneration via AAV9-Sav1 Hippo knockdown in mice and pigs (Leach & Martin Nature 2017; Liu Sci Transl Med 2021), neonatal ECM Agrin and transient ERBB2 cardiomyocyte dedifferentiation (Bassat & Tzahor Nature 2017), reversible MST1/2 kinase inhibition (XMU-MP-1) for liver and intestinal regeneration (Fan & Zhou Sci Transl Med 2016), and Cpt1b fatty-acid oxidation blockade (Bae & Sadek Nature 2023).",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(hippo\s+pathway|yap\/taz|\bsav1\b|cardiomyocyte\s+proliferation|heart\s+regeneration|\bagrin\b|xmu-mp-1)\b/.test(q),
   },
 ];
 

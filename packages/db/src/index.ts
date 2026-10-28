@@ -9,6 +9,7 @@ export { PHYSICS_CLASSICAL_DOSSIERS } from "./physics-classical-dossiers";
 export { PHYSICS_FRONTIER_GRAVITY_DOSSIERS } from "./physics-frontier-gravity-dossiers";
 export { PHYSICS_GRAVITY_STRING_DOSSIERS } from "./physics-gravity-string-dossiers";
 export { PHYSICS_QUANTUM_DOSSIERS } from "./physics-quantum-dossiers";
+export { REGENERATION_SEED_DOSSIERS } from "./regeneration-dossiers";
 export * from "./repo";
 export {
   buildRollbackPlan,
