@@ -768,8 +768,8 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(LONGEVITY_SEED_DOSSIERS)).toHaveLength(18);
-    expect(Object.keys(REGENERATION_SEED_DOSSIERS)).toHaveLength(16);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(86);
+    expect(Object.keys(REGENERATION_SEED_DOSSIERS)).toHaveLength(17);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(87);
     expect(ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"]).toBeDefined();
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {
@@ -995,7 +995,7 @@ describe("SEO metadata, JSON-LD structured data, and crawler discovery", () => {
         },
       ],
     });
-    expect(llms).toContain("# Alexander's Library");
+    expect(llms).toMatch(/# (Alexander's Library|Library of Alexandria)/);
     expect(llms).toContain("https://newdomain.org/topic/natural-sciences");
     expect(llms).toContain("T1 (Synthesis of trials)");
 

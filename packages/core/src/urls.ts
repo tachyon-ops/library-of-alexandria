@@ -132,6 +132,7 @@ export const SHORT_TOPIC_SEGMENTS: Record<string, string> = {
   "whole-organ-bioengineering-decellularized-scaffolds-3d-bioprinting-and-xenotransplantation": "organ-bioprinting-xenotransplant",
   "transcriptional-elongation-speed-rna-pol-ii-splicing-fidelity-and-ribosomal-aging": "rna-pol2-splicing-fidelity",
   "organ-cryopreservation-nanowarming-vitrification-and-metabolic-torpor-biostasis": "organ-vitrification-torpor",
+  "dental-tooth-regeneration-usag1-antibodies-dpsc-pulp-and-biomimetic-enamel": "dental-tooth-regeneration",
   "neuroscience-cognitive-science-and-consciousness": "neuroscience",
   "brain-aging-glymphatic-clearance-klotho-and-neuro-rejuvenation": "brain-glymphatic-klotho",
 
