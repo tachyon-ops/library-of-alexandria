@@ -38,6 +38,7 @@ import {
   CROSS_DISCIPLINE_LINKS,
   ECONOMICS_FINANCE_DOSSIERS,
   ENCYCLOPAEDIC_TRUNKS,
+  LONGEVITY_SEED_DOSSIERS,
   MATH_SEED_DOSSIERS,
   PHYSICS_CLASSICAL_DOSSIERS,
   PHYSICS_FRONTIER_GRAVITY_DOSSIERS,
@@ -765,7 +766,8 @@ describe("encyclopaedic tree, cross-discipline links, and curated dossiers", () 
     expect(Object.keys(PHYSICS_FRONTIER_GRAVITY_DOSSIERS)).toHaveLength(4);
     expect(Object.keys(MATH_SEED_DOSSIERS)).toHaveLength(7);
     expect(Object.keys(ECONOMICS_FINANCE_DOSSIERS)).toHaveLength(7);
-    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(52);
+    expect(Object.keys(LONGEVITY_SEED_DOSSIERS)).toHaveLength(18);
+    expect(Object.keys(ALL_SEED_DOSSIERS)).toHaveLength(70);
     expect(ALL_SEED_DOSSIERS["hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence"]).toBeDefined();
 
     for (const [slug, dossier] of Object.entries(ALL_SEED_DOSSIERS)) {

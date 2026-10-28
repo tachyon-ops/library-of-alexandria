@@ -825,6 +825,78 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
     slugSubstring: "reproductive-medicine-human-fertility",
     keywords: ["fertility", "infertility", "reproductive", "ivf", "conception", "embryo", "blastocyst", "pregnancy", "ovulation", "hormone"],
   },
+  {
+    slugSubstring: "epigenetic-clocks-dna-methylation-and-biological-age-biomarkers",
+    keywords: ["epigenetic clock", "horvath", "grimage", "dunedinpace", "phenoage", "dna methylation", "biological clock", "biological age", "cpg", "causage", "damAge"],
+  },
+  {
+    slugSubstring: "organ-specific-proteomic-clocks-and-multi-omic-aging-signatures",
+    keywords: ["proteomic clock", "organ clock", "somascan", "olink", "glycanage", "igg glycan", "wyss-coray", "aging wave", "crests at 44"],
+  },
+  {
+    slugSubstring: "partial-cellular-reprogramming-yamanaka-factors-and-epigenetic-reset",
+    keywords: ["yamanaka", "oskm", "osk", "partial reprogramming", "cellular reprogramming", "epigenetic reset", "sinclair", "belmonte", "reik"],
+  },
+  {
+    slugSubstring: "chemical-and-mrna-transient-reprogramming-without-oncogenic-transformation",
+    keywords: ["chemical reprogramming", "mrna reprogramming", "transient reprogramming", "vc6tf", "repsox", "sebastiano", "oskmln"],
+  },
+  {
+    slugSubstring: "cellular-senescence-sasp-senolytics-and-senomorphics",
+    keywords: ["senolytic", "senolytics", "senomorphic", "senescence", "sasp", "dasatinib", "quercetin", "fisetin", "foxo4", "p16", "kirkland"],
+  },
+  {
+    slugSubstring: "immunotherapy-car-t-and-vaccines-for-senescent-cell-clearance",
+    keywords: ["senolytic car-t", "upar", "gpnmb", "senolytic vaccine", "procyanidin c1", "pcc1", "nkg2d"],
+  },
+  {
+    slugSubstring: "nutrient-sensing-mtor-ampk-igf1-and-geroprotective-pharmacology",
+    keywords: ["rapamycin", "sirolimus", "mtorc1", "acarbose", "17-alpha-estradiol", "canagliflozin", "sglt2", "metformin", "tame trial", "itp"],
+  },
+  {
+    slugSubstring: "caloric-restriction-fasting-mimetics-and-human-calerie-trials",
+    keywords: ["caloric restriction", "calorie restriction", "calerie", "fasting-mimicking", "fmd", "time-restricted", "pla2g7", "valter longo", "takahashi"],
+  },
+  {
+    slugSubstring: "nad-metabolism-sirtuins-cd38-inhibition-and-mitochondrial-rejuvenation",
+    keywords: ["nad+", "nmn", "nicotinamide riboside", "sirtuin", "sirt1", "sirt6", "cd38", "apigenin", "nampt", "pseudohypoxia"],
+  },
+  {
+    slugSubstring: "mitophagy-activators-urolithin-a-spermidine-glynac-and-ss31",
+    keywords: ["mitophagy", "urolithin a", "spermidine", "glynac", "elamipretide", "ss-31", "pink1", "parkin", "glutathione", "cardiolipin"],
+  },
+  {
+    slugSubstring: "telomere-dynamics-telomerase-tert-and-replicative-immortality",
+    keywords: ["telomere", "telomeres", "telomerase", "tert", "shelterin", "hayflick", "blasco", "depinho"],
+  },
+  {
+    slugSubstring: "heterochronic-parabiosis-therapeutic-plasma-exchange-and-systemic-factors",
+    keywords: ["parabiosis", "plasma exchange", "tpe", "plasmapheresis", "young blood", "neutral blood exchange", "conboy", "ambar", "pf4", "timp2"],
+  },
+  {
+    slugSubstring: "thymic-regeneration-immunosenescence-and-inflammaging-reversal",
+    keywords: ["thymus", "thymic", "triim", "immunosenescence", "inflammaging", "fahy", "myeloid-biased", "foxn1", "trec"],
+  },
+  {
+    slugSubstring: "proteostasis-autophagy-extracellular-matrix-stiffening-and-age-crosslinks",
+    keywords: ["proteostasis", "chaperone-mediated autophagy", "lamp2a", "glucosepane", "advanced glycation", "ecm stiffness", "piezo1", "beclin-1", "cuervo"],
+  },
+  {
+    slugSubstring: "comparative-longevity-genomics-naked-mole-rats-bowhead-whales-and-centenarians",
+    keywords: ["naked mole-rat", "bowhead whale", "greenland shark", "peto's paradox", "nmrhas2", "centenarian", "supercentenarian", "foxo3a", "gorbunova"],
+  },
+  {
+    slugSubstring: "physiological-hormesis-vo2max-sauna-cold-shock-and-circadian-longevity",
+    keywords: ["vo2max", "vo2 max", "sauna", "heat shock", "hsp70", "cold shock", "rbm3", "zone 2", "4x4 hiit", "hormesis"],
+  },
+  {
+    slugSubstring: "brain-aging-glymphatic-clearance-klotho-and-neuro-rejuvenation",
+    keywords: ["glymphatic", "aquaporin-4", "aqp4", "klotho", "meningeal lymphatic", "40 hz", "ep2", "brain aging", "nedergaard", "dubal"],
+  },
+  {
+    slugSubstring: "geroscience-cellular-senescence-longevity-biology",
+    keywords: ["aging", "ageing", "longevity", "biological clock", "reversing aging", "age reversal", "healthspan", "lifespan", "geroscience", "rejuvenation"],
+  },
 ];
 
 interface CanonicalFacetSpec {
@@ -1105,6 +1177,59 @@ const CANONICAL_TOPIC_FACETS: CanonicalFacetSpec[] = [
     matches: (q) =>
       /\b(dark\s+matter|wide\s+binar(?:y|ies)|wimp)\b/.test(q) &&
       /[,?;]|(\band\b)|(\bvs\b)|(\bversus\b)|(\bwhat\b)|(\bhow\b)/.test(q),
+  },
+  {
+    slug: "epigenetic-clocks-dna-methylation-and-biological-age-biomarkers",
+    title: "Epigenetic Clocks, DNA Methylation & Biological Age Biomarkers (Horvath, GrimAge, DunedinPACE)",
+    brief:
+      "First-, second-, and third-generation DNA methylation clocks (Horvath 353-CpG pan-tissue, Hannum, PhenoAge, GrimAge2, DunedinPACE), PRC2/TET/DNMT drift, CausAge/AdaptAge/DamAge Mendelian randomization, and universal mammalian pan-tissue clocks.",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(epigenetic\s+clocks?|horvath|grimage|dunedinpace|phenoage|biological\s+clock|biological\s+age\s+clock)\b/.test(q),
+  },
+  {
+    slug: "partial-cellular-reprogramming-yamanaka-factors-and-epigenetic-reset",
+    title: "Partial Cellular Reprogramming, Yamanaka Factors (OSKM/OSK) & Epigenetic Information Reset",
+    brief:
+      "Cyclic in vivo OSKM reprogramming (Ocampo & Izpisua Belmonte Cell 2016), c-Myc-free AAV-OSK optic nerve regeneration and Information Theory of Aging validation (Lu & Sinclair Nature 2020; Yang & Sinclair Cell 2023), 124-week-old mouse +109% remaining lifespan extension (Macip Nature Aging 2024), and 30-year human fibroblast maturation-phase epigenetic reset (Gill & Reik eLife 2022).",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(yamanaka|oskm|\bosk\b|partial\s+(?:cellular\s+)?reprogramming|epigenetic\s+reset|information\s+theory\s+of\s+ag(?:e?ing))\b/.test(q),
+  },
+  {
+    slug: "cellular-senescence-sasp-senolytics-and-senomorphics",
+    title: "Cellular Senescence, SASP Paracrine Cascades, Senolytics & Senomorphics",
+    brief:
+      "p16INK4a/p21CIP1 arrest, the Senescence-Associated Secretory Phenotype (SASP), Senescent Cell Anti-Apoptotic Pathways (SCAPs), INK-ATTAC genetic clearance (Baker & van Deursen Nature 2016), hit-and-run Dasatinib + Quercetin (Xu & Kirkland Nat Med 2018; Hickson human biopsy RCT 2019), Fisetin (Yousefzadeh & Niedernhofer 2018), FOXO4-DRI peptide (Baar Cell 2017), and SASP-suppressing senomorphics.",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(senolytics?|senomorphics?|dasatinib|fisetin|foxo4-dri|\bsasp\b|zombie\s+cells?)\b/.test(q),
+  },
+  {
+    slug: "telomere-dynamics-telomerase-tert-and-replicative-immortality",
+    title: "Telomere Attrition, Shelterin Complex, Telomerase (TERT) Gene Therapy & Replicative Senescence",
+    brief:
+      "Species telomere shortening rate law (R² = 0.934; Whittemore & Blasco PNAS 2019), telomere-p53-PGC1α mitochondrial repression (Sahin & DePinho Nature 2011), AAV9-TERT and MCMV-TERT mammalian lifespan extension (+24% to +41.4% without excess cancer; Blasco 2012; Jaijyan & Zhu PNAS 2022), small-molecule TERT Activating Compound (TAC; Shim & DePinho Cell 2024), and endurance/HIIT telomerase activation (Werner & Laufs Eur Heart J 2019).",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) => /\b(telomeres?|telomerase|\btert\b|shelterin|hayflick)\b/.test(q),
+  },
+  {
+    slug: "heterochronic-parabiosis-therapeutic-plasma-exchange-and-systemic-factors",
+    title: "Heterochronic Parabiosis, Therapeutic Plasma Exchange (TPE) & Systemic Circulating Rejuvenation Factors",
+    brief:
+      "Stem cell niche rejuvenation via shared young circulation (Conboy & Rando Nature 2005), extended 3-month parabiosis epigenetic clock reversal (−20% to −30%) and post-detachment lifespan extension (Zhang, Gladyshev & White Nature Aging 2023), Neutral Blood Exchange / human Therapeutic Plasma Exchange with 5% Albumin (−1.3 to −2.6 yr biological age; Conboy 2020/2022; AMBAR Phase 3 RCT), and circulating PF4, TIMP2, and Oxytocin.",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(parabiosis|therapeutic\s+plasma\s+exchange|neutral\s+blood\s+exchange|young\s+blood|young\s+plasma|\btpe\b)\b/.test(q),
+  },
+  {
+    slug: "thymic-regeneration-immunosenescence-and-inflammaging-reversal",
+    title: "Thymic Involution Reversal, Immunosenescence, Inflammaging & Hematopoietic Rejuvenation",
+    brief:
+      "Human MRI thymic regeneration and −2.5 year GrimAge reversal in the TRIIM trial (rhGH + DHEA + Metformin; Fahy & Horvath Aging Cell 2019), solid-organ senescence driven by Ercc1-deficient aged immune cells (Yousefzadeh & Niedernhofer Nature 2021), and antibody depletion of aged myeloid-biased hematopoietic stem cells to restore youthful adaptive immunity (Ross & Weissman Nature 2024).",
+    parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
+    matches: (q) =>
+      /\b(thymic\s+regeneration|thymus\s+regeneration|thymic\s+involution|\btriim\b|immunosenescence|inflammaging)\b/.test(q),
   },
 ];
 

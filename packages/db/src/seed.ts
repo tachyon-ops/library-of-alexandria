@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { getSql, type Sql } from "./client";
 import { ECONOMICS_FINANCE_DOSSIERS } from "./economics-finance-dossiers";
 import { FERTILITY_SEED_DOSSIERS } from "./fertility-dossiers";
+import { LONGEVITY_SEED_DOSSIERS } from "./longevity-dossiers";
 import { MATH_SEED_DOSSIERS } from "./math-dossiers";
 import { PHYSICS_CLASSICAL_DOSSIERS } from "./physics-classical-dossiers";
 import { PHYSICS_FRONTIER_GRAVITY_DOSSIERS } from "./physics-frontier-gravity-dossiers";
@@ -11,6 +12,7 @@ import { ensureSeedTopic, getTopicBySlug, isSeedComplete, linkTopics, type SeedD
 
 export const ALL_SEED_DOSSIERS: Record<string, SeedDossier> = {
   ...FERTILITY_SEED_DOSSIERS,
+  ...LONGEVITY_SEED_DOSSIERS,
   ...PHYSICS_CLASSICAL_DOSSIERS,
   ...PHYSICS_QUANTUM_DOSSIERS,
   ...PHYSICS_GRAVITY_STRING_DOSSIERS,
@@ -417,12 +419,128 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
             title: "Geroscience, Cellular Senescence & Longevity Biology",
             brief:
               "Hallmarks of biological aging, telomere dynamics, epigenetic clocks, senolytics, autophagy, NAD+ and sirtuin metabolism, caloric restriction mimetics, and partial cellular reprogramming.",
+            children: [
+              {
+                slug: "epigenetic-clocks-dna-methylation-and-biological-age-biomarkers",
+                title: "Epigenetic Clocks, DNA Methylation & Biological Age Biomarkers (Horvath, GrimAge, DunedinPACE)",
+                brief:
+                  "First-, second-, and third-generation DNA methylation clocks (Horvath 353-CpG pan-tissue, Hannum, PhenoAge, GrimAge2, DunedinPACE), PRC2/TET/DNMT drift, CausAge/AdaptAge/DamAge Mendelian randomization, and universal mammalian pan-tissue clocks.",
+                children: [
+                  {
+                    slug: "organ-specific-proteomic-clocks-and-multi-omic-aging-signatures",
+                    title: "Organ-Specific Plasma Proteomic Clocks, IgG Glycan Clocks & Multi-Omic Aging Trajectories",
+                    brief:
+                      "Stanford 5,000-protein SomaScan organ-specific plasma aging clocks (Oh & Wyss-Coray Nature 2023), UK Biobank 2,897-protein Olink organ clocks, non-linear human multi-omic aging waves at ages 34, 44, 60, and 78 (Lehallier 2019; Shen & Snyder 2024), and IgG N-glycan (GlycanAge) immunosenescence biomarkers.",
+                  },
+                ],
+              },
+              {
+                slug: "partial-cellular-reprogramming-yamanaka-factors-and-epigenetic-reset",
+                title: "Partial Cellular Reprogramming, Yamanaka Factors (OSKM/OSK) & Epigenetic Information Reset",
+                brief:
+                  "Cyclic in vivo OSKM reprogramming (Ocampo & Izpisua Belmonte Cell 2016), c-Myc-free AAV-OSK optic nerve regeneration and Information Theory of Aging validation (Lu & Sinclair Nature 2020; Yang & Sinclair Cell 2023), 124-week-old mouse +109% remaining lifespan extension (Macip Nature Aging 2024), and 30-year human fibroblast maturation-phase epigenetic reset (Gill & Reik eLife 2022).",
+                children: [
+                  {
+                    slug: "chemical-and-mrna-transient-reprogramming-without-oncogenic-transformation",
+                    title: "Chemical Cocktails & Transient mRNA Delivery for Non-Oncogenic Partial Reprogramming",
+                    brief:
+                      "Four-day non-integrating modified mRNA reprogramming (OSKMLN) of aged human fibroblasts, endothelial cells, chondrocytes, and muscle stem cells (Sarkar, Rando & Sebastiano Nat Commun 2020) and six small-molecule chemical reprogramming cocktails (VC6TF; Yang & Sinclair Aging 2023).",
+                  },
+                ],
+              },
+              {
+                slug: "cellular-senescence-sasp-senolytics-and-senomorphics",
+                title: "Cellular Senescence, SASP Paracrine Cascades, Senolytics & Senomorphics",
+                brief:
+                  "p16INK4a/p21CIP1 arrest, the Senescence-Associated Secretory Phenotype (SASP), Senescent Cell Anti-Apoptotic Pathways (SCAPs), INK-ATTAC genetic clearance (Baker & van Deursen Nature 2016), hit-and-run Dasatinib + Quercetin (Xu & Kirkland Nat Med 2018; Hickson human biopsy RCT 2019), Fisetin (Yousefzadeh & Niedernhofer 2018), FOXO4-DRI peptide (Baar Cell 2017), and SASP-suppressing senomorphics.",
+                children: [
+                  {
+                    slug: "immunotherapy-car-t-and-vaccines-for-senescent-cell-clearance",
+                    title: "Senolytic CAR-T Cells (uPAR, NKG2DL), GPNMB Vaccines & Immune Clearance of Senescent Cells",
+                    brief:
+                      "Lifelong prophylactic and therapeutic uPAR-targeted senolytic CAR-T cells (Amor & Lowe Nature 2020 / Nature Aging 2024), NKG2D-ligand CAR-T cells in aged non-human primates, GPNMB senolytic peptide vaccination (Suda & Minamino Nature 2021), PD-L1/PD-L2/HLA-E immune checkpoint evasion, and Procyanidin C1 (+64.2% remaining mouse lifespan).",
+                  },
+                ],
+              },
+              {
+                slug: "nutrient-sensing-mtor-ampk-igf1-and-geroprotective-pharmacology",
+                title: "Nutrient-Sensing Networks (mTORC1, AMPK, IIS/FOXO3) & Geroprotective Pharmacology",
+                brief:
+                  "NIA Interventions Testing Program (ITP) gold-standard lifespan extensions via Rapamycin (+23%–28%, Harrison Nature 2009 / Miller 2014), Acarbose (+22% male), 17α-Estradiol (+19% male), Canagliflozin (+14% male), rapalog + trametinib + lithium triple synergy (+48%), human low-dose weekly mTORC1 inhibition (Mannick 2014/2018), and the TAME metformin framework.",
+                children: [
+                  {
+                    slug: "caloric-restriction-fasting-mimetics-and-human-calerie-trials",
+                    title: "Caloric Restriction, Circadian Time-Restricted Feeding, Fasting-Mimicking Diets & Human CALERIE Trials",
+                    brief:
+                      "Circadian active-phase feeding (+35% vs +10% mouse lifespan; Acosta-Rodríguez & Takahashi Science 2022), the 2-year NIH CALERIE Phase 2 human RCT (14% CR slows DunedinPACE by 2%–3% and regenerates the thymus via PLA2G7 suppression; Waziry Nat Aging 2023; Spadaro & Dixit Science 2022), and 5-day Fasting-Mimicking Diet cycles (−2.5 yr human biological age; Brandhorst, Levine & Longo Nat Commun 2024).",
+                  },
+                ],
+              },
+              {
+                slug: "nad-metabolism-sirtuins-cd38-inhibition-and-mitochondrial-rejuvenation",
+                title: "NAD+ Metabolism, Sirtuins (SIRT1–SIRT7), CD38 Inhibition & Mitochondrial Bioenergetics",
+                brief:
+                  "SASP-induced macrophage CD38 NADase sink (Camacho-Pereira & Chini Cell Metab 2016; Covarrubias & Verdin Nat Metab 2020), nuclear NAD+ depletion and HIF-1α pseudohypoxia reversal (Gomes & Sinclair Cell 2013), SIRT6 mammalian lifespan extension (+23%–30%; Roichman & Cohen Nat Commun 2021), NAMPT exercise induction, and human NMN/NR clinical trials (Yoshino, Klein & Imai Science 2021).",
+                children: [
+                  {
+                    slug: "mitophagy-activators-urolithin-a-spermidine-glynac-and-ss31",
+                    title: "Mitophagy & Mitochondrial Quality Control: Urolithin A, Spermidine, GlyNAC & Elamipretide (SS-31)",
+                    brief:
+                      "PINK1/Parkin mitophagy induction via Urolithin A (+45% worm lifespan, +12% human muscle strength RCT; Auwerx Nat Med 2016 / Singh Cell Rep Med 2022), Spermidine EP300 inhibition and eIF5A-TFEB hypusination (Madeo & Kroemer Nat Med 2016 / Nat Cell Biol 2024), GlyNAC glutathione and β-oxidation restoration in older adults (Kumar & Sekhar J Gerontol 2023), and SS-31 cardiolipin stabilization.",
+                  },
+                ],
+              },
+              {
+                slug: "telomere-dynamics-telomerase-tert-and-replicative-immortality",
+                title: "Telomere Attrition, Shelterin Complex, Telomerase (TERT) Gene Therapy & Replicative Senescence",
+                brief:
+                  "Species telomere shortening rate law (R² = 0.934; Whittemore & Blasco PNAS 2019), telomere-p53-PGC1α mitochondrial repression (Sahin & DePinho Nature 2011), AAV9-TERT and MCMV-TERT mammalian lifespan extension (+24% to +41.4% without excess cancer; Blasco 2012; Jaijyan & Zhu PNAS 2022), small-molecule TERT Activating Compound (TAC; Shim & DePinho Cell 2024), and endurance/HIIT telomerase activation (Werner & Laufs Eur Heart J 2019).",
+              },
+              {
+                slug: "heterochronic-parabiosis-therapeutic-plasma-exchange-and-systemic-factors",
+                title: "Heterochronic Parabiosis, Therapeutic Plasma Exchange (TPE) & Systemic Circulating Rejuvenation Factors",
+                brief:
+                  "Stem cell niche rejuvenation via shared young circulation (Conboy & Rando Nature 2005), extended 3-month parabiosis epigenetic clock reversal (−20% to −30%) and post-detachment lifespan extension (Zhang, Gladyshev & White Nature Aging 2023), Neutral Blood Exchange / human Therapeutic Plasma Exchange with 5% Albumin (−1.3 to −2.6 yr biological age; Conboy 2020/2022; AMBAR Phase 3 RCT), and circulating PF4, TIMP2, and Oxytocin.",
+              },
+              {
+                slug: "thymic-regeneration-immunosenescence-and-inflammaging-reversal",
+                title: "Thymic Involution Reversal, Immunosenescence, Inflammaging & Hematopoietic Rejuvenation",
+                brief:
+                  "Human MRI thymic regeneration and −2.5 year GrimAge reversal in the TRIIM trial (rhGH + DHEA + Metformin; Fahy & Horvath Aging Cell 2019), solid-organ senescence driven by Ercc1-deficient aged immune cells (Yousefzadeh & Niedernhofer Nature 2021), and antibody depletion of aged myeloid-biased hematopoietic stem cells to restore youthful adaptive immunity (Ross & Weissman Nature 2024).",
+              },
+              {
+                slug: "proteostasis-autophagy-extracellular-matrix-stiffening-and-age-crosslinks",
+                title: "Loss of Proteostasis, Chaperone-Mediated Autophagy, ECM Cross-Linking (AGEs) & Tissue Fibrosis",
+                brief:
+                  "Beclin-1–BCL2 uncoupling and mammalian macroautophagy lifespan extension (+12%; Fernández & Levine Nature 2018), LAMP2A Chaperone-Mediated Autophagy and CA77.1 (Bourdenx & Cuervo Cell 2021), Glucosepane non-enzymatic Maillard cross-linking (>90% of aged human collagen cross-links; Monnier 2005), and Piezo1 mechanotransduction reset of stiffened stem cell niches (Segel & Franklin Nature 2019).",
+              },
+              {
+                slug: "comparative-longevity-genomics-naked-mole-rats-bowhead-whales-and-centenarians",
+                title: "Comparative Biology of Extreme Longevity: Bowhead Whales, Naked Mole-Rats, Greenland Sharks & Human Centenarians",
+                brief:
+                  "Universal inverse scaling of somatic mutation rates with mammalian lifespan (47 vs 796 mut/yr; Cagan & Martincorena Nature 2022), naked mole-rat high-molecular-weight hyaluronic acid transfer into mice (nmrHas2 extends lifespan and cuts cancer 50%–70%; Gorbunova & Seluanov Nature 2023), rodent SIRT6 DSB repair evolution (Cell 2019), Bowhead whale CIRBP/ERCC1 (211+ yr), elephant 20-copy TP53, and human centenarian alleles (FOXO3A, APOE ε2, IGF1R, LAV-BPIFB4).",
+              },
+              {
+                slug: "physiological-hormesis-vo2max-sauna-cold-shock-and-circadian-longevity",
+                title: "Physiological Hormesis, Cardiorespiratory Fitness (VO2max), Thermal Stress (HSPs), Klotho & Circadian Clocks",
+                brief:
+                  "Elite VO2max 80% all-cause mortality reduction (HR 0.20, n=122,007; Mandsager & Jaber JAMA Netw Open 2018), 2-year Norwegian 4×4 HIIT reversal of middle-aged cardiac left ventricular stiffness (−25%; Howden & Levine Circulation 2018), late-life resistance training reversal of muscle epigenetic clocks (Murach & Horvath Aging Cell 2022), Finnish dry sauna HSP70 hormesis (−40% mortality, −65% dementia; Laukkanen 2015), and cold-shock RBM3 synaptic protection.",
+              },
+            ],
           },
           {
             slug: "neuroscience-cognitive-science-and-consciousness",
             title: "Neuroscience, Cognitive Science & Consciousness",
             brief:
               "Synaptic transmission, neural circuit dynamics, memory consolidation, neuroimaging, neural correlates of consciousness, and neuropsychiatric pathophysiology.",
+            children: [
+              {
+                slug: "brain-aging-glymphatic-clearance-klotho-and-neuro-rejuvenation",
+                title: "Brain Aging, Glymphatic Amyloid/Tau Clearance, α-Klotho, PF4 & Neural Stem Cell Rejuvenation",
+                brief:
+                  "Slow-wave N3 sleep 60% interstitial expansion and astrocytic AQP4 glymphatic β-amyloid clearance (Xie & Nedergaard Science 2013), 40 Hz VIP-interneuron gamma glymphatic washout (Murdock & Tsai Nature 2024), single low-dose α-Klotho cognitive enhancement in aged rhesus macaques (Castner & Dubal Nature Aging 2023), Platelet Factor 4 (PF4) synaptic rejuvenation (Villeda Nature 2023), and myeloid PGE2-EP2 metabolic reset (Minhas & Andreasson Nature 2021).",
+              },
+            ],
           },
         ],
       },
@@ -1142,6 +1260,84 @@ export const CROSS_DISCIPLINE_LINKS: {
     slugB: "advanced-maternal-age-pregnancy-after-40",
     relation: "intersects",
     note: "Links the Sardinian Blue Zone late-maternal reproduction phenotype (15–22% natural births ≥40 with -25% lower stillbirth/preterm loss, Astolfi 2008; Salaris 2016), Hutterite HLA-G implantation tolerance, and Tsimane vascular preservation to pregnancy after 40.",
+  },
+  {
+    slugA: "epigenetic-clocks-dna-methylation-and-biological-age-biomarkers",
+    slugB: "partial-cellular-reprogramming-yamanaka-factors-and-epigenetic-reset",
+    relation: "bridges",
+    note: "DNA methylation clocks (Horvath, GrimAge2, DunedinPACE) provide the primary quantitative readout for TET1/2-dependent biological age reversal by OSK/OSKM Yamanaka factors.",
+  },
+  {
+    slugA: "epigenetic-clocks-dna-methylation-and-biological-age-biomarkers",
+    slugB: "information-theory-cybernetics-and-rhetoric",
+    relation: "bridges",
+    note: "Shannon's Mathematical Theory of Communication (observer-backup-decoder correction of analog channel noise) directly inspired Sinclair's Information Theory of Epigenetic Aging (Lu et al., Nature 2020; Yang et al., Cell 2023).",
+  },
+  {
+    slugA: "organ-specific-proteomic-clocks-and-multi-omic-aging-signatures",
+    slugB: "brain-aging-glymphatic-clearance-klotho-and-neuro-rejuvenation",
+    relation: "bridges",
+    note: "Stanford SomaScan organ-specific plasma proteomic clocks (Oh & Wyss-Coray, Nature 2023) quantify brain biological aging and Alzheimer's progression 15 years before clinical symptoms.",
+  },
+  {
+    slugA: "cellular-senescence-sasp-senolytics-and-senomorphics",
+    slugB: "nad-metabolism-sirtuins-cd38-inhibition-and-mitochondrial-rejuvenation",
+    relation: "bridges",
+    note: "SASP cytokines secreted by p16INK4a+ senescent cells induce a 3–5-fold expansion of CD38+ pro-inflammatory macrophages that destroy tissue NAD+ (Chini 2016; Verdin 2020).",
+  },
+  {
+    slugA: "immunotherapy-car-t-and-vaccines-for-senescent-cell-clearance",
+    slugB: "thymic-regeneration-immunosenescence-and-inflammaging-reversal",
+    relation: "bridges",
+    note: "Endogenous clearance of uPAR+/GPNMB+ senescent cells requires rejuvenating thymic T-cell output (TRIIM) and depleting myeloid-biased aged hematopoietic stem cells (Ross & Weissman, Nature 2024).",
+  },
+  {
+    slugA: "nutrient-sensing-mtor-ampk-igf1-and-geroprotective-pharmacology",
+    slugB: "mtor-pathway-modulation-follicular-longevity",
+    relation: "bridges",
+    note: "Transient mTORC1 inhibition (Rapamycin) preserves both systemic multi-organ healthspan (+23%–28% lifespan in NIA ITP mice) and the primordial ovarian follicle pool (Dou et al., 2017; VIBRANT trial).",
+  },
+  {
+    slugA: "caloric-restriction-fasting-mimetics-and-human-calerie-trials",
+    slugB: "thymic-regeneration-immunosenescence-and-inflammaging-reversal",
+    relation: "bridges",
+    note: "In the 2-year NIH CALERIE human RCT, 14% caloric restriction downregulated adipose macrophage PLA2G7 and regenerated functional MRI thymic volume and naive T-cell output (Spadaro & Dixit, Science 2022).",
+  },
+  {
+    slugA: "mitophagy-activators-urolithin-a-spermidine-glynac-and-ss31",
+    slugB: "gamete-rejuvenation-mitochondrial-bioenergetics-and-natural-conception-after-40",
+    relation: "bridges",
+    note: "Spermidine eIF5A-TFEB mitophagy (Zhang, Nature Aging 2023) and Urolithin A PINK1/Parkin quality control restore mitochondrial membrane potential in both aged skeletal muscle and Metaphase II oocytes.",
+  },
+  {
+    slugA: "telomere-dynamics-telomerase-tert-and-replicative-immortality",
+    slugB: "nad-metabolism-sirtuins-cd38-inhibition-and-mitochondrial-rejuvenation",
+    relation: "bridges",
+    note: "Critically short telomeres activate p53 to repress PGC-1α/β mitochondrial biogenesis (Sahin & DePinho, Nature 2011), while nuclear SIRT1/SIRT6 deacylases stabilize telomeric heterochromatin.",
+  },
+  {
+    slugA: "heterochronic-parabiosis-therapeutic-plasma-exchange-and-systemic-factors",
+    slugB: "brain-aging-glymphatic-clearance-klotho-and-neuro-rejuvenation",
+    relation: "bridges",
+    note: "Platelet Factor 4 (PF4 / CXCL4) and TIMP2 in young plasma and α-Klotho signaling cross/signal to the aged hippocampus to suppress microglial TNF-α and restore synaptic plasticity (Villeda & Dubal, Nature / Nature Aging 2023) while Therapeutic Plasma Exchange slows Alzheimer's decline by 52%–71% (AMBAR RCT).",
+  },
+  {
+    slugA: "comparative-longevity-genomics-naked-mole-rats-bowhead-whales-and-centenarians",
+    slugB: "blue-zones-high-fertility-populations-and-reproductive-longevity-genetics",
+    relation: "bridges",
+    note: "Human centenarian alleles (FOXO3A, APOE ε2, IGF1R, LAV-BPIFB4) and vertebrate DNA-repair adaptations (SIRT6, ERCC1, BRCA1/2) couple extreme systemic longevity with extended reproductive lifespan.",
+  },
+  {
+    slugA: "physiological-hormesis-vo2max-sauna-cold-shock-and-circadian-longevity",
+    slugB: "brain-aging-glymphatic-clearance-klotho-and-neuro-rejuvenation",
+    relation: "bridges",
+    note: "High-intensity exercise and Finnish sauna bathing elevate circulating α-Klotho, BDNF, Irisin, HSP70, and cold-shock RBM3, reducing 20-year Alzheimer's and dementia risk by 65% (Laukkanen 2017).",
+  },
+  {
+    slugA: "geroscience-cellular-senescence-longevity-biology",
+    slugB: "thermodynamics-statistical-mechanics-and-entropy",
+    relation: "intersects",
+    note: "Biological aging reflects open-system non-equilibrium thermodynamic entropy accumulation across genomic, epigenetic, and extracellular matrix networks, countered by ATP-driven maintenance and repair.",
   },
 ];
 
