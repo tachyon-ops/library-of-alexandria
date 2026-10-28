@@ -398,8 +398,13 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
     controversies: [
       {
         kind: "contested",
-        note: "Somatic Mutation Theory vs. Epigenetic Information Theory of Aging: While Yang, Sinclair et al. (Cell 2023) argue that loss of epigenetic information (chromatin modifier relocalization during DSB repair) is the primary, reversible driver of aging, Cagan et al. (Nature 2022, cross-species somatic mutation rates across 16 mammalian species) demonstrate that somatic mutation accumulation per year scales inversely with species lifespan, indicating that both irreversible genomic mutations and reversible epigenetic drift interact across the lifespan.",
+        note: "Somatic Mutation Theory vs. David Sinclair's Epigenetic Information Theory of Aging (ICE Mouse Debate): While Yang, Sinclair et al. (Cell 2023) argue that loss of epigenetic information (chromatin modifier relocalization during DSB repair) is the primary, reversible driver of aging, independent biogerontologists (including Charles Brenner, Matt Kaeberlein, and Jan Vijg) and cross-species genomic studies (Cagan et al., Nature 2022, across 16 mammalian species) point out that ubiquitous I-PpoI endonuclease induction in ICE mice cuts ribosomal DNA (rDNA) and 28S loci hundreds of times per cell, inducing p53-dependent apoptosis, cellular senescence, and stem-cell depletion alongside epigenetic drift — meaning ICE models radiation-like DNA damage toxicity rather than proving that chronological aging is purely 'epigenetic software noise' independent of irreversible somatic mutations.",
         claimIndexes: [0, 3],
+      },
+      {
+        kind: "commercial_hype",
+        note: "Researcher Commercial Hype & Governance Controversies (David Sinclair, Sirtris Pharmaceuticals & The 2024 AHLR Resignation): Longevity biology has repeatedly suffered from commercial hype outrunning replicated evidence — most notably around Harvard geneticist David Sinclair. In 2008, GlaxoSmithKline acquired Sinclair's Sirtris Pharmaceuticals for $720 million based on claims that resveratrol and synthetic STACs (SRT1720, SRT501) directly activated SIRT1 to mimic caloric restriction; Pfizer (Pacholec et al., JBC 2010) and Amgen subsequently proved that the apparent SIRT1 activation was an in vitro artifact of a hydrophobic Fluor-de-Lys fluorophore tag, GSK shuttered Sirtris in 2013 after Phase II multiple myeloma trials failed with renal toxicity, and the NIA Interventions Testing Program (Strong et al., J Gerontol 2013; Harrison et al., Aging Cell 2021) proved that neither Resveratrol nor standalone Nicotinamide Riboside (NR) extends genetically heterogeneous mouse lifespan. In March 2024, Sinclair resigned as President of the Academy for Health and Lifespan Research (AHLR) following board resignations and public condemnation by leading biogerontologists (Matt Kaeberlein, Charles Brenner, Felipe Sierra, Nir Barzilai, Steven Austad) over a commercial press release claiming a proprietary canine supplement ('Leap Years' by Animal Libre) 'reversed aging in dogs' without peer-reviewed publication.",
+        claimIndexes: [3],
       },
     ],
   },
@@ -1192,6 +1197,11 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         note: "Hepatic and Intestinal Dysplasia Risk in Whole-Body 4-Factor OSKM vs. c-Myc-Free OSK: Parras, Ocampo et al. (Nature Aging 2023) showed that continuous or unguarded 4-factor OSKM expression in the liver and GI tract causes fatal hepatic/intestinal stem cell failure within days, proving that therapeutic translation requires omitting c-Myc (OSK), avoiding liver/GI expression via tissue-specific promoters, or using transient mRNA/chemical pulses.",
         claimIndexes: [0, 1],
       },
+      {
+        kind: "contested",
+        note: "David Sinclair's ICE Mouse & Information Theory of Aging Controversy (Yang & Sinclair, Cell 2023): Critics (including Charles Brenner, Matt Kaeberlein, and Jan Vijg) challenge Sinclair's interpretation that the Inducible Changes to the Epigenome (ICE) mouse proves aging is purely 'reversible epigenetic noise' free of genetic damage. Because the I-PpoI endonuclease cuts 28S ribosomal DNA (rDNA) repeats alongside ~19 canonical sites, inducing I-PpoI triggers acute DNA damage signaling (p53/p21), cellular senescence, and stem-cell clonal selection; furthermore, independent groups note that whole-body AAV9-OSK lifespan extension in wild-type mice (Macip et al., 2024) has thus far been demonstrated only at extreme old age (124 weeks) and awaits multi-site NIA ITP-scale replication.",
+        claimIndexes: [1],
+      },
     ],
   },
 
@@ -1342,7 +1352,7 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         statement:
           "Four-day exposure to six defined small-molecule chemical reprogramming cocktails (targeting ALK5/TGF-β, GSK3β, HDACs, LSD1, and cAMP) restores youthful nucleocytoplasmic compartmentalization and reverses transcriptomic biological age in human fibroblasts without genetic modification.",
         tier: "T5",
-        controversy: "settled",
+        controversy: "contested",
         direction: "supports",
         confidence: 0.90,
         rationale: "Yang, Petty, Gladyshev, Sinclair et al. (Aging 2023).",
@@ -1364,7 +1374,13 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
     ],
     entities: [],
-    controversies: [],
+    controversies: [
+      {
+        kind: "commercial_hype",
+        note: "Overstatement of In Vitro Chemical Cocktails as 'Whole-Body Age Reversal' (Yang & Sinclair, Aging 2023): When David Sinclair promoted the July 2023 Aging paper on social media as discovering 'chemical cocktails that reverse aging' toward a single human rejuvenation pill, independent biogerontologists and medicinal chemists noted that (1) the study was strictly an in vitro cell-culture screen in fibroblasts using a fluorescent nuclear-import reporter (NCC) and bulk RNA-seq clocks without any in vivo animal lifespan or organ-function data, (2) the VC6TF molecules were already known iPSC reprogramming reagents (Hou et al., Science 2013), and (3) systemic ingestion of unselective GSK3β inhibitors (CHIR99021), MAO/LSD1 inhibitors (Tranylcypromine), and teratogenic HDAC inhibitors (Valproic Acid) carries severe systemic toxicity and oncogenic hazards in vivo.",
+        claimIndexes: [1],
+      },
+    ],
   },
 
   "cellular-senescence-sasp-senolytics-and-senomorphics": {
@@ -2433,9 +2449,22 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
           verdict: "Supported",
           sourceUrl: "https://doi.org/10.1038/s41467-021-23545-7",
         },
+        {
+          name: "Resveratrol (Trans-Resveratrol) & First-Generation Sirtris STACs (SRT1720 / SRT501)",
+          category: "4. Refuted / Contested Sirtuin Claims",
+          description:
+            "Polyphenol and synthetic 'Sirtuin-Activating Compounds' (STACs) originally reported by Howitz & Sinclair (Nature 2003) and Milne, Sinclair et al. (Nature 2007) to allosterically activate SIRT1 and mimic caloric restriction.",
+          bestEvidence: "Kaeberlein et al., JBC 2005 & Beher et al., Chem Biol Drug Des 2009; Pacholec et al. (Pfizer), JBC 2010; Burnett, Gems & Partridge, Nature 2011; Strong et al. (NIA ITP), J Gerontol A 2013",
+          effect: "Direct SIRT1 activation in the original screen was an in vitro artifact of the synthetic 'Fluor-de-Lys' fluorophore tag (no activation on native p53/PGC-1α peptides); failed to extend male or female mouse lifespan at 300 or 1,200 ppm in the multi-site NIA ITP; high-dose human trials (SRT501, 5 g/day) in multiple myeloma were halted after 5 of 24 patients developed acute renal failure; attenuates VO2max and vascular gains from human exercise training (Gliemann et al., J Physiol 2013)",
+          reading:
+            "The canonical warning case in longevity pharmacology: GlaxoSmithKline acquired David Sinclair's Sirtris Pharmaceuticals for $720M in 2008 based on Fluor-de-Lys STAC assays and shut the division down in 2013 after Pfizer/Amgen refutations and SRT501 clinical toxicity.",
+          verdict: "Not supported",
+          sourceUrl: "https://doi.org/10.1074/jbc.M109.088682",
+        },
       ],
       clinicalQuestions: [
         "Why does high-dose plain Nicotinamide (NAM) feedback-inhibit sirtuins and consume SAMe methyl groups via NNMT methylation (producing 1-methylnicotinamide), whereas NR/NMN and NAMPT induction avoid sirtuin inhibition?",
+        "Why did Resveratrol and standalone Nicotinamide Riboside (NR) both fail to extend mouse lifespan in the multi-site NIA Interventions Testing Program (Strong et al., 2013; Harrison et al., 2021), and why did David Sinclair's resveratrol/STAC claims trigger a 20-year reproducibility controversy?",
       ],
       sweepQueue: [
         "Human randomized trials of reduced nicotinamide riboside (NRH) and NMNH (dihydronicotinamide mononucleotide)",
@@ -2444,7 +2473,7 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       article: {
         title: "NAD+ Metabolism, Sirtuins (SIRT1–SIRT7), CD38 Inhibition & Mitochondrial Bioenergetics",
         subtitle:
-          "How SASP-driven CD38 macrophages drain the aging NAD+ pool (Chini 2016; Verdin 2020), how nuclear NAD+ loss triggers HIF-1α pseudohypoxia (Sinclair 2013), and how SIRT6 extends mammalian lifespan (Cohen 2021).",
+          "How SASP-driven CD38 macrophages drain the aging NAD+ pool (Chini 2016; Verdin 2020), how SIRT6 extends mammalian lifespan (Cohen 2021), and a rigorous audit of the David Sinclair / Resveratrol / Sirtris ($720M) & 2024 AHLR controversies.",
         synopsis:
           "NAD+ sits at the intersection of cellular energy production and genome maintenance. Every time a sirtuin deacetylates a histone or PARP1 repairs a DNA single-strand break, a molecule of NAD+ is cleaved into nicotinamide and ADP-ribose. With age, chronic DNA damage activates PARP1 and senescent-cell SASP cytokines induce a massive expansion of CD38+ macrophages that destroy extracellular and intracellular NAD+, starving nuclear SIRT1/SIRT6 and mitochondrial SIRT3/4/5.",
         sections: [
@@ -2466,14 +2495,25 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
               "Three years later, Juliana Camacho-Pereira, Eduardo Chini et al. (Cell Metabolism 2016; doi:10.1016/j.cmet.2016.05.006) and Anthony Covarrubias, Eric Verdin et al. (Nature Metabolism 2020; doi:10.1038/s42255-020-00305-3) solved why NAD+ falls with age: SASP cytokines secreted by senescent cells induce CD38 expression on tissue-resident macrophages by 300%–500%. CD38 knockout mice are completely protected from age-related NAD+ decline and mitochondrial dysfunction, and the potent thiazoloquin(az)olinone CD38 inhibitor 78c reverses age-related NAD+ loss and extends male mouse median lifespan by 17% (Peclat, Chini et al., Aging Cell 2022). Meanwhile, Yael Roichman, Haim Cohen et al. (Nature Communications 2021; doi:10.1038/s41467-021-23545-7) demonstrated that overexpressing NAD+-dependent SIRT6 extends median lifespan by 27% in male and 15% in female C57BL/6J mice by preserving hepatic gluconeogenesis, suppressing Myc-driven neoplasia, and silencing LINE-1 retrotransposons. In humans, Jun Yoshino, Samuel Klein, and Shin-ichiro Imai (Science 2021; doi:10.1126/science.abe9985) conducted a 10-week randomized, placebo-controlled trial of NMN (250 mg/day) in postmenopausal prediabetic women, demonstrating a 25% increase in hyperinsulinemic-euglycemic clamp skeletal muscle insulin sensitivity, increased PDGFRβ+ pericyte remodeling, and elevated PBMC NAD+ metabolites.",
             ],
           },
+          {
+            kicker: "Section III · Researcher & Reproducibility Controversies: David Sinclair, The Resveratrol Fluor-de-Lys Artifact, Sirtris ($720M GSK) & The 2024 AHLR Crisis",
+            heading: "3. Separating Replicated NAD+/SIRT6 Biology from Resveratrol & Sirtris Commercial Hype",
+            paragraphs: [
+              "No dossier on sirtuins and NAD+ is scientifically complete without examining the two-decade controversy surrounding Harvard geneticist David Sinclair. In 2003, Howitz, Sinclair et al. (Nature 2003) reported that the red-wine polyphenol Resveratrol allosterically activates SIRT1 and extends yeast lifespan, followed by Sirtris Pharmaceuticals reporting synthetic SIRT1-activating compounds (STACs: SRT1720, SRT2183, SRT1460; Milne, Sinclair et al., Nature 2007). On the strength of those papers, GlaxoSmithKline acquired Sirtris in 2008 for $720 million. However, independent teams led by Matt Kaeberlein and Brian Kennedy (JBC 2005), Amgen (Beher et al., 2009), and Pfizer (Pacholec et al., Journal of Biological Chemistry 2010; doi:10.1074/jbc.M109.088682) proved by NMR, isothermal titration calorimetry, and mass spectrometry that neither Resveratrol nor SRT1720/SRT2183/SRT1460 activates SIRT1 against native full-length substrates (p53, PGC-1α, FOXO3a); the apparent activation in the original Nature screens was an artifact of the compounds binding the synthetic hydrophobic 'Fluor-de-Lys' coumarin fluorophore covalently attached to the screening peptide, and the Sirtris compounds instead exhibited >30 off-target receptor/enzyme interactions. Although Hubbard, Sinclair et al. (Science 2013) later argued that rare native bulky-hydrophobic substrates can mimic the fluorophore at Glu230, in 2011 David Gems, Linda Partridge, and colleagues (Burnett et al., Nature 2011; doi:10.1038/nature10296) further demonstrated that earlier reports of Sir2 overexpression extending C. elegans and Drosophila lifespan disappeared once genetic background and transgenic marker effects were controlled. In the gold-standard multi-site NIA Interventions Testing Program (Strong et al., J Gerontol A 2013; doi:10.1093/gerona/gls070), Resveratrol failed to extend median or maximum lifespan in genetically heterogeneous UM-HET3 male or female mice at either 300 ppm or 1,200 ppm, and GSK shut down Sirtris in 2013 after its lead micronized resveratrol formulation (SRT501, 5 g/day) caused cast nephropathy and acute kidney failure in 5 of 24 multiple myeloma trial patients.",
+              "A second controversy centers on standalone NAD+ precursors vs. commercial marketing: while short-term NMN/NR rescues tissue NAD+ in aged or diabetic rodents and improves muscle insulin sensitivity in prediabetic women (Yoshino, Imai et al., Science 2021), standalone Nicotinamide Riboside (NR, 1,000 ppm) failed to extend male or female mouse lifespan in the NIA ITP (Harrison et al., Aging Cell 2021; doi:10.1111/acel.13328), likely because uninhibited CD38 and gut-microbial/hepatic first-pass cleavage degrade oral precursors into plain nicotinamide unless paired with CD38 suppression. Meanwhile, Sinclair's company Metro International Biotech petitioned the FDA around its proprietary crystalline β-NMN drug candidate (MIB-626), prompting the FDA in November 2022 to invoke FD&C Act §201(ff)(3)(B) drug preclusion against over-the-counter NMN dietary supplements. Finally, in March 2024, Sinclair resigned as President of the Academy for Health and Lifespan Research (AHLR) following public resignations by prominent biogerontologists — including Matt Kaeberlein, Charles Brenner, Felipe Sierra (former Director of the NIA Division of Aging Biology), Nir Barzilai, and Steven Austad — after Sinclair's animal-supplement company (Animal Libre / 'Leap Years') issued a press release claiming its proprietary canine NAD+-booster/senolytic chew 'reverses aging in dogs' based on an unpublished cognitive/owner-survey trial that measured neither lifespan nor epigenetic age.",
+            ],
+            callout:
+              "Epistemic Bottom Line: Replicated mammalian longevity evidence supports SIRT6 overexpression (Cohen 2021, +27% lifespan) and CD38 inhibition (Chini 2022, +17% lifespan), whereas Resveratrol failed the NIA ITP, first-generation STACs relied on the Fluor-de-Lys fluorophore artifact, and standalone NR did not extend wild-type mouse lifespan.",
+          },
         ],
         conclusions:
-          "3. Conclusion: Rejuvenating the NAD+-Sirtuin axis requires pairing NAMPT induction (resistance/aerobic training) and salvage precursors (NMN/NR) with CD38 sink suppression (Apigenin, Quercetin, senolysis) so restored NAD+ reaches nuclear SIRT1/SIRT6 and mitochondrial SIRT3.",
+          "4. Conclusion: Rejuvenating the NAD+-Sirtuin axis requires pairing NAMPT induction (resistance/aerobic training) and salvage precursors (NMN/NR) with CD38 sink suppression (Apigenin, Quercetin, senolysis) so restored NAD+ reaches nuclear SIRT1/SIRT6 and mitochondrial SIRT3 — while strictly rejecting refuted Resveratrol/STAC claims and unvalidated supplement hype.",
         keyTakeaways: [
           "Pseudohypoxia Reversal (Gomes & Sinclair, Cell 2013): 1 week of NMN reverses nuclear-mitochondrial uncoupling and HIF-1α pseudohypoxia in 22-month-old mice.",
           "CD38 Macrophage Sink (Chini, Cell Metab 2016; Verdin, Nat Metab 2020): SASP-induced CD38 on macrophages is the primary driver of age-related NAD+ depletion and extracellular NMN degradation.",
           "SIRT6 Lifespan Extension (Roichman & Cohen, Nat Commun 2021): Overexpressing SIRT6 extends wild-type mouse lifespan by up to 27%–30% and restores youthful hepatic energy homeostasis.",
           "Human RCT Proof (Yoshino, Klein & Imai, Science 2021): 250 mg/day oral NMN for 10 weeks increases skeletal muscle insulin sensitivity by 25% in prediabetic women.",
+          "Resveratrol / Sirtris Controversy (Pacholec et al., JBC 2010; Strong et al., NIA ITP 2013): Direct SIRT1 activation by Resveratrol and Sirtris STACs was an in vitro Fluor-de-Lys fluorophore artifact, Resveratrol and standalone NR both failed to extend UM-HET3 mouse lifespan in the NIA ITP, GSK shut down $720M Sirtris in 2013, and David Sinclair resigned as AHLR President in March 2024 over commercial supplement claims.",
         ],
       },
     },
@@ -2550,6 +2590,42 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         sampleSize: 25,
         extra: {},
       },
+      {
+        kind: "paper",
+        externalId: "doi:10.1074/jbc.M109.088682",
+        origin: "literature",
+        title: "SRT1720, SRT2183, SRT1460, and Resveratrol Are Not Direct Activators of SIRT1",
+        url: "https://doi.org/10.1074/jbc.M109.088682",
+        doi: "10.1074/jbc.M109.088682",
+        venue: "Journal of Biological Chemistry",
+        year: 2010,
+        authors: ["Michelle Pacholec", "John E. Bleasdale", "B. Chrunyk", "D. Cunningham", "D. Flynn", "R. S. Garofalo", "D. Griffith", "M. Griffor", "P. Loulakis", "B. Pabst", "X. Qiu", "B. Stockman", "V. Thanabal", "A. Varghese", "J. Ward", "J. Withka", "Kay Ahn"],
+        abstract:
+          "Uses NMR, surface plasmon resonance, isothermal titration calorimetry, and mass spectrometry on native full-length substrates (p53, PGC-1α) to demonstrate that Resveratrol and the Sirtris Pharmaceuticals compounds SRT1720, SRT2183, and SRT1460 do not directly activate SIRT1; the apparent activation reported in Nature (2003, 2007) required covalent attachment of the synthetic Fluor-de-Lys fluorophore to the peptide substrate, and the STACs instead exhibited promiscuous off-target interactions across >30 receptors, enzymes, and ion channels.",
+        citedBy: 980,
+        declaredDesign: "in_vitro",
+        design: "in_vitro",
+        sampleSize: 38,
+        extra: {},
+      },
+      {
+        kind: "paper",
+        externalId: "doi:10.1093/gerona/gls070",
+        origin: "literature",
+        title: "Evaluation of Resveratrol, Green Tea Extract, Curcumin, Oxaloacetic Acid, and Medium-Chain Triglyceride Oil on Life Span of Genetically Heterogeneous Mice",
+        url: "https://doi.org/10.1093/gerona/gls070",
+        doi: "10.1093/gerona/gls070",
+        venue: "The Journals of Gerontology: Series A",
+        year: 2013,
+        authors: ["Randy Strong", "Richard A. Miller", "Caleb E. Finch", "David E. Harrison", "M. A. Javors", "J. F. Nelson", "K. Flurkey", "N. L. Nadon"],
+        abstract:
+          "Multi-site National Institute on Aging Interventions Testing Program (NIA ITP) survival study in genetically heterogeneous UM-HET3 mice demonstrating that dietary Resveratrol (at 300 ppm and 1,200 ppm initiated at 12 months or 4 months of age) produced zero statistically significant extension of median or maximum lifespan in either male or female mice.",
+        citedBy: 590,
+        declaredDesign: "animal",
+        design: "animal",
+        sampleSize: 600,
+        extra: {},
+      },
     ],
     claims: [
       {
@@ -2582,8 +2658,24 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         rationale: "Yoshino, Klein & Imai (Science 2021).",
         sourceIndexes: [3],
       },
+      {
+        statement:
+          "Resveratrol and first-generation Sirtris STACs (SRT1720, SRT2183, SRT1460) do not directly activate SIRT1 against native unlabelled p53 or PGC-1α substrates (their initial discovery relied on an artificial interaction with the covalent Fluor-de-Lys fluorophore tag), and Resveratrol at 300 or 1,200 ppm failed to extend median or maximum lifespan in male or female UM-HET3 mice in the multi-site NIA Interventions Testing Program.",
+        tier: "T4",
+        controversy: "commercial_hype",
+        direction: "refutes",
+        confidence: 0.95,
+        rationale: "Pacholec et al., Pfizer (JBC 2010), Kaeberlein et al. (JBC 2005), Beher et al., Amgen (2009), and Strong et al., NIA ITP (J Gerontol A 2013).",
+        sourceIndexes: [4, 5],
+      },
     ],
     milestones: [
+      {
+        year: 2010,
+        title: "Pacholec et al. (JBC) & Strong et al. (NIA ITP 2013) Refute Direct Resveratrol/Sirtris SIRT1 Activation & Mouse Lifespan Extension",
+        description: "Proves Fluor-de-Lys fluorophore artifact in STAC screens and zero UM-HET3 mouse lifespan benefit from Resveratrol, preceding GSK's 2013 shutdown of $720M Sirtris Pharmaceuticals.",
+        sourceIndex: 4,
+      },
       {
         year: 2013,
         title: "Gomes & Sinclair (Cell) Discover NAD+-Depleted Pseudohypoxia & Reversal via NMN",
@@ -2604,7 +2696,18 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
     ],
     entities: [],
-    controversies: [],
+    controversies: [
+      {
+        kind: "commercial_hype",
+        note: "David Sinclair, The Resveratrol / Sirtris ($720M GSK) Fluor-de-Lys Artifact & The 2024 AHLR Resignation: (1) Howitz & Sinclair (Nature 2003) and Milne, Sinclair et al. (Nature 2007) claimed Resveratrol and Sirtris compounds (SRT1720/SRT2183) allosterically activate SIRT1, leading GlaxoSmithKline to buy Sirtris for $720M in 2008; independent teams at UW (Kaeberlein et al., JBC 2005), Amgen (Beher et al., 2009), and Pfizer (Pacholec et al., JBC 2010) proved the activation was an in vitro artifact of the synthetic 'Fluor-de-Lys' fluorophore tag, Burnett, Gems & Partridge (Nature 2011) refuted invertebrate Sir2 lifespan extension once genetic background was controlled, Resveratrol failed the multi-site NIA ITP lifespan test (Strong et al., 2013), and GSK shut down Sirtris in 2013 after 5 of 24 multiple myeloma patients on SRT501 developed cast-nephropathy renal failure; (2) In March 2024, Sinclair resigned as President of the Academy for Health and Lifespan Research (AHLR) after board members and leading biogerontologists (Matt Kaeberlein, Charles Brenner, Felipe Sierra, Nir Barzilai, Steven Austad) resigned in protest when Sinclair's company Animal Libre ('Leap Years') issued a press release claiming its canine NAD+/senolytic supplement 'reverses aging in dogs' without measuring lifespan or biological age.",
+        claimIndexes: [3],
+      },
+      {
+        kind: "contested",
+        note: "Standalone NAD+ Precursors (NR/NMN) in the NIA ITP & Metro Biotech FDA Preclusion: While short-term NMN/NR rescues metabolic defects in aged rodents and improves muscle insulin sensitivity in prediabetic women (Yoshino, Imai et al., Science 2021), standalone Nicotinamide Riboside (NR, 1,000 ppm) failed to extend male or female UM-HET3 mouse lifespan in the NIA ITP (Harrison et al., Aging Cell 2021) — supporting the Chini/Verdin model that oral precursors are rapidly degraded unless paired with CD38 NADase inhibition (78c/Apigenin). Separately, Sinclair's company Metro International Biotech petitioned the FDA around its proprietary crystalline β-NMN drug candidate (MIB-626), prompting the FDA in November 2022 to invoke FD&C Act §201(ff)(3)(B) drug preclusion against OTC NMN dietary supplements.",
+        claimIndexes: [1, 2],
+      },
+    ],
   },
 
   "mitophagy-activators-urolithin-a-spermidine-glynac-and-ss31": {
@@ -2860,7 +2963,7 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
 
   "telomere-dynamics-telomerase-tert-and-replicative-immortality": {
     summary:
-      "Human chromosomes end in thousands of hexameric `TTAGGG` repeats bound by the six-protein Shelterin complex (TRF1, TRF2, POT1, TIN2, TPP1, RAP1), which tucks the single-stranded 3' G-overhang into a protective 'T-loop' so the cell does not mistake chromosome ends for double-strand DNA breaks. Because DNA polymerase cannot fully replicate the 3' lagging strand ('the end-replication problem') and guanine-rich `GGG` triplets are hypersensitive to oxidative 8-oxodG cleavage, human somatic cells lose 50–150 base pairs per division until critically short (<3–4 kb) uncapped telomeres trigger ATM/ATR-p53-p21 replicative senescence (the Hayflick limit, ~50–70 divisions) and silence mitochondrial PGC-1α/β. Crucially, cross-species comparative biology (Whittemore, Vera, Blasco et al., PNAS 2019) proved that it is the RATE of telomere shortening (bp/year), not initial birth telomere length, that predicts species lifespan ($R^2 = 0.934$ across mammals and birds: mice have 50 kb telomeres but lose 7,000 bp/year and live 2.5 years; humans have 10–15 kb telomeres, lose 70 bp/year, and live ~80 years). In mice, non-integrating AAV9 or intranasal/injectable CMV-vector Telomerase Reverse Transcriptase (TERT) gene therapy extends median lifespan by 24%–41.4% WITHOUT increasing cancer incidence (Bernardes de Jesus & Blasco, EMBO Mol Med 2012; Jaijyan,华, Zhu et al., PNAS 2022), while a small-molecule TAC (TERT Activating Compound) restores human TERT transcription via the MEK/ERK/AP-1 pathway, elongating telomeres, suppressing p16INK4a inflammaging, and promoting hippocampal neurogenesis in aged mice (Shim, DePinho et al., Cell 2024).",
+      "Human chromosomes end in thousands of hexameric `TTAGGG` repeats bound by the six-protein Shelterin complex (TRF1, TRF2, POT1, TIN2, TPP1, RAP1), which tucks the single-stranded 3' G-overhang into a protective 'T-loop' so the cell does not mistake chromosome ends for double-strand DNA breaks. Because DNA polymerase cannot fully replicate the 3' lagging strand ('the end-replication problem') and guanine-rich `GGG` triplets are hypersensitive to oxidative 8-oxodG cleavage, human somatic cells lose 50–150 base pairs per division until critically short (<3–4 kb) uncapped telomeres trigger ATM/ATR-p53-p21 replicative senescence (the Hayflick limit, ~50–70 divisions) and silence mitochondrial PGC-1α/β. Crucially, cross-species comparative biology (Whittemore, Vera, Blasco et al., PNAS 2019) proved that it is the RATE of telomere shortening (bp/year), not initial birth telomere length, that predicts species lifespan (R² = 0.934 across mammals and birds: mice have 50 kb telomeres but lose 7,000 bp/year and live 2.5 years; humans have 10–15 kb telomeres, lose 70 bp/year, and live ~80 years). In mice, non-integrating AAV9 or intranasal/injectable CMV-vector Telomerase Reverse Transcriptase (TERT) gene therapy extends median lifespan by 24%–41.4% WITHOUT increasing cancer incidence (Bernardes de Jesus & Blasco, EMBO Mol Med 2012; Jaijyan, Hua, Zhu et al., PNAS 2022), while a small-molecule TAC (TERT Activating Compound) restores human TERT transcription via the MEK/ERK/AP-1 pathway, elongating telomeres, suppressing p16INK4a inflammaging, and promoting hippocampal neurogenesis in aged mice (Shim, DePinho et al., Cell 2024).",
     gaps: [
       "Navigating the human evolutionary tumor-suppression trade-off: large, long-lived mammals (humans, whales, elephants) evolved strict somatic TERT repression as an anti-cancer barrier, whereas small short-lived rodents express constitutive somatic telomerase — meaning human TERT activation must be transient or tightly regulated",
       "Resolving the 'Telomere Length Paradox' identified by large UK Biobank Mendelian Randomization studies (Codd, Samani et al., Nature Genetics 2021, n=472,174): genetically longer germline leukocyte telomere length lowers risk of coronary artery disease and idiopathic pulmonary fibrosis, but increases risk of glioma, melanoma, and lung adenocarcinoma",
@@ -3099,6 +3202,11 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
         kind: "contested",
         note: "The Germline Telomere Length Cancer Paradox (Codd et al., Nature Genetics 2021): In a UK Biobank Mendelian Randomization study of 472,174 participants, inheriting genetic variants that produce longer lifelong leukocyte telomeres reduced risk of coronary artery disease and pulmonary fibrosis, but significantly increased risk of glioma (OR ~5.2), melanoma, and lung adenocarcinoma because pre-malignant clones can divide more times before hitting replicative crisis.",
         claimIndexes: [1],
+      },
+      {
+        kind: "commercial_hype",
+        note: "Offshore Unregulated AAV-hTERT Self-Experimentation (Elizabeth Parrish / BioViva, 2015–present): In 2015, BioViva CEO Elizabeth Parrish announced she had received offshore intravenous injections of unapproved AAV-hTERT and AAV-Follistatin vectors in Colombia and claimed a ~600 bp leukocyte telomere lengthening (+9% on a single commercial qPCR assay). Leading telomere biologists (Maria Blasco, Carol Greider, Jerry Shay, George Martin) and BioViva's own scientific advisors resigned or publicly condemned the claims, noting that commercial qPCR telomere assays have an intra-individual coefficient of variation of 5%–10% (exceeding the claimed effect), no baseline pre-dose replication, vector biodistribution, or safety controls were performed, and offshore pay-to-treat clinics marketing unapproved AAV-hTERT gene therapy pose severe insertional/immunogenic and hepatotoxicity risks.",
+        claimIndexes: [0],
       },
     ],
   },
@@ -3339,7 +3447,18 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
       },
     ],
     entities: [],
-    controversies: [],
+    controversies: [
+      {
+        kind: "contested",
+        note: "The GDF11 vs. Myostatin (GDF8) Reproducibility Controversy (Wagers & Rubin vs. Glass / Novartis): In 2013–2014, Amy Wagers, Richard Lee, and Lee Rubin (Loffredo et al., Cell 2013; Sinha et al., Science 2014; Katsimpardi et al., Science 2014) reported that Growth Differentiation Factor 11 (GDF11) declines with age and is the youthful parabiosis factor that reverses cardiac hypertrophy and rejuvenates aged muscle and brain. In 2015, David Glass's team at Novartis (Egerman et al., Cell Metabolism 2015; doi:10.1016/j.cmet.2015.05.002) and Harper et al. (Circulation Research 2016) demonstrated that the SOMAmer aptamer and antibodies used in the 2013–2014 papers cross-reacted with Myostatin (GDF8, which shares 90% mature sequence identity with GDF11), that specific LC-MS/MS assays show active GDF11 actually increases or stays flat with age, and that recombinant GDF11 activates SMAD2/3 like Myostatin to inhibit satellite cell regeneration and induce cachexia at supraphysiological doses.",
+        claimIndexes: [0],
+      },
+      {
+        kind: "commercial_hype",
+        note: "Commercial Young-Donor Plasma Infusions (Ambrosia) & The February 2019 FDA Safety Warning: Following media coverage of rodent heterochronic parabiosis, commercial clinics such as Ambrosia LLC (founded by Jesse Karmazin) charged patients $8,000–$12,000 for 1–2 liters of young-donor fresh frozen plasma under a pay-to-participate trial with no placebo arm. In February 2019, the U.S. FDA issued an official safety communication warning that commercial young-plasma infusions have 'no proven clinical benefit' for aging, dementia, or Parkinson's disease and expose patients to transfusion-related acute lung injury (TRALI), circulatory overload (TACO), allergic reactions, and infectious transmission — in sharp contrast to FDA-cleared apheresis Therapeutic Plasma Exchange (TPE) with sterile 5% purified Albumin.",
+        claimIndexes: [1, 2],
+      },
+    ],
   },
 
   "thymic-regeneration-immunosenescence-and-inflammaging-reversal": {
@@ -3901,7 +4020,7 @@ export const LONGEVITY_SEED_DOSSIERS: Record<string, SeedDossier> = {
             kicker: "Section II · Somatic Mutation Scaling (Nature 2022), nmrHas2 Transfer (Nature 2023) & SIRT6 (Cell 2019)",
             heading: "2. Transferring Extreme Longevity Adaptations Across Species",
             paragraphs: [
-              "In 2022, Alex Cagan, Adrian Baez-Ortega, Inigo Martincorena et al. at the Wellcome Sanger Institute (Nature 2022; doi:10.1038/s41586-022-04618-z) whole-genome sequenced 208 individual intestinal crypts across 16 mammalian species (mouse, rat, rabbit, dog, cat, horse, giraffe, tiger, lion, cow, ring-tailed lemur, harbor porpoise, naked mole-rat, and human). They discovered a striking universal law: somatic mutation rate per year is tightly and inversely proportional to species lifespan ($R^2 = 0.82$), with mice accumulating 796 single-base substitutions per year, dogs ~249/year, naked mole-rats ~93/year, and humans only 47/year. Why do long-lived mammals mutate so slowly? Vera Gorbunova and Andrei Seluanov (Tian et al., Cell 2019; doi:10.1016/j.cell.2019.03.043) compared 18 rodent species with lifespans ranging from 3 years (mouse) to 32–40 years (beaver and naked mole-rat) and proved that maximum lifespan correlates directly with SIRT6-dependent DNA double-strand break (DSB) repair efficiency. Five specific amino acid residues in beaver SIRT6 make it a vastly more potent DNA-repair catalyst than mouse SIRT6; expressing beaver SIRT6 in human cells decelerated cellular senescence and extended fruit fly lifespan.",
+              "In 2022, Alex Cagan, Adrian Baez-Ortega, Inigo Martincorena et al. at the Wellcome Sanger Institute (Nature 2022; doi:10.1038/s41586-022-04618-z) whole-genome sequenced 208 individual intestinal crypts across 16 mammalian species (mouse, rat, rabbit, dog, cat, horse, giraffe, tiger, lion, cow, ring-tailed lemur, harbor porpoise, naked mole-rat, and human). They discovered a striking universal law: somatic mutation rate per year is tightly and inversely proportional to species lifespan (R² = 0.82), with mice accumulating 796 single-base substitutions per year, dogs ~249/year, naked mole-rats ~93/year, and humans only 47/year. Why do long-lived mammals mutate so slowly? Vera Gorbunova and Andrei Seluanov (Tian et al., Cell 2019; doi:10.1016/j.cell.2019.03.043) compared 18 rodent species with lifespans ranging from 3 years (mouse) to 32–40 years (beaver and naked mole-rat) and proved that maximum lifespan correlates directly with SIRT6-dependent DNA double-strand break (DSB) repair efficiency. Five specific amino acid residues in beaver SIRT6 make it a vastly more potent DNA-repair catalyst than mouse SIRT6; expressing beaver SIRT6 in human cells decelerated cellular senescence and extended fruit fly lifespan.",
               "In a landmark 2023 study, Zhihui Zhang, Xiao Tian, Andrei Seluanov, and Vera Gorbunova (Nature 2023; doi:10.1038/s41586-023-06463-8) transferred the Naked Mole-Rat hyaluronan synthase 2 gene (nmrHas2) into C57BL/6 mice. The nmrHas2 mice accumulated high-molecular-weight hyaluronic acid across tissues, exhibited a 50%–70% reduction in both spontaneous cancer and DMBA/TPA-induced skin papillomas, maintained youthful intestinal stem cell crypts and microbiome diversity, showed globally suppressed inflammaging transcriptomes across liver, kidney, spleen, and white adipose tissue, and achieved a 4.4% median and 12.2% maximum lifespan extension.",
             ],
           },

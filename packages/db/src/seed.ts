@@ -1628,6 +1628,7 @@ export async function seed(sql: Sql): Promise<void> {
     dossierSlugs: dossierEntries.map(([slug]) => slug),
     dossierMinClaims: dossierEntries.reduce((sum, [, d]) => sum + d.claims.length, 0),
     dossierMinSources: dossierEntries.reduce((sum, [, d]) => sum + d.sources.length, 0),
+    dossierMinControversies: dossierEntries.reduce((sum, [, d]) => sum + d.controversies.length, 0),
   });
   if (complete) return;
 
