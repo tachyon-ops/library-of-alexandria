@@ -41,7 +41,22 @@ function extractSelectionContext(target: HTMLElement, sel: Selection | null): st
   const block = target.closest("p, li, blockquote, td, dd, figcaption, h1, h2, h3, h4");
   const blockText = block?.textContent?.trim() || sel?.anchorNode?.parentElement?.textContent?.trim();
   if (blockText) {
-    pieces.push(blockText.slice(0, 600));
+    pieces.push(blockText.slice(0, 2800));
+  }
+
+  // Also include any inline glossary paragraph from the current article so Section I definitions resolve throughout the monograph
+  const articleRoot = target.closest("article, main") ?? document.body;
+  const paragraphs = articleRoot ? Array.from(articleRoot.querySelectorAll("p")) : [];
+  for (const p of paragraphs) {
+    const txt = p.textContent?.trim() ?? "";
+    if (
+      txt &&
+      txt !== blockText &&
+      /\b(Glossary|Key Terms|Nomenclature|Plain-English Glossary)\b/i.test(txt)
+    ) {
+      pieces.push(txt.slice(0, 2800));
+      break;
+    }
   }
 
   return pieces.join(" — ");
@@ -55,7 +70,7 @@ async function fetchDictionaryDefinition(
   const forms = candidateLookupForms(raw);
   if (forms.length === 0) return null;
 
-  const trimmedExact = raw.trim().replace(/^[^a-zA-Z0-9-]+|[^a-zA-Z0-9-]+$/g, "");
+  const trimmedExact = raw.trim().replace(/^[^a-zA-Z0-9\u0370-\u03ff+-]+|[^a-zA-Z0-9\u0370-\u03ff+-]+$/g, "");
   const lookupQueue = trimmedExact && !forms.includes(trimmedExact) ? [trimmedExact, ...forms] : forms;
 
   const cacheKey = `${forms[0]!}:${context.slice(0, 120).toLowerCase()}`;
@@ -130,6 +145,37 @@ async function fetchDictionaryDefinition(
     }
   }
 
+  // 3. Fallback to English Wikipedia REST Summary API for scientific/biomedical entities & proper terms
+  for (const form of lookupQueue.slice(0, 2)) {
+    try {
+      const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(form)}`, {
+        signal,
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.type === "disambiguation") continue;
+      const extract = typeof data?.extract === "string" ? data.extract.trim() : "";
+      if (extract.length >= 20) {
+        const firstTwoSentences = extract
+          .split(/(?<=[.!?])\s+/)
+          .slice(0, 2)
+          .join(" ")
+          .trim();
+        const title = (typeof data?.title === "string" && data.title.trim()) || form;
+        const description = typeof data?.description === "string" ? data.description.trim() : "Encyclopedia";
+        const entry: GlossaryEntry = {
+          term: title,
+          domain: description ? `Encyclopedia (${description})` : "Scientific Encyclopedia",
+          synopsis: firstTwoSentences.length > 340 ? `${firstTwoSentences.slice(0, 337).trim()}...` : firstTwoSentences,
+        };
+        REMOTE_CACHE.set(cacheKey, entry);
+        return entry;
+      }
+    } catch {
+      if (signal.aborted) return null;
+    }
+  }
+
   return null;
 }
 
@@ -183,26 +229,23 @@ export function WordSynopsis() {
       setState({ word: raw, entry: localMatch, left, top, width: cardWidth, placeAbove });
 
       const isMorphologicalSynthesis = Boolean(localMatch.etymology?.startsWith("Morphology:"));
+      const isContextualFallback =
+        localMatch.synopsis.startsWith("Contextual usage in this monograph:") ||
+        localMatch.synopsis.startsWith("Scientific or academic term referenced in this monograph") ||
+        localMatch.synopsis.startsWith("English term (");
       const isCuratedScientific =
         !localMatch.domain.startsWith("Lexicon") &&
         localMatch.domain !== "Scientific Terminology" &&
-        !isMorphologicalSynthesis;
+        !isMorphologicalSynthesis &&
+        !isContextualFallback;
       if (isCuratedScientific) {
         return;
       }
 
-      // If it fell back to the generic grammatical/morphological analyzer, enrich from live dictionary APIs using passage context
+      // If it fell back to the generic grammatical/morphological/contextual analyzer, enrich from live dictionary/encyclopedia APIs
       const isGenericFallback =
         isMorphologicalSynthesis ||
-        localMatch.synopsis.startsWith("English term (") ||
-        localMatch.synopsis.startsWith("In a manner characterized by") ||
-        localMatch.synopsis.startsWith("The action, process, or resulting state") ||
-        localMatch.synopsis.startsWith("The quality, condition, or degree") ||
-        localMatch.synopsis.startsWith("Capable of or suitable for") ||
-        localMatch.synopsis.startsWith("Relating to, characterized by") ||
-        localMatch.synopsis.startsWith("Present participle or gerund") ||
-        localMatch.synopsis.startsWith("Past tense or participial") ||
-        localMatch.synopsis.startsWith("Plural or third-person singular") ||
+        isContextualFallback ||
         localMatch.domain === "Scientific Terminology";
 
       if (!isGenericFallback) {
@@ -219,7 +262,7 @@ export function WordSynopsis() {
             ? {
                 ...prev,
                 entry: {
-                  term: localMatch.term,
+                  term: remoteEntry.term || localMatch.term,
                   domain: remoteEntry.domain,
                   synopsis: remoteEntry.synopsis,
                   whyItMatters: localMatch.whyItMatters,
