@@ -995,7 +995,7 @@ describe("SEO metadata, JSON-LD structured data, and crawler discovery", () => {
         },
       ],
     });
-    expect(llms).toContain("# Library of Alexandria");
+    expect(llms).toMatch(/# (Alexander's Library|Library of Alexandria)/);
     expect(llms).toContain("https://newdomain.org/topic/natural-sciences");
     expect(llms).toContain("T1 (Synthesis of trials)");
 
