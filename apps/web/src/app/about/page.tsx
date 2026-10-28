@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "article",
     url: "/about",
-    title: `${ABOUT_TITLE} — Alexander's Library`,
+    title: `${ABOUT_TITLE} — Library of Alexandria`,
     description: ABOUT_DESCRIPTION,
     images: [
       {
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${ABOUT_TITLE} — Alexander's Library`,
+    title: `${ABOUT_TITLE} — Library of Alexandria`,
     description: ABOUT_DESCRIPTION,
     images: ["/archival-library.jpg"],
   },

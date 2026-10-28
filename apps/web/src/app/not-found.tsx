@@ -5,7 +5,7 @@ import { LibrarySearchForm } from "@/components/LibrarySearchForm";
 export const metadata: Metadata = {
   title: "Branch Not Found (404)",
   description:
-    "This branch or scroll could not be found in Alexander's Library. Search the scientific record or return to the Tree of Knowledge.",
+    "This branch or scroll could not be found in Library of Alexandria. Search the scientific record or return to the Tree of Knowledge.",
   robots: {
     index: false,
     follow: true,

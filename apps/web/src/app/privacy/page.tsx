@@ -6,7 +6,7 @@ import { getSiteUrl } from "@/lib/seo";
 
 const PRIVACY_TITLE = "Legal, Copyright & Privacy Notice";
 const PRIVACY_DESCRIPTION =
-  "Open-access bibliographic compliance, non-hosting of copyrighted full texts, medical disclaimer, and GDPR / Swiss FADP privacy notice for Alexander's Library.";
+  "Open-access bibliographic compliance, non-hosting of copyrighted full texts, medical disclaimer, and GDPR / Swiss FADP privacy notice for Library of Alexandria.";
 
 export const metadata: Metadata = {
   title: PRIVACY_TITLE,
@@ -17,12 +17,12 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/privacy",
-    title: `${PRIVACY_TITLE} — Alexander's Library`,
+    title: `${PRIVACY_TITLE} — Library of Alexandria`,
     description: PRIVACY_DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${PRIVACY_TITLE} — Alexander's Library`,
+    title: `${PRIVACY_TITLE} — Library of Alexandria`,
     description: PRIVACY_DESCRIPTION,
   },
 };
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           <p className="chronicle-kicker">Public Archive Governance · Compliance &amp; Provenance</p>
           <h1>Legal, Copyright &amp; Privacy Notice</h1>
           <p className="chronicle-subtitle">
-            How Alexander&rsquo;s Library synthesises the open scientific record legally, respects publisher copyright
+            How Library of Alexandria synthesises the open scientific record legally, respects publisher copyright
             and official API terms, and protects visitor privacy.
           </p>
         </header>
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
         <section className="chronicle-chapter">
           <h2>1. Not Medical, Legal, or Financial Advice</h2>
           <p>
-            <strong>Alexander&rsquo;s Library</strong> is an open-source encyclopaedic synthesis tool that organises
+            <strong>Library of Alexandria</strong> is an open-source encyclopaedic synthesis tool that organises
             published, peer-reviewed scientific literature, preprints, and registered clinical trials by canonical
             academic taxonomy and deterministic study-design tier (<code>T1</code> meta-analyses and clinical guidelines
             through <code>T6</code> commentary).
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
         <section className="chronicle-chapter">
           <h2>2. Copyright Compliance &amp; Open-Access API Provenance</h2>
           <p>
-            Unlike shadow libraries, Alexander&rsquo;s Library <strong>never downloads, hosts, mirrors, or redistributes
+            Unlike shadow libraries, Library of Alexandria <strong>never downloads, hosts, mirrors, or redistributes
             copyrighted full-text PDFs, books, or paywalled articles</strong>, nor does it bypass publisher access
             controls.
           </p>
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
         <section className="chronicle-chapter">
           <h2>3. Privacy &amp; Data Minimization (GDPR / Swiss FADP)</h2>
           <p>
-            Alexander&rsquo;s Library is built on strict data minimization principles under the EU General Data
+            Library of Alexandria is built on strict data minimization principles under the EU General Data
             Protection Regulation (GDPR) and the Swiss Federal Act on Data Protection (FADP):
           </p>
           <ul>

@@ -3,12 +3,13 @@ import type { FieldResearchMonograph } from "./article";
 import type { SynthesisLever, TopicStatus } from "./types";
 
 export const DEFAULT_SITE_URL = "https://alexanderslibrary.org";
-export const SITE_NAME = "Alexander's Library";
+export const SITE_NAME = "Library of Alexandria";
 export const SITE_TAGLINE = "The Tree of Knowledge & Graded Scientific Record";
 export const SITE_DESCRIPTION =
   "An open encyclopaedic Tree of Knowledge synthesised from peer-reviewed literature, clinical trial registries, and empirical studies, with every claim graded T1–T6 by study design.";
 
 export const CORE_SEO_KEYWORDS: string[] = [
+  "Library of Alexandria",
   "Alexander's Library",
   "Tree of Knowledge",
   "scientific synthesis",
@@ -255,7 +256,7 @@ export function buildTopicSeoMetadata(input: TopicSeoInput): TopicSeoMetadata {
     "DC.language": "en",
     "DC.identifier": canonicalUrl,
     citation_title: input.monograph?.title || input.title,
-    citation_author: "Alexander's Library Autonomous Research Synthesis",
+    citation_author: `${SITE_NAME} Autonomous Research Synthesis`,
     citation_journal_title: `${SITE_NAME} — ${rootTitle}`,
     citation_online_date: publicationDate.replace(/-/g, "/"),
     citation_publication_date: publicationDate.replace(/-/g, "/"),
@@ -555,9 +556,9 @@ export function buildPrivacyJsonLd(input: { siteUrl: string }): Record<string, u
       {
         "@type": "WebPage",
         "@id": `${canonicalUrl}#webpage`,
-        name: "Legal, Copyright & Privacy Notice — Alexander's Library",
+        name: `Legal, Copyright & Privacy Notice — ${SITE_NAME}`,
         description:
-          "Open-access bibliographic compliance, non-hosting of copyrighted full texts, medical disclaimer, and GDPR / Swiss FADP privacy notice for Alexander's Library.",
+          `Open-access bibliographic compliance, non-hosting of copyrighted full texts, medical disclaimer, and GDPR / Swiss FADP privacy notice for ${SITE_NAME}.`,
         url: canonicalUrl,
         inLanguage: "en",
         isPartOf: { "@id": `${base}/#website` },
@@ -579,7 +580,7 @@ export interface LlmsTxtNode {
 /**
  * Builds the `llms.txt` markdown specification file so AI search engines,
  * answer engines, and research crawlers can index the taxonomy, grading system,
- * and canonical URLs of Alexander's Library.
+ * and canonical URLs of the Library of Alexandria.
  */
 export function buildLlmsTxt(input: { siteUrl: string; nodes: LlmsTxtNode[] }): string {
   const base = normaliseSiteUrl(input.siteUrl);
@@ -590,7 +591,7 @@ export function buildLlmsTxt(input: { siteUrl: string; nodes: LlmsTxtNode[] }): 
     "",
     "## Epistemic Stance & Deterministic Evidence Grading (T1–T6)",
     "",
-    "Alexander's Library harvests peer-reviewed literature from Europe PMC and OpenAlex and registered clinical trials from ClinicalTrials.gov. Every extracted claim is graded deterministically in code by study design:",
+    `${SITE_NAME} harvests peer-reviewed literature from Europe PMC and OpenAlex and registered clinical trials from ClinicalTrials.gov. Every extracted claim is graded deterministically in code by study design:`,
     "",
     "- **T1 (Synthesis of trials):** Clinical guidelines, systematic reviews, and meta-analyses.",
     "- **T2 (Randomised trials):** At least two independent randomised controlled trials (RCTs) with sample size >= 100.",
@@ -691,7 +692,7 @@ export function buildRssFeedXml(input: {
 
 /**
  * Builds an OpenSearch Description XML document so web browsers can discover
- * Alexander's Library as a native address-bar search provider.
+ * the Library of Alexandria as a native address-bar search provider.
  */
 export function buildOpenSearchXml(input: { siteUrl: string }): string {
   const base = normaliseSiteUrl(input.siteUrl);
@@ -699,7 +700,7 @@ export function buildOpenSearchXml(input: { siteUrl: string }): string {
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">',
     `  <ShortName>${escapeXml(SITE_NAME)}</ShortName>`,
-    `  <Description>${escapeXml("Search graded scientific findings, papers, and clinical trials in Alexander's Library")}</Description>`,
+    `  <Description>${escapeXml(`Search graded scientific findings, papers, and clinical trials in ${SITE_NAME}`)}</Description>`,
     "  <InputEncoding>UTF-8</InputEncoding>",
     "  <OutputEncoding>UTF-8</OutputEncoding>",
     `  <Url type="text/html" method="get" template="${escapeXml(`${base}/search?q={searchTerms}`)}" />`,

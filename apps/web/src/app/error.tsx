@@ -11,7 +11,7 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Alexander's Library server-side exception:", error);
+    console.error("Library of Alexandria server-side exception:", error);
   }, [error]);
 
   return (
@@ -30,7 +30,7 @@ export default function ErrorBoundary({
           Try again
         </button>
         <Link href="/" className="muted small">
-          ← Return to Alexander&rsquo;s Library
+          ← Return to Library of Alexandria
         </Link>
       </div>
     </main>
