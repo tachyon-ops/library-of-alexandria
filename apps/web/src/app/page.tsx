@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { buildWebSiteJsonLd, serializeJsonLd } from "@lib/core";
 import { listTopicLinks, usageSummary } from "@lib/db";
 import { Tree } from "@/components/Tree";
 import { TopicGraph3D } from "@/components/TopicGraph3D";
@@ -14,17 +16,34 @@ import {
   loadTree,
   sql,
 } from "@/lib/data";
+import { getSiteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function Home() {
   const [roots, usage, crossLinks] = await Promise.all([loadTree(), usageSummary(sql()), listTopicLinks(sql())]);
   const busy = anyBusy(roots);
   const calls = usage.reduce((n, u) => n + u.calls, 0);
   const searches = usage.reduce((n, u) => n + u.webSearches, 0);
+  const jsonLd = buildWebSiteJsonLd({
+    siteUrl: getSiteUrl(),
+    rootTopics: roots.map((r) => ({ title: r.title, slug: r.slug, brief: r.brief })),
+    authorUrl: AUTHOR_SITE_URL,
+    githubUrl: GITHUB_PROFILE_URL,
+  });
 
   return (
     <main className="home">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       <AutoRefresh active={busy} />
       <header className="home-header">
         <h1 className="home-tree-heading">The Tree of Knowledge</h1>

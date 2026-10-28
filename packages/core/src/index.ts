@@ -2,6 +2,7 @@ export * from "./article";
 export * from "./evidence";
 export * from "./glossary";
 export * from "./search";
+export * from "./seo";
 export * from "./types";
 export * from "./urls";
 

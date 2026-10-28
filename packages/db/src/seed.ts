@@ -292,6 +292,12 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                     brief:
                       "Randomised clinical trials, Cochrane meta-analyses, and biophysical mechanisms of hyaluronan-enriched embryo transfer medium (EmbryoGlue, 0.5 mg/mL hyaluronan) versus standard low-hyaluronan transfer media: CD44 and RHAMM receptor-mediated embryo–endometrial apposition, luminal fluid viscosity, live-birth and clinical pregnancy rates across fresh and frozen-thawed embryo transfers (FET), recurrent implantation failure (RIF) and maternal age ≥35 subgroups, multiple pregnancy risk, and ESHRE add-on guidance.",
                   },
+                  {
+                    slug: "fet-endometrial-preparation-luteal-progesterone-and-implantation-biologics",
+                    title: "Frozen Embryo Transfer (FET) Protocols, Luteal Progesterone Rescue & Implantation Biologics (PRP, PBMC, Microbiome)",
+                    brief:
+                      "Comparative effectiveness of ovulatory natural, letrozole-stimulated, and programmed HRT frozen embryo transfer protocols (COMPETE RCT), transfer-day serum progesterone rescue (iLPS with subcutaneous Prolutex or IM P4), CD138 chronic endometritis and Lactobacillus crispatus + lactoferrin microbiome reconstitution, pre-transfer vascular/circadian conditioning, immediate post-transfer ambulation, luteal GnRH-agonist bolus, and intrauterine autologous hCG-activated PBMC and leukocyte-poor PRP biologics.",
+                  },
                 ],
               },
               {
@@ -331,6 +337,12 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                     title: "Blastocyst Morphological Grading (Gardner AA/BB System) & Embryo Morphokinetics",
                     brief:
                       "Gardner & Schoolcraft blastocyst scoring (expansion stages 1–6, Inner Cell Mass grades A–C, Trophectoderm grades A–C: AA, AB, BA, BB, BC, CC), Day 3 cleavage compaction, time-lapse morphokinetic intervals, euploidy correlation, and live-birth outcomes.",
+                  },
+                  {
+                    slug: "monopronuclear-1pn-and-low-grade-blastocyst-transfer-optimization",
+                    title: "Monopronuclear (1PN) & Low-Grade Blastocyst (BC/CB/CC) Ploidy Triage, Lab Adjuncts & Perinatal Outcomes",
+                    brief:
+                      "Time-lapse morphokinetics and SNP-haplotyping of monopronuclear (1PN) zygotes across conventional IVF (96.9% biparental diploid at blastocyst stage) and ICSI (65.9% biparental diploid), blastocyst culture as a biological haploidy filter, avoidance of double-vitrification biopsy trauma, first-trimester SNP-based NIPT verification, perinatal safety of low-grade (BC/CB/CC) blastocysts, and laboratory transfer adjuncts.",
                   },
                 ],
               },
@@ -377,6 +389,26 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                 title: "Lifestyle, Metabolic Health & Natural Conception Optimization",
                 brief:
                   "Non-assisted reproductive optimization at 40–50: circadian sleep and follicular melatonin signaling, pro-fertility nutrition and targeted micronutrient protocols, oocyte mitochondrial ATP bioenergetics (CoQ10, NAD+, spermidine mitophagy), and organic facilitators (24–36h sperm DNA fragmentation reduction, early-shifted fertile window timing, cervical mucus protection, and endocrine/toxin clearance).",
+                children: [
+                  {
+                    slug: "gamete-rejuvenation-mitochondrial-bioenergetics-and-natural-conception-after-40",
+                    title: "Gamete Rejuvenation (Oocyte & Sperm), Mitochondrial Bioenergetics, Sport Physiology & Natural Conception at 40+",
+                    brief:
+                      "Exhaustive open-literature synthesis of sperm rejuvenation (1–3h double ejaculation, Astaxanthin, L-Carnitine, Myo-Inositol, Leydig StAR restoration), ovarian and oocyte rejuvenation (CD38 blockade, NMN/NR + Apigenin/Quercetin, Spermidine/Urolithin A mitophagy, Connexin-37/43 transzonal projections, stromal fibrosis reversal, 830 nm photobiomodulation), exercise physiology and RED-S luteal preservation, microplastic/AGE clearance, and natural conception epidemiology (AMH dissociation, Lipiodol tubal flushing, and 3-DPO corpus luteum rescue) at ages 40–45.",
+                  },
+                  {
+                    slug: "harvard-fertility-diet-and-earth-preconception-nutrition",
+                    title: "The Harvard Fertility Diet (NHS-II) & EARTH Study Preconception Nutrition",
+                    brief:
+                      "Comprehensive synthesis of the Harvard Nurses' Health Study II (n=17,544; 66%–84% reduction in ovulatory infertility), the MGH EARTH Pro-Fertility Diet in ART (n=357; 56% vs. 33% live birth rate), the sex-specific full-fat vs. skim dairy paradox (IGF-1/insulinemic index vs. MFGM/CLA), plant vs. animal protein (RR 0.50), trans-fat PPAR-γ blockade (RR 2.31), glycemic load & hepatic HNF-4α/SHBG regulation, the USDA/Harvard Pesticide Residue Burden Score (RR 1.88 live birth swap; -49% sperm count in high-pesticide consumers), whole-grain endometrial thickness (+0.4 mm/serving), soy isoflavone BPA neutralization, the LIFE seafood cohort (FOR 1.61; 92% 12-month pregnancy), and male Prudent/Mediterranean + FERTINUTS trials.",
+                  },
+                  {
+                    slug: "blue-zones-high-fertility-populations-and-reproductive-longevity-genetics",
+                    title: "Blue Zones, High-Fertility Populations & Reproductive Longevity Genetics (40–50+)",
+                    brief:
+                      "Biodemographic, nutritional, immunological, and genomic synthesis of natural late-life fertility (ages 40–50+) across Blue Zones (Sardinia Ogliastra/Barbagia, Ikaria, Okinawa, Nicoya, Loma Linda) and high-fertility populations (Hutterites TFR 9.8 & HLA-G/HLA dissimilarity, Bolivian Tsimane TFR 9.0 & zero vascular calcification, Yoruba of Igbo-Ora dual-FSH dizygotic twinning, Cândido Godói TP53/LIF), the evolutionary coupling of motherhood ≥40 with centenarian survival (OR 4.0, Perls Nature 1997; brothers' mortality RR 0.786, Smith 2009), and the 290 genetic loci of human ovarian aging (Ruth et al., Nature 2021, n=201,323: BRCA1/2, MCM8/9, HELQ, CHEK2 DNA repair).",
+                  },
+                ],
               },
             ],
           },
@@ -1056,6 +1088,60 @@ export const CROSS_DISCIPLINE_LINKS: {
     slugB: "assisted-reproductive-technology-gamete-donation",
     relation: "bridges",
     note: "Connects embryology laboratory transfer media rheology (0.5 mg/mL vs. 0.125 mg/mL hyaluronan) and elective single embryo transfer (eSET) policy directly to luminal endometrial apposition.",
+  },
+  {
+    slugA: "monopronuclear-1pn-and-low-grade-blastocyst-transfer-optimization",
+    slugB: "fet-endometrial-preparation-luteal-progesterone-and-implantation-biologics",
+    relation: "bridges",
+    note: "Connects monopronuclear (1PN) and low-grade (BC/CB/CC) blastocyst ploidy triage and embryology lab adjuncts directly to ovulatory FET protocols, transfer-day progesterone rescue, and intrauterine hCG-PBMC/PRP biologics.",
+  },
+  {
+    slugA: "monopronuclear-1pn-and-low-grade-blastocyst-transfer-optimization",
+    slugB: "hyaluronan-embryo-transfer-media-embryoglue-implantation-adherence",
+    relation: "intersects",
+    note: "Links 0.5 mg/mL hyaluronan transfer medium (NNT=8 in poor-quality embryos, Urman et al. 2008) and partial laser zona thinning with low-grade and 1PN blastocyst implantation.",
+  },
+  {
+    slugA: "gamete-rejuvenation-mitochondrial-bioenergetics-and-natural-conception-after-40",
+    slugB: "mtor-pathway-modulation-follicular-longevity",
+    relation: "bridges",
+    note: "Connects ovarian CD38 NADase inhibition (Apigenin/Quercetin) + NMN/NR SIRT2–BubR1 spindle stabilization, Spermidine eIF5A hypusination mitophagy, and stromal fibrosis reversal to follicular longevity.",
+  },
+  {
+    slugA: "gamete-rejuvenation-mitochondrial-bioenergetics-and-natural-conception-after-40",
+    slugB: "sperm-chromatin-integrity-dna-fragmentation-diagnostics",
+    relation: "bridges",
+    note: "Connects 1–3 hour consecutive double ejaculation (Scarselli 2019: euploidy 27.5% to 43.6%), Astaxanthin, L-Carnitine, Myo-Inositol midpiece MMP hyperpolarization, and Leydig StAR restoration directly to paternal chromatin integrity.",
+  },
+  {
+    slugA: "gamete-rejuvenation-mitochondrial-bioenergetics-and-natural-conception-after-40",
+    slugB: "advanced-maternal-age-pregnancy-after-40",
+    relation: "intersects",
+    note: "Links the JAMA AMH-fecundability dissociation (Steiner 2017: 84% vs 75% natural conception at 12 cycles), H2Oil Lipiodol tubal flushing (39.7% ongoing pregnancy), and 3-DPO corpus luteum rescue to reproductive outcomes after age 40.",
+  },
+  {
+    slugA: "harvard-fertility-diet-and-earth-preconception-nutrition",
+    slugB: "endometrial-receptivity-implantation-biology",
+    relation: "bridges",
+    note: "Connects the MGH EARTH Pro-Fertility Diet (Gaskins 2019: 56% vs 33% ART live birth), whole-grain bran endometrial thickening (+0.4 mm/serving, Gaskins 2016), and soy isoflavone neutralization of Bisphenol A (Chavarro 2016) directly to uterine implantation biology.",
+  },
+  {
+    slugA: "harvard-fertility-diet-and-earth-preconception-nutrition",
+    slugB: "sperm-chromatin-integrity-dna-fragmentation-diagnostics",
+    relation: "bridges",
+    note: "Connects the EARTH male pesticide residue study (-49% total sperm count in high-pesticide produce consumers, Chiu 2015), the Danish Young Men Prudent diet (+42M sperm count, Nassan 2020), and the FERTINUTS RCT (Salas-Huetos 2018: -4.0% DFI) to paternal gamete quality.",
+  },
+  {
+    slugA: "blue-zones-high-fertility-populations-and-reproductive-longevity-genetics",
+    slugB: "geroscience-cellular-senescence-longevity-biology",
+    relation: "bridges",
+    note: "Connects the evolutionary coupling of natural motherhood ≥40 with centenarian survival (OR 4.0, Perls Nature 1997; brothers' mortality RR 0.786, Smith 2009), Ikarian CD38 NADase inhibition, Okinawan spermidine mitophagy, and the 290 ovarian aging DNA-repair loci (Ruth Nature 2021) to systemic longevity biology.",
+  },
+  {
+    slugA: "blue-zones-high-fertility-populations-and-reproductive-longevity-genetics",
+    slugB: "advanced-maternal-age-pregnancy-after-40",
+    relation: "intersects",
+    note: "Links the Sardinian Blue Zone late-maternal reproduction phenotype (15–22% natural births ≥40 with -25% lower stillbirth/preterm loss, Astolfi 2008; Salaris 2016), Hutterite HLA-G implantation tolerance, and Tsimane vascular preservation to pregnancy after 40.",
   },
 ];
 
