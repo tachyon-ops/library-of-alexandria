@@ -27,7 +27,7 @@ export async function GET(
 
   let title = normaliseTopicTitle(lastSegment.replace(/-/g, " "));
   let brief =
-    "Synthesised peer-reviewed literature, clinical trial registries, and study-design-graded findings in Alexander's Library.";
+    `Synthesised peer-reviewed literature, clinical trial registries, and study-design-graded findings in ${SITE_NAME}.`;
   let trailText = "Library / Tree of Knowledge";
   let bestTier: Tier | null = null;
   let sourcesCount = 0;
