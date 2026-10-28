@@ -560,6 +560,12 @@ export const ENCYCLOPAEDIC_TRUNKS: SeedNode[] = [
                     brief:
                       "Resident adult skeletal stem cell reprogramming into hyaline articular cartilage via BMP2 + soluble VEGFR1 (Murphy, Chan & Longaker Nat Med 2020), Verteporfin YAP-blockade scarless skin and hair-follicle regeneration in mice and pigs (Mascharak & Longaker Science 2021), and 15-PGDH gerozyme inhibition (SW033291) to restore PGE2 and rejuvenate aged muscle and bone marrow (Palla & Blau Science 2021).",
                   },
+                  {
+                    slug: "dental-tooth-regeneration-usag1-antibodies-dpsc-pulp-and-biomimetic-enamel",
+                    title: "Dental & Whole-Tooth Regeneration: Anti-USAG-1 Third-Dentition Antibody (TRG035), GSK3β/Tideglusib Dentin Repair, DPSC Pulp Regeneration & Biomimetic Enamel",
+                    brief:
+                      "Systemic anti-USAG-1 (SOSTDC1) monoclonal antibody (TRG035) awakening rudimentary third-dentition tooth buds to regrow whole teeth in mice and diphyodont ferrets and entering human Phase I/IIa trials (Murashima-Suginami & Takahashi Sci Adv 2021), Tideglusib (50 nM GSK3β inhibitor) biodegradable collagen sponges for full-thickness tubular dentin repair (Neves & Sharpe Sci Rep 2017), human RCT of autologous SHED/MDPSC whole-pulp and sensory nerve regeneration (Xuan & Shi Sci Transl Med 2018; Nakashima 2017), and 1.5 nm CaP ion cluster (CPIC) epitaxial enamel regrowth (Shao & Tang Sci Adv 2019).",
+                  },
                 ],
               },
               {
@@ -1538,6 +1544,18 @@ export const CROSS_DISCIPLINE_LINKS: {
     slugB: "telomere-dynamics-telomerase-tert-and-replicative-immortality",
     relation: "bridges",
     note: "Restoring youthful RNA Pol II elongation speed (Debès, Partridge & Beyer, Nature 2023) and SRSF/HNRNP spliceosome fidelity with resveralogues rescues full-length catalytic hTERT splicing and elongates aged human fibroblast telomeres (Latorre & Harries, 2017).",
+  },
+  {
+    slugA: "dental-tooth-regeneration-usag1-antibodies-dpsc-pulp-and-biomimetic-enamel",
+    slugB: "mammalian-skeletal-ending-cartilage-regeneration-and-focal-adhesion-mechanotherapy",
+    relation: "bridges",
+    note: "Both anti-USAG-1 third-dentition tooth regrowth (Takahashi, Science Advances 2021) and adult hyaline articular cartilage regeneration (Longaker, Nature Medicine 2020) operate by precision local modulation of Bone Morphogenetic Protein (BMP) signaling in resident craniofacial and skeletal stem cell niches.",
+  },
+  {
+    slugA: "dental-tooth-regeneration-usag1-antibodies-dpsc-pulp-and-biomimetic-enamel",
+    slugB: "sensory-organ-regeneration-cochlear-hair-cells-and-retinal-muller-glia",
+    relation: "bridges",
+    note: "Small-molecule GSK3β inhibition (CHIR99021 / Tideglusib) activates canonical Wnt/β-catenin to drive both resident dental pulp stem cell tubular dentin regeneration (Neves & Sharpe, Scientific Reports 2017) and >2,000-fold clonal expansion of Lgr5+ cochlear supporting cells into auditory hair cells (McLean & Edge, Cell Reports 2017).",
   },
 ];
 

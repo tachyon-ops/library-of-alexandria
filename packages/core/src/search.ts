@@ -958,6 +958,10 @@ const DOMAIN_HINTS: { slugSubstring: string; keywords: string[] }[] = [
     keywords: ["nanowarming", "organ vitrification", "organ cryopreservation", "torpor", "hibernation", "biostasis", "bischof", "trpm2"],
   },
   {
+    slugSubstring: "dental-tooth-regeneration-usag1-antibodies-dpsc-pulp-and-biomimetic-enamel",
+    keywords: ["tooth regeneration", "teeth regeneration", "dental regeneration", "usag-1", "usag1", "trg035", "sostdc1", "tideglusib", "dentin", "dentine", "enamel regeneration", "dental pulp", "dpsc", "shed", "katsu takahashi", "paul sharpe", "p11-4", "curodont", "amelogenin"],
+  },
+  {
     slugSubstring: "geroscience-cellular-senescence-longevity-biology",
     keywords: ["aging", "ageing", "longevity", "biological clock", "reversing aging", "age reversal", "healthspan", "lifespan", "geroscience", "rejuvenation", "regeneration"],
   },
@@ -1333,6 +1337,18 @@ const CANONICAL_TOPIC_FACETS: CanonicalFacetSpec[] = [
     parentSlugs: ["geroscience-cellular-senescence-longevity-biology"],
     matches: (q) =>
       /\b(hippo\s+pathway|yap\/taz|\bsav1\b|cardiomyocyte\s+proliferation|heart\s+regeneration|\bagrin\b|xmu-mp-1)\b/.test(q),
+  },
+  {
+    slug: "dental-tooth-regeneration-usag1-antibodies-dpsc-pulp-and-biomimetic-enamel",
+    title: "Dental & Whole-Tooth Regeneration: Anti-USAG-1 Third-Dentition Antibody (TRG035), GSK3β/Tideglusib Dentin Repair, DPSC Pulp Regeneration & Biomimetic Enamel",
+    brief:
+      "Systemic anti-USAG-1 (SOSTDC1) monoclonal antibody (TRG035) awakening rudimentary third-dentition tooth buds to regrow whole teeth in mice and diphyodont ferrets and entering human Phase I/IIa trials (Murashima-Suginami & Takahashi Sci Adv 2021), Tideglusib (50 nM GSK3β inhibitor) biodegradable collagen sponges for full-thickness tubular dentin repair (Neves & Sharpe Sci Rep 2017), human RCT of autologous SHED/MDPSC whole-pulp and sensory nerve regeneration (Xuan & Shi Sci Transl Med 2018; Nakashima 2017), and 1.5 nm CaP ion cluster (CPIC) epitaxial enamel regrowth (Shao & Tang Sci Adv 2019).",
+    parentSlugs: [
+      "epimorphic-limb-regeneration-axolotl-blastema-and-scarless-acomys-healing",
+      "geroscience-cellular-senescence-longevity-biology",
+    ],
+    matches: (q) =>
+      /\b(tooth\s+regeneration|teeth\s+regeneration|teath\s+regeneration|dental\s+regeneration|usag-?1|trg035|tideglusib|dentin\s+regeneration|enamel\s+regeneration|dental\s+pulp\s+stem\s+cells?)\b/.test(q),
   },
 ];
 
